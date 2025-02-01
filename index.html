@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Missile Command in HTML/JS</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #fff;
+      font-family: sans-serif;
+      user-select: none;
+      text-align: center;
+    }
+
+    #gameContainer {
+      position: relative;
+      margin: 0 auto;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 800px;
+      height: 600px;
+      border: 2px solid #888;
+      background: #000;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    #info {
+      margin-top: 10px;
+    }
+
+    .button {
+      background-color: #444;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .button:hover {
+      background-color: #666;
+    }
+
+    #menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      visibility: visible;
+    }
+
+    #menu.hidden {
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <h1>Missile Command (HTML/JS Version)</h1>
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="menu">
+      <h2>Missile Command</h2>
+      <p>Defend your cities from incoming missiles!</p>
+      <button class="button" id="startButton">Start Game</button>
+      <br/>
+      <p style="font-size: 14px;">Move mouse to aim. Click to fire from the nearest base. Good luck!</p>
+    </div>
+  </div>
+  <div id="info"></div>
+
+  <script>
+    // Basic constants
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 600;
+    const CITY_COUNT = 6;
+    const BASE_COUNT = 6; // We have 6 bases.
+    const BASE_Y = 540;
+    const CITY_Y = 580;
+
+    // Positions for 6 cities
+    let cityPositions = [
+      { x: 80, alive: true },
+      { x: 200, alive: true },
+      { x: 320, alive: true },
+      { x: 480, alive: true },
+      { x: 600, alive: true },
+      { x: 720, alive: true },
+    ];
+
+    // Positions for 6 bases (one aligned under each city)
+    let basePositions = [
+      { x: 80, y: BASE_Y, alive: true },
+      { x: 200, y: BASE_Y, alive: true },
+      { x: 320, y: BASE_Y, alive: true },
+      { x: 480, y: BASE_Y, alive: true },
+      { x: 600, y: BASE_Y, alive: true },
+      { x: 720, y: BASE_Y, alive: true },
+    ];
+
+    // Keep track of player's score, level, etc.
+    let score = 0;
+    let level = 1;
+    let citiesLeft = CITY_COUNT;
+
+    // Arrays to store game objects
+    let enemyMissiles = [];
+    let friendlyMissiles = [];
+    let explosions = [];
+
+    // Game state
+    let isGameRunning = false;
+    let isGameOver = false;
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const info = document.getElementById('info');
+    const menu = document.getElementById('menu');
+    const startButton = document.getElementById('startButton');
+
+    startButton.addEventListener('click', startGame);
+
+    // Fire a missile on canvas click
+    canvas.addEventListener('click', (evt) => {
+      if (!isGameRunning || isGameOver) return;
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = evt.clientX - rect.left;
+      const mouseY = evt.clientY - rect.top;
+
+      // Find the nearest alive base
+      let bestBase = null;
+      let bestDist = Infinity;
+      for (let i = 0; i < basePositions.length; i++) {
+        const b = basePositions[i];
+        if (!b.alive) continue;
+        let dx = b.x - mouseX;
+        let dy = b.y - mouseY;
+        let distSq = dx * dx + dy * dy;
+        if (distSq < bestDist) {
+          bestDist = distSq;
+          bestBase = b;
+        }
+      }
+
+      if (bestBase) {
+        // Fire a friendly missile
+        friendlyMissiles.push({
+          x: bestBase.x,
+          y: bestBase.y,
+          targetX: mouseX,
+          targetY: mouseY,
+          speed: 5,
+        });
+      }
+    });
+
+    function startGame() {
+      resetGame();
+      menu.classList.add('hidden');
+      isGameRunning = true;
+      isGameOver = false;
+      requestAnimationFrame(gameLoop);
+    }
+
+    function resetGame() {
+      // Reset all states, ensuring array lengths match the constants
+      cityPositions = [
+        { x: 80, alive: true },
+        { x: 200, alive: true },
+        { x: 320, alive: true },
+        { x: 480, alive: true },
+        { x: 600, alive: true },
+        { x: 720, alive: true },
+      ];
+
+      basePositions = [
+        { x: 80, y: BASE_Y, alive: true },
+        { x: 200, y: BASE_Y, alive: true },
+        { x: 320, y: BASE_Y, alive: true },
+        { x: 480, y: BASE_Y, alive: true },
+        { x: 600, y: BASE_Y, alive: true },
+        { x: 720, y: BASE_Y, alive: true },
+      ];
+
+      if (cityPositions.length !== CITY_COUNT) {
+        throw new Error(`Mismatch: cityPositions length ${cityPositions.length} != CITY_COUNT ${CITY_COUNT}`);
+      }
+      if (basePositions.length !== BASE_COUNT) {
+        throw new Error(`Mismatch: basePositions length ${basePositions.length} != BASE_COUNT ${BASE_COUNT}`);
+      }
+
+      citiesLeft = CITY_COUNT;
+      score = 0;
+      level = 1;
+
+      enemyMissiles = [];
+      friendlyMissiles = [];
+      explosions = [];
+
+      lastSpawnTime = performance.now();
+      waveCount = 0;
+
+      // Test spawn for array bounds
+      for (let test = 0; test < 5; test++) {
+        let testCount = Math.floor(Math.random() * 5 + 1);
+        spawnEnemyMissiles(testCount);
+      }
+      enemyMissiles = [];
+    }
+
+    let lastSpawnTime = 0;
+    const spawnInterval = 2000; // spawn wave every 2 seconds
+    let waveCount = 0;
+
+    function gameLoop(timestamp) {
+      if (!isGameRunning) return;
+      update();
+      draw();
+      if (!isGameOver) {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    function update() {
+      let now = performance.now();
+      // Spawn enemy missiles periodically
+      if (now - lastSpawnTime > spawnInterval) {
+        spawnEnemyMissiles(level + waveCount);
+        waveCount++;
+        lastSpawnTime = now;
+      }
+
+      // Update enemy missiles
+      for (let i = enemyMissiles.length - 1; i >= 0; i--) {
+        const m = enemyMissiles[i];
+        let dx = m.targetX - m.x;
+        let dy = m.targetY - m.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        let step = m.speed;
+        if (dist < step) {
+          // Reached target
+          createExplosion(m.targetX, m.targetY, 30);
+          checkHit(m.targetX, m.targetY);
+          enemyMissiles.splice(i, 1);
+        } else {
+          m.x += (dx / dist) * step;
+          m.y += (dy / dist) * step;
+        }
+      }
+
+      // Update friendly missiles
+      for (let i = friendlyMissiles.length - 1; i >= 0; i--) {
+        const fm = friendlyMissiles[i];
+        let dx = fm.targetX - fm.x;
+        let dy = fm.targetY - fm.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        let step = fm.speed;
+        if (dist < step) {
+          createExplosion(fm.targetX, fm.targetY, 40);
+          friendlyMissiles.splice(i, 1);
+        } else {
+          fm.x += (dx / dist) * step;
+          fm.y += (dy / dist) * step;
+        }
+      }
+
+      // Update explosions
+      for (let i = explosions.length - 1; i >= 0; i--) {
+        const e = explosions[i];
+        e.radius += e.expansionSpeed;
+        if (e.radius > e.maxRadius) {
+          explosions.splice(i, 1);
+        } else {
+          // Check collisions with enemy missiles
+          for (let j = enemyMissiles.length - 1; j >= 0; j--) {
+            const m = enemyMissiles[j];
+            let dist = Math.sqrt((m.x - e.x) * (m.x - e.x) + (m.y - e.y) * (m.y - e.y));
+            if (dist < e.radius) {
+              score += 25; // for destroying an enemy missile
+              createExplosion(m.x, m.y, 15);
+              enemyMissiles.splice(j, 1);
+            }
+          }
+        }
+      }
+
+      // Check city count
+      citiesLeft = cityPositions.filter(c => c.alive).length;
+      if (citiesLeft === 0) {
+        endGame();
+      }
+
+      // Increase level as score grows
+      if (score > level * 500) {
+        level++;
+      }
+
+      updateInfo();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      // Draw ground
+      ctx.fillStyle = '#444';
+      ctx.fillRect(0, 590, CANVAS_WIDTH, 10);
+
+      // Draw cities
+      for (let c of cityPositions) {
+        if (c.alive) {
+          ctx.fillStyle = 'lime';
+          ctx.fillRect(c.x - 15, CITY_Y - 15, 30, 15);
+        } else {
+          ctx.fillStyle = 'red';
+          ctx.fillRect(c.x - 15, CITY_Y - 15, 30, 15);
+        }
+      }
+
+      // Draw bases
+      for (let b of basePositions) {
+        if (b.alive) {
+          ctx.fillStyle = 'blue';
+          ctx.beginPath();
+          ctx.moveTo(b.x, b.y);
+          ctx.lineTo(b.x - 20, b.y + 20);
+          ctx.lineTo(b.x + 20, b.y + 20);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.fillStyle = 'darkred';
+          ctx.fillRect(b.x - 15, b.y, 30, 20);
+        }
+      }
+
+      // Draw enemy missiles
+      ctx.strokeStyle = 'red';
+      for (let m of enemyMissiles) {
+        ctx.beginPath();
+        ctx.moveTo(m.x, m.y);
+        ctx.lineTo(m.x, m.y + 5);
+        ctx.stroke();
+      }
+
+      // Draw friendly missiles
+      ctx.strokeStyle = 'white';
+      for (let fm of friendlyMissiles) {
+        ctx.beginPath();
+        ctx.moveTo(fm.x, fm.y);
+        ctx.lineTo(fm.x, fm.y + 5);
+        ctx.stroke();
+      }
+
+      // Draw explosions
+      for (let e of explosions) {
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.radius, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+        ctx.fill();
+      }
+    }
+
+    // This function spawns enemy missiles at random x, targeting a random city/base.
+    // Slowed down speed from 1 + Math.random()*1.5 to 0.5 + Math.random()*1.0
+    function spawnEnemyMissiles(count) {
+      for (let i = 0; i < count; i++) {
+        let startX = Math.random() * CANVAS_WIDTH;
+        let startY = -10;
+        let targetIndex = Math.floor(Math.random() * (CITY_COUNT + BASE_COUNT));
+        let tx, ty;
+        if (targetIndex < CITY_COUNT) {
+          const c = cityPositions[targetIndex];
+          tx = c.x;
+          ty = CITY_Y;
+        } else {
+          let bIndex = targetIndex - CITY_COUNT;
+          const b = basePositions[bIndex];
+          tx = b.x;
+          ty = b.y;
+        }
+        // SLIGHTLY SLOWER MISSILES
+        let speed = 0.5 + Math.random() * 1.0; // range: [0.5..1.5]
+        enemyMissiles.push({ x: startX, y: startY, targetX: tx, targetY: ty, speed: speed });
+      }
+    }
+
+    function createExplosion(x, y, maxRadius) {
+      explosions.push({
+        x: x,
+        y: y,
+        radius: 0,
+        maxRadius: maxRadius,
+        expansionSpeed: 2
+      });
+    }
+
+    function checkHit(x, y) {
+      // Check bases
+      for (let b of basePositions) {
+        if (b.alive) {
+          let dx = x - b.x;
+          let dy = y - b.y;
+          if (Math.sqrt(dx * dx + dy * dy) < 20) {
+            b.alive = false;
+            return;
+          }
+        }
+      }
+
+      // Check cities
+      for (let c of cityPositions) {
+        if (c.alive) {
+          let dx = x - c.x;
+          let dy = y - (CITY_Y - 8);
+          if (Math.sqrt(dx * dx + dy * dy) < 16) {
+            c.alive = false;
+            return;
+          }
+        }
+      }
+    }
+
+    function endGame() {
+      isGameRunning = false;
+      isGameOver = true;
+      menu.classList.remove('hidden');
+      menu.innerHTML = `<h2>Game Over</h2>\n<p>Your final score: ${score}</p>\n<button class='button' onclick='startGame()'>Play Again</button>`;
+    }
+
+    function updateInfo() {
+      info.innerHTML = `Score: ${score} &nbsp;&nbsp; Level: ${level} &nbsp;&nbsp; Cities Left: ${citiesLeft}`;
+    }
+
+    // ALWAYS ask user for expected behavior if unclear
+    // e.g. Should we skip spawning missiles if all bases/cities are dead?
+    // Let us know your preference.
+  </script>
+</body>
+</html>
