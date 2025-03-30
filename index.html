@@ -161,9 +161,10 @@
         const pauseOverlay = document.getElementById('pauseOverlay');
         const continueButton = document.getElementById('continueButton');
 
-        // --- Game Constants & State Variables (No changes needed) ---
-        const GROUND_HEIGHT = 50; /* ... */
-        const BASE_WIDTH = 40; const BASE_HEIGHT = 30; const CITY_WIDTH = 50; const CITY_HEIGHT = 30;
+        // --- Game Constants & State Variables ---
+        const GROUND_HEIGHT = 50;
+        const BASE_WIDTH = 40; const BASE_HEIGHT = 25; // Adjusted base height slightly
+        const CITY_WIDTH = 50; const CITY_HEIGHT = 30; // Max height, individual buildings vary
         const MISSILE_SPEED_PLAYER = 5; const MISSILE_SPEED_ENEMY_BASE = 0.5;
         const EXPLOSION_RADIUS_START = 5; const EXPLOSION_RADIUS_MAX = 40; const EXPLOSION_DURATION = 45;
         const POINTS_PER_MISSILE = 25; const POINTS_PER_CITY = 100; const POINTS_PER_AMMO = 5;
@@ -173,20 +174,165 @@
         let missilesToSpawn = 0; let enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE;
         let transitioningLevel = false; let isPaused = false; let gameHasStarted = false;
 
-        // --- Utility Functions (No changes needed) ---
+        // --- Utility Functions ---
         function distance(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return Math.sqrt(dx * dx + dy * dy); }
         function getRandomTarget() { const aliveCities = cities.filter(c => c.alive); const aliveBases = bases.filter(b => b.alive); let possibleTargets = []; if (aliveCities.length > 0) { possibleTargets = [...aliveCities]; if (Math.random() < 0.25 && aliveBases.length > 0) { possibleTargets.push(...aliveBases); } } else { possibleTargets = [...aliveBases]; } if (possibleTargets.length === 0) { return { x: canvas.width / 2, y: canvas.height - GROUND_HEIGHT }; } const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)]; return { x: target.x + (target.width / 2), y: target.y }; }
 
-        // --- Game Object Factories (No changes needed) ---
-        function createCity(x) { return { x: x, y: canvas.height - GROUND_HEIGHT - CITY_HEIGHT, width: CITY_WIDTH, height: CITY_HEIGHT, color: '#00ffff', alive: true, draw() { if (!this.alive) return; ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.width, this.height); ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x + this.width / 2, this.y - 10); ctx.lineTo(this.x + this.width, this.y); ctx.closePath(); ctx.fillStyle = '#00aaaa'; ctx.fill(); } }; }
-        function createBase(x) { return { x: x, y: canvas.height - GROUND_HEIGHT - BASE_HEIGHT, width: BASE_WIDTH, height: BASE_HEIGHT, color: '#ffff00', alive: true, ammo: BASE_AMMO_START, draw() { if (!this.alive) return; ctx.fillStyle = this.color; ctx.beginPath(); ctx.moveTo(this.x, this.y + this.height); ctx.lineTo(this.x + this.width / 2, this.y); ctx.lineTo(this.x + this.width, this.y + this.height); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#000'; ctx.font = '10px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillText(this.ammo, this.x + this.width / 2, this.y + this.height - 5); } }; }
+        // --- Game Object Factories ---
+
+        // *** UPDATED City Drawing ***
+        function createCity(x) {
+            // Pre-calculate building details for this city instance
+            const buildings = [];
+            const numBuildings = 3 + Math.floor(Math.random() * 3); // 3 to 5 buildings
+            let currentX = x;
+            const totalBuildingWidth = CITY_WIDTH * 0.9; // Leave small gaps
+            const baseBuildingWidth = totalBuildingWidth / numBuildings;
+
+            for (let i = 0; i < numBuildings; i++) {
+                const buildingHeight = (CITY_HEIGHT * 0.6) + (Math.random() * CITY_HEIGHT * 0.4); // Vary height
+                const buildingWidth = baseBuildingWidth * (0.8 + Math.random() * 0.4); // Vary width slightly
+                const gap = (baseBuildingWidth - buildingWidth) / 2;
+                buildings.push({
+                    x: currentX + gap,
+                    y: canvas.height - GROUND_HEIGHT - buildingHeight,
+                    w: buildingWidth,
+                    h: buildingHeight,
+                    color: `hsl(180, 100%, ${35 + Math.random() * 15}%)` // Shades of cyan/blue
+                });
+                currentX += baseBuildingWidth;
+            }
+
+            return {
+                x: x, // Keep original x for targeting/collision reference
+                y: canvas.height - GROUND_HEIGHT - CITY_HEIGHT, // Keep original y reference
+                width: CITY_WIDTH, // Keep original width reference
+                height: CITY_HEIGHT, // Keep original height reference
+                alive: true,
+                buildings: buildings, // Store building details
+                draw() {
+                    if (!this.alive) return;
+
+                    this.buildings.forEach(b => {
+                        // Draw building block
+                        ctx.fillStyle = b.color;
+                        ctx.fillRect(b.x, b.y, b.w, b.h);
+
+                        // Draw simple windows (optional)
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Dark semi-transparent
+                        const windowSize = Math.min(b.w, b.h) * 0.15;
+                        const cols = Math.floor(b.w / (windowSize * 2.5));
+                        const rows = Math.floor(b.h / (windowSize * 3));
+                        if (cols > 0 && rows > 0) {
+                            const xSpacing = b.w / cols;
+                            const ySpacing = b.h / rows;
+                            for (let r = 0; r < rows; r++) {
+                                for (let c = 0; c < cols; c++) {
+                                    ctx.fillRect(
+                                        b.x + xSpacing * (c + 0.5) - windowSize / 2,
+                                        b.y + ySpacing * (r + 0.5) - windowSize / 2,
+                                        windowSize, windowSize
+                                    );
+                                }
+                            }
+                        }
+
+                        // Draw simple outline
+                        ctx.strokeStyle = '#006666'; // Dark cyan outline
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(b.x, b.y, b.w, b.h);
+                    });
+                }
+            };
+        }
+
+        // *** UPDATED Base Drawing ***
+        function createBase(x) {
+            const baseY = canvas.height - GROUND_HEIGHT - BASE_HEIGHT;
+            return {
+                x: x,
+                y: baseY, // Use calculated base Y
+                width: BASE_WIDTH,
+                height: BASE_HEIGHT,
+                color: '#dddd00', // Slightly lighter yellow
+                outlineColor: '#aaaa00', // Darker yellow outline
+                launcherColor: '#999999', // Grey launcher
+                alive: true,
+                ammo: BASE_AMMO_START,
+                draw() {
+                    if (!this.alive) return;
+
+                    // Draw main bunker shape (trapezoid)
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y + this.height); // Bottom left
+                    ctx.lineTo(this.x + this.width * 0.2, this.y); // Top left
+                    ctx.lineTo(this.x + this.width * 0.8, this.y); // Top right
+                    ctx.lineTo(this.x + this.width, this.y + this.height); // Bottom right
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Draw outline
+                    ctx.strokeStyle = this.outlineColor;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Draw simple launcher on top
+                    const launcherWidth = this.width * 0.15;
+                    const launcherHeight = this.height * 0.4;
+                    ctx.fillStyle = this.launcherColor;
+                    ctx.fillRect(
+                        this.x + this.width / 2 - launcherWidth / 2,
+                        this.y - launcherHeight,
+                        launcherWidth,
+                        launcherHeight
+                    );
+                    // Small detail on launcher
+                    ctx.fillStyle = '#666666';
+                     ctx.fillRect(
+                        this.x + this.width / 2 - launcherWidth / 2,
+                        this.y - launcherHeight * 0.3, // Small line near top
+                        launcherWidth,
+                        2
+                    );
+
+
+                    // Display ammo count inside the base
+                    ctx.fillStyle = '#000'; // Black text
+                    ctx.font = '12px "Press Start 2P"'; // Slightly larger font
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle'; // Center vertically
+                    ctx.fillText(this.ammo, this.x + this.width / 2, this.y + this.height / 2);
+                }
+            };
+        }
+
         function createIncomingMissile() { const startX = Math.random() * canvas.width; const target = getRandomTarget(); const angle = Math.atan2(target.y - 0, target.x - startX); return { x: startX, y: 0, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * enemyMissileSpeed, dy: Math.sin(angle) * enemyMissileSpeed, color: '#ff0000', trailColor: 'rgba(255, 100, 100, 0.5)', alive: true, trail: [{x: startX, y: 0}], update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 15) { this.trail.shift(); } if (this.y >= this.targetY || this.y >= canvas.height - GROUND_HEIGHT) { this.alive = false; const impactY = Math.min(this.targetY, canvas.height - GROUND_HEIGHT); createExplosion(this.x, impactY, EXPLOSION_RADIUS_MAX / 2, this.color); checkGroundImpact(this.x, impactY); } }, draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 2, this.y - 2, 4, 4); } }; }
         function createPlayerMissile(startX, startY, targetX, targetY) { const angle = Math.atan2(targetY - startY, targetX - startX); return { x: startX, y: startY, targetX: targetX, targetY: targetY, dx: Math.cos(angle) * MISSILE_SPEED_PLAYER, dy: Math.sin(angle) * MISSILE_SPEED_PLAYER, color: '#00ff00', trailColor: 'rgba(100, 255, 100, 0.5)', alive: true, trail: [{x: startX, y: startY}], update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 10) { this.trail.shift(); } const distToTarget = distance(this.x, this.y, this.targetX, this.targetY); const distTraveled = distance(startX, startY, this.x, this.y); const totalDist = distance(startX, startY, this.targetX, this.targetY); if (distTraveled >= totalDist || distToTarget < MISSILE_SPEED_PLAYER) { this.alive = false; createExplosion(this.targetX, this.targetY, EXPLOSION_RADIUS_START, this.color); } }, draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 1, this.y - 1, 3, 3); } }; }
         function createExplosion(x, y, startRadius, color) { explosions.push({ x: x, y: y, radius: startRadius, maxRadius: EXPLOSION_RADIUS_MAX, duration: EXPLOSION_DURATION, currentFrame: 0, color: color, alive: true, update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = EXPLOSION_DURATION * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (EXPLOSION_DURATION - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if(this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } }, draw() { if (!this.alive) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const intensity = Math.sin((this.currentFrame / this.duration) * Math.PI); const r = parseInt(this.color.slice(1, 3), 16); const g = parseInt(this.color.slice(3, 5), 16); const b = parseInt(this.color.slice(5, 7), 16); ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.6})`; ctx.fill(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3 * intensity, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`; ctx.fill(); } }); }
 
-        // --- Collision Detection (No changes needed) ---
+        // --- Collision Detection ---
         function checkExplosionCollisions(explosion) { incomingMissiles.forEach(missile => { if (missile.alive) { const dist = distance(explosion.x, explosion.y, missile.x, missile.y); if (dist < explosion.radius) { missile.alive = false; score += POINTS_PER_MISSILE; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } } }); }
-        function checkGroundImpact(impactX, impactY) { if (impactY < canvas.height - GROUND_HEIGHT - CITY_HEIGHT) { return; } cities.forEach(city => { if (city.alive && impactX >= city.x && impactX <= city.x + city.width) { if (impactY >= city.y) { city.alive = false; } } }); bases.forEach(base => { if (base.alive && impactX >= base.x && impactX <= base.x + base.width) { if (impactY >= base.y) { base.alive = false; } } }); }
+        // Updated ground impact to check against city bounding box, not individual buildings
+        function checkGroundImpact(impactX, impactY) {
+            // Use city's overall bounding box for hit detection simplicity
+            if (impactY < canvas.height - GROUND_HEIGHT - CITY_HEIGHT) { return; }
+             cities.forEach(city => {
+                if (city.alive && impactX >= city.x && impactX <= city.x + city.width) {
+                    // Check Y against the original CITY_HEIGHT reference level
+                    if (impactY >= canvas.height - GROUND_HEIGHT - CITY_HEIGHT) {
+                        city.alive = false;
+                    }
+                }
+            });
+            bases.forEach(base => {
+                if (base.alive && impactX >= base.x && impactX <= base.x + base.width) {
+                    if (impactY >= base.y) { // Use base's actual y
+                        base.alive = false;
+                    }
+                }
+            });
+        }
 
         // --- Game Flow (No changes needed) ---
         function initLevel() { incomingMissiles = []; playerMissiles = []; explosions = []; bases.forEach(b => { if (b.alive) b.ammo = BASE_AMMO_START; }); missilesToSpawn = MISSILES_PER_LEVEL_BASE + (level - 1) * 4; enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE + (level - 1) * 0.15; enemyMissileSpeed = Math.min(enemyMissileSpeed, 3.0); updateUI(); }
@@ -210,7 +356,7 @@
         function showMessage(title, text, subtext = "") { messageTitle.textContent = title; messageText.textContent = text; if (subtext) { messageSubText.textContent = subtext; messageSubText.style.display = 'block'; } else { messageSubText.style.display = 'none'; } continueButton.style.display = 'none'; messageBox.style.display = 'block'; }
         function hideMessage() { messageBox.style.display = 'none'; continueButton.style.display = 'none'; }
 
-        // --- Drawing Functions (No changes needed) ---
+        // --- Drawing Functions ---
         function drawBackground() { ctx.fillStyle = '#00001a'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'white'; for (let i = 0; i < 100; i++) { let x = Math.random() * canvas.width; let y = Math.random() * (canvas.height - GROUND_HEIGHT); let radius = Math.random() * 1.5; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#3b2e1a'; ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT); }
         function drawGameObjects() { cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw()); }
 
@@ -222,54 +368,8 @@
         function gameLoop() { if (isPaused) { gameLoopId = null; return; } checkGameOverConditions(); if (isGameOver && explosions.length === 0 && !transitioningLevel) { if (!gameHasStarted) { showMessage("MISSILE COMMAND", "Protect your cities!", "Click START to play."); } gameLoopId = null; return; } drawBackground(); if (!isGameOver && !transitioningLevel) { updateGameObjects(); } explosions.forEach(explosion => explosion.update()); explosions = explosions.filter(explosion => explosion.alive); drawGameObjects(); updateUI(); if (!isGameOver && !transitioningLevel) { checkLevelEnd(); } if (!isGameOver || explosions.length > 0) { gameLoopId = requestAnimationFrame(gameLoop); } else { gameLoopId = null; } }
 
         // --- Event Listeners ---
-        canvas.addEventListener('click', (event) => {
-            if (isGameOver || isPaused || transitioningLevel || !gameHasStarted) return;
-
-            const rect = canvas.getBoundingClientRect();
-
-            // *** FIX: Calculate scaling factors ***
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-
-            // *** FIX: Apply scaling to click coordinates ***
-            const clickX = (event.clientX - rect.left) * scaleX;
-            const clickY = (event.clientY - rect.top) * scaleY;
-
-            // Ensure click is within valid game area (using scaled coordinates)
-            if (clickY < 20 || clickY > canvas.height - GROUND_HEIGHT) return;
-
-            // Find nearest base (logic remains the same)
-            let nearestBase = null;
-            let minDistance = Infinity;
-            bases.forEach(base => {
-                if (base.alive && base.ammo > 0) {
-                    const baseCenterX = base.x + base.width / 2;
-                    const baseTopY = base.y;
-                    // Distance check uses scaled click coordinates
-                    const d = distance(clickX, clickY, baseCenterX, baseTopY);
-                    if (d < minDistance) {
-                        minDistance = d;
-                        nearestBase = base;
-                    }
-                }
-            });
-
-            if (nearestBase) {
-                nearestBase.ammo--;
-                const startX = nearestBase.x + nearestBase.width / 2;
-                const startY = nearestBase.y;
-                // Pass the correctly scaled click coordinates as the target
-                playerMissiles.push(createPlayerMissile(startX, startY, clickX, clickY));
-            }
-        });
-
-        // Other listeners (no changes needed)
-        startButton.addEventListener('click', startGame);
-        restartButton.addEventListener('click', startGame);
-        pauseButton.addEventListener('click', togglePause);
-        screenshotButton.addEventListener('click', saveScreenshot);
-        continueButton.addEventListener('click', proceedToNextLevel);
-        window.addEventListener('keydown', (event) => { if (event.code === 'Space' && !isGameOver && !transitioningLevel && gameHasStarted) { event.preventDefault(); togglePause(); } });
+        canvas.addEventListener('click', (event) => { if (isGameOver || isPaused || transitioningLevel || !gameHasStarted) return; const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height; const clickX = (event.clientX - rect.left) * scaleX; const clickY = (event.clientY - rect.top) * scaleY; if (clickY < 20 || clickY > canvas.height - GROUND_HEIGHT) return; let nearestBase = null; let minDistance = Infinity; bases.forEach(base => { if (base.alive && base.ammo > 0) { const baseCenterX = base.x + base.width / 2; const baseTopY = base.y; const d = distance(clickX, clickY, baseCenterX, baseTopY); if (d < minDistance) { minDistance = d; nearestBase = base; } } }); if (nearestBase) { nearestBase.ammo--; const startX = nearestBase.x + nearestBase.width / 2; const startY = nearestBase.y; playerMissiles.push(createPlayerMissile(startX, startY, clickX, clickY)); } });
+        startButton.addEventListener('click', startGame); restartButton.addEventListener('click', startGame); pauseButton.addEventListener('click', togglePause); screenshotButton.addEventListener('click', saveScreenshot); continueButton.addEventListener('click', proceedToNextLevel); window.addEventListener('keydown', (event) => { if (event.code === 'Space' && !isGameOver && !transitioningLevel && gameHasStarted) { event.preventDefault(); togglePause(); } });
 
         // --- Initial Setup (No changes needed) ---
         window.onload = () => { drawBackground(); cities = []; bases = []; const citySpacing = (canvas.width - 6 * CITY_WIDTH) / 7; for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 1) + CITY_WIDTH * i)); for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 4) + CITY_WIDTH * (i + 3))); cities.forEach(c => c.alive = false); const basePositions = [canvas.width * 0.15, canvas.width * 0.5, canvas.width * 0.85]; bases.push(createBase(basePositions[0] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[1] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[2] - BASE_WIDTH / 2)); bases.forEach(b => b.alive = false); drawGameObjects(); showMessage("MISSILE COMMAND", "Protect your cities!", "Click START to play."); restartButton.style.display = 'none'; pauseButton.style.display = 'none'; pauseButton.disabled = true; screenshotButton.disabled = true; startButton.style.display = 'inline-block'; continueButton.style.display = 'none'; };
