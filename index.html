@@ -93,11 +93,11 @@
         <div id="storeScore">Current Score: $0</div>
         <div class="storeItem">
             <div class="storeItemInfo">
-                <span>Satellite Base (Max 3 Active)</span> 
+                <span>Satellite Base (Max 3 Active)</span>
                 <span class="itemCost">Cost: $4000</span>
                 <span class="itemStock" id="stockSatellite">Stock: 6</span>
             </div>
-            <button class="buyButton" id="buySatelliteButton">BUY</button> 
+            <button class="buyButton" id="buySatelliteButton">BUY</button>
         </div>
         <div class="storeItem">
             <div class="storeItemInfo">
@@ -128,123 +128,58 @@
 
         // --- Game Constants & State Variables ---
         const GROUND_HEIGHT = 50; const BASE_WIDTH = 40; const BASE_HEIGHT = 25; const CITY_WIDTH = 50; const CITY_HEIGHT = 30; const MISSILE_SPEED_PLAYER = 5; const MISSILE_SPEED_ENEMY_BASE = 0.5; const EXPLOSION_RADIUS_START = 5; const EXPLOSION_RADIUS_MAX = 40; const EXPLOSION_DURATION = 45; const POINTS_PER_MISSILE = 25; const POINTS_PER_CITY = 100; const POINTS_PER_AMMO = 5; const MISSILES_PER_LEVEL_BASE = 8; let selectedDifficultyAmmo = 60; const BONUS_FIRE_SPREAD = 8;
-        const COST_SATELLITE = 4000; const COST_BASE = 1000; const COST_CITY = 2000; const MAX_STOCK = 6;
-        const MAX_ACTIVE_SATELLITES = 3; const SATELLITE_AMMO_START = 100; // Starting ammo for satellites
-        const SATELLITE_Y_POS = canvas.height * 0.4; // Vertical position for satellites
-        const SATELLITE_WIDTH = 30; const SATELLITE_HEIGHT = 20;
-
+        const COST_SATELLITE = 4000; const COST_BASE = 1000; const COST_CITY = 2000; const MAX_STOCK = 6; const MAX_ACTIVE_SATELLITES = 3;
+        const SATELLITE_Y_POS = canvas.height * 0.4; const SATELLITE_WIDTH = 35; const SATELLITE_HEIGHT = 25;
         let score = 0; let level = 1; let cities = []; let bases = []; let incomingMissiles = []; let playerMissiles = []; let explosions = []; let isGameOver = true; let gameLoopId = null; let missilesToSpawn = 0; let enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE; let transitioningLevel = false; let isPaused = false; let gameHasStarted = false; let difficultySelected = false; let bonusMissileCount = 0;
-        let storeStockSatellite = MAX_STOCK; let storeStockBase = MAX_STOCK; let storeStockCity = MAX_STOCK;
-        let satelliteBases = []; // Array to hold active satellite objects
+        let storeStockSatellite = MAX_STOCK; let storeStockBase = MAX_STOCK; let storeStockCity = MAX_STOCK; let satelliteBases = [];
 
         // --- Utility Functions ---
         function distance(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return Math.sqrt(dx * dx + dy * dy); }
-        // Updated getRandomTarget to include satellites
-        function getRandomTarget() {
-            const aliveCities = cities.filter(c => c.alive);
-            const aliveBases = bases.filter(b => b.alive);
-            const aliveSatellites = satelliteBases.filter(s => s.alive); // Get alive satellites
-            let possibleTargets = [...aliveCities, ...aliveBases, ...aliveSatellites]; // Combine all potential targets
-
-            if (possibleTargets.length === 0) { return { x: canvas.width / 2, y: canvas.height - GROUND_HEIGHT }; }
-
-            // Basic weighting: prioritize cities/bases slightly over satellites? Or equal chance? Let's do equal for now.
-            const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
-            // Target center-top of the object
-            return { x: target.x + (target.width / 2), y: target.y };
-        }
+        function getRandomTarget() { const aliveCities = cities.filter(c => c.alive); const aliveBases = bases.filter(b => b.alive); const aliveSatellites = satelliteBases.filter(s => s.alive); let possibleTargets = [...aliveCities, ...aliveBases, ...aliveSatellites]; if (possibleTargets.length === 0) { return { x: canvas.width / 2, y: canvas.height - GROUND_HEIGHT }; } const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)]; return { x: target.x + (target.width / 2), y: target.y }; }
 
         // --- Game Object Factories ---
         function createCity(x) { const buildings = []; const numBuildings = 3 + Math.floor(Math.random() * 3); let currentX = x; const totalBuildingWidth = CITY_WIDTH * 0.9; const baseBuildingWidth = totalBuildingWidth / numBuildings; for (let i = 0; i < numBuildings; i++) { const buildingHeight = (CITY_HEIGHT * 0.6) + (Math.random() * CITY_HEIGHT * 0.4); const buildingWidth = baseBuildingWidth * (0.8 + Math.random() * 0.4); const gap = (baseBuildingWidth - buildingWidth) / 2; buildings.push({ x: currentX + gap, y: canvas.height - GROUND_HEIGHT - buildingHeight, w: buildingWidth, h: buildingHeight, color: `hsl(180, 100%, ${35 + Math.random() * 15}%)` }); currentX += baseBuildingWidth; } return { x: x, y: canvas.height - GROUND_HEIGHT - CITY_HEIGHT, width: CITY_WIDTH, height: CITY_HEIGHT, alive: true, buildings: buildings, draw() { if (!this.alive) return; this.buildings.forEach(b => { ctx.fillStyle = b.color; ctx.fillRect(b.x, b.y, b.w, b.h); ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; const windowSize = Math.min(b.w, b.h) * 0.15; const cols = Math.floor(b.w / (windowSize * 2.5)); const rows = Math.floor(b.h / (windowSize * 3)); if (cols > 0 && rows > 0) { const xSpacing = b.w / cols; const ySpacing = b.h / rows; for (let r = 0; r < rows; r++) { for (let c = 0; c < cols; c++) { ctx.fillRect( b.x + xSpacing * (c + 0.5) - windowSize / 2, b.y + ySpacing * (r + 0.5) - windowSize / 2, windowSize, windowSize ); } } } ctx.strokeStyle = '#006666'; ctx.lineWidth = 1; ctx.strokeRect(b.x, b.y, b.w, b.h); }); } }; }
         function createBase(x) { const baseY = canvas.height - GROUND_HEIGHT - BASE_HEIGHT; return { x: x, y: baseY, width: BASE_WIDTH, height: BASE_HEIGHT, color: '#dddd00', outlineColor: '#aaaa00', launcherColor: '#999999', alive: true, ammo: selectedDifficultyAmmo, isSatellite: false, draw() { if (!this.alive) return; ctx.fillStyle = this.color; ctx.beginPath(); ctx.moveTo(this.x, this.y + this.height); ctx.lineTo(this.x + this.width * 0.2, this.y); ctx.lineTo(this.x + this.width * 0.8, this.y); ctx.lineTo(this.x + this.width, this.y + this.height); ctx.closePath(); ctx.fill(); ctx.strokeStyle = this.outlineColor; ctx.lineWidth = 2; ctx.stroke(); const launcherWidth = this.width * 0.15; const launcherHeight = this.height * 0.4; ctx.fillStyle = this.launcherColor; ctx.fillRect( this.x + this.width / 2 - launcherWidth / 2, this.y - launcherHeight, launcherWidth, launcherHeight ); ctx.fillStyle = '#666666'; ctx.fillRect( this.x + this.width / 2 - launcherWidth / 2, this.y - launcherHeight * 0.3, launcherWidth, 2 ); ctx.fillStyle = '#000'; ctx.font = '12px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(this.ammo, this.x + this.width / 2, this.y + this.height / 2); } }; }
-
-        // *** NEW Satellite Base Factory ***
-        function createSatelliteBase(x, y) {
-            return {
-                x: x, y: y, width: SATELLITE_WIDTH, height: SATELLITE_HEIGHT,
-                color: '#cccccc', // Light grey body
-                panelColor: '#4444ff', // Blue panels
-                outlineColor: '#999999',
-                alive: true,
-                ammo: SATELLITE_AMMO_START,
-                isSatellite: true, // Flag to identify type
-                draw() {
-                    if (!this.alive) return;
-                    const bodyWidth = this.width * 0.6;
-                    const bodyHeight = this.height;
-                    const panelWidth = this.width * 0.2; // Width of each panel
-                    const panelHeight = this.height * 1.5; // Panels taller than body
-
-                    // Draw body
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(this.x + panelWidth, this.y, bodyWidth, bodyHeight);
-                    ctx.strokeStyle = this.outlineColor;
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(this.x + panelWidth, this.y, bodyWidth, bodyHeight);
-
-                    // Draw panels
-                    ctx.fillStyle = this.panelColor;
-                    ctx.fillRect(this.x, this.y - (panelHeight - bodyHeight) / 2, panelWidth, panelHeight); // Left panel
-                    ctx.strokeRect(this.x, this.y - (panelHeight - bodyHeight) / 2, panelWidth, panelHeight);
-                    ctx.fillRect(this.x + panelWidth + bodyWidth, this.y - (panelHeight - bodyHeight) / 2, panelWidth, panelHeight); // Right panel
-                    ctx.strokeRect(this.x + panelWidth + bodyWidth, this.y - (panelHeight - bodyHeight) / 2, panelWidth, panelHeight);
-
-                    // Draw simple launcher nozzle below body
-                    const nozzleWidth = bodyWidth * 0.3;
-                    const nozzleHeight = bodyHeight * 0.3;
-                     ctx.fillStyle = '#aaaaaa';
-                     ctx.fillRect(this.x + panelWidth + (bodyWidth / 2) - (nozzleWidth / 2), this.y + bodyHeight, nozzleWidth, nozzleHeight);
-
-                    // Display ammo count near body
-                    ctx.fillStyle = '#ffff00'; // Yellow ammo text
-                    ctx.font = '10px "Press Start 2P"';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'top';
-                    ctx.fillText(this.ammo, this.x + this.width / 2, this.y + bodyHeight + nozzleHeight + 2);
-                }
-            };
-        }
-
+        function createSatelliteBase(x, y) { return { x: x, y: y, width: SATELLITE_WIDTH, height: SATELLITE_HEIGHT, bodyColor: '#b0b0b0', panelColor: '#3333cc', panelHighlight: '#6666ff', outlineColor: '#777777', antennaColor: '#dddddd', lightColor: '#ff0000', alive: true, ammo: selectedDifficultyAmmo, isSatellite: true, draw() { if (!this.alive) return; const bodyW = this.width * 0.5; const bodyH = this.height; const bodyX = this.x + (this.width - bodyW) / 2; const panelW = this.width * 0.25; const panelH = this.height * 0.8; const panelY = this.y + (bodyH - panelH) / 2; ctx.fillStyle = this.panelColor; ctx.fillRect(this.x, panelY, panelW, panelH); ctx.fillRect(this.x + this.width - panelW, panelY, panelW, panelH); ctx.strokeStyle = this.panelHighlight; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(this.x + panelW / 2, panelY); ctx.lineTo(this.x + panelW / 2, panelY + panelH); ctx.moveTo(this.x + this.width - panelW / 2, panelY); ctx.lineTo(this.x + this.width - panelW / 2, panelY + panelH); ctx.moveTo(this.x, panelY + panelH / 3); ctx.lineTo(this.x + panelW, panelY + panelH / 3); ctx.moveTo(this.x, panelY + panelH * 2/3); ctx.lineTo(this.x + panelW, panelY + panelH * 2/3); ctx.moveTo(this.x + this.width - panelW, panelY + panelH / 3); ctx.lineTo(this.x + this.width, panelY + panelH / 3); ctx.moveTo(this.x + this.width - panelW, panelY + panelH * 2/3); ctx.lineTo(this.x + this.width, panelY + panelH * 2/3); ctx.stroke(); ctx.fillStyle = this.bodyColor; ctx.beginPath(); ctx.moveTo(bodyX, this.y + bodyH * 0.2); ctx.lineTo(bodyX + bodyW * 0.1, this.y); ctx.lineTo(bodyX + bodyW * 0.9, this.y); ctx.lineTo(bodyX + bodyW, this.y + bodyH * 0.2); ctx.lineTo(bodyX + bodyW, this.y + bodyH * 0.8); ctx.lineTo(bodyX + bodyW * 0.9, this.y + bodyH); ctx.lineTo(bodyX + bodyW * 0.1, this.y + bodyH); ctx.lineTo(bodyX, this.y + bodyH * 0.8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = this.outlineColor; ctx.lineWidth = 1; ctx.stroke(); const dishRadius = bodyW * 0.3; const dishY = this.y - dishRadius * 0.6; ctx.strokeStyle = this.antennaColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bodyX + bodyW / 2, dishY, dishRadius, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); ctx.beginPath(); ctx.moveTo(bodyX + bodyW / 2, this.y); ctx.lineTo(bodyX + bodyW / 2, dishY); ctx.stroke(); const nozzleWidth = bodyW * 0.2; const nozzleHeight = bodyH * 0.25; ctx.fillStyle = this.outlineColor; ctx.fillRect(bodyX + (bodyW / 2) - (nozzleWidth / 2), this.y + bodyH, nozzleWidth, nozzleHeight); ctx.fillStyle = this.lightColor; if (Math.floor(Date.now() / 500) % 2 === 0) { ctx.beginPath(); ctx.arc(bodyX + bodyW / 2, this.y + bodyH / 2, 2, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#ffff00'; ctx.font = '10px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(this.ammo, this.x + this.width / 2, this.y + bodyH + nozzleHeight + 3); } }; }
         function createIncomingMissile() { const startX = Math.random() * canvas.width; const target = getRandomTarget(); const angle = Math.atan2(target.y - 0, target.x - startX); return { x: startX, y: 0, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * enemyMissileSpeed, dy: Math.sin(angle) * enemyMissileSpeed, color: '#ff0000', trailColor: 'rgba(255, 100, 100, 0.5)', alive: true, trail: [{x: startX, y: 0}], update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 15) { this.trail.shift(); } if (this.y >= this.targetY || this.y >= canvas.height - GROUND_HEIGHT) { this.alive = false; const impactY = Math.min(this.targetY, canvas.height - GROUND_HEIGHT); createExplosion(this.x, impactY, EXPLOSION_RADIUS_MAX / 2, this.color); checkObjectImpact(this.x, impactY); } }, draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 2, this.y - 2, 4, 4); } }; }
         function createPlayerMissile(startX, startY, targetX, targetY) { const angle = Math.atan2(targetY - startY, targetX - startX); return { x: startX, y: startY, targetX: targetX, targetY: targetY, dx: Math.cos(angle) * MISSILE_SPEED_PLAYER, dy: Math.sin(angle) * MISSILE_SPEED_PLAYER, color: '#00ff00', trailColor: 'rgba(100, 255, 100, 0.5)', alive: true, trail: [{x: startX, y: startY}], update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 10) { this.trail.shift(); } const distToTarget = distance(this.x, this.y, this.targetX, this.targetY); const distTraveled = distance(startX, startY, this.x, this.y); const totalDist = distance(startX, startY, this.targetX, this.targetY); if (distTraveled >= totalDist || distToTarget < MISSILE_SPEED_PLAYER) { this.alive = false; createExplosion(this.targetX, this.targetY, EXPLOSION_RADIUS_START, this.color); } }, draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 1, this.y - 1, 3, 3); } }; }
-        function createExplosion(x, y, startRadius, color) { explosions.push({ x: x, y: y, radius: startRadius, maxRadius: EXPLOSION_RADIUS_MAX, duration: EXPLOSION_DURATION, currentFrame: 0, color: color, alive: true, update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = EXPLOSION_DURATION * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (EXPLOSION_DURATION - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if(this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } }, draw() { if (!this.alive) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const intensity = Math.sin((this.currentFrame / this.duration) * Math.PI); const r = parseInt(this.color.slice(1, 3), 16); const g = parseInt(this.color.slice(3, 5), 16); const b = parseInt(this.color.slice(5, 7), 16); ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.6})`; ctx.fill(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3 * intensity, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`; ctx.fill(); } }); }
+        function createExplosion(x, y, startRadius, color) {
+            // Add a check for undefined color just in case
+             if (typeof color !== 'string' || !color.startsWith('#')) {
+                console.warn("Invalid color passed to createExplosion:", color, "Using default grey.");
+                color = '#888888'; // Default explosion color if invalid
+            }
+            explosions.push({ x: x, y: y, radius: startRadius, maxRadius: EXPLOSION_RADIUS_MAX, duration: EXPLOSION_DURATION, currentFrame: 0, color: color, alive: true, update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = EXPLOSION_DURATION * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (EXPLOSION_DURATION - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if(this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } }, draw() { if (!this.alive) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const intensity = Math.sin((this.currentFrame / this.duration) * Math.PI); const r = parseInt(this.color.slice(1, 3), 16); const g = parseInt(this.color.slice(3, 5), 16); const b = parseInt(this.color.slice(5, 7), 16); ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.6})`; ctx.fill(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3 * intensity, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`; ctx.fill(); } });
+        }
 
         // --- Collision Detection ---
         function checkExplosionCollisions(explosion) { incomingMissiles.forEach(missile => { if (missile.alive) { const dist = distance(explosion.x, explosion.y, missile.x, missile.y); if (dist < explosion.radius) { missile.alive = false; score += POINTS_PER_MISSILE; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } } }); }
-        // Renamed and updated to check satellites
+        // Updated checkObjectImpact
         function checkObjectImpact(impactX, impactY) {
-            // Check Cities (only hit if impact low enough)
-            if (impactY >= canvas.height - GROUND_HEIGHT - CITY_HEIGHT) {
-                 cities.forEach(city => { if (city.alive && impactX >= city.x && impactX <= city.x + city.width) { city.alive = false; } });
-            }
-            // Check Bases (only hit if impact low enough)
-            if (impactY >= canvas.height - GROUND_HEIGHT - BASE_HEIGHT) {
-                bases.forEach(base => { if (base.alive && impactX >= base.x && impactX <= base.x + base.width) { if (impactY >= base.y) {base.alive = false;} } });
-            }
-            // Check Satellites
+            // Check Satellites first (higher up)
             satelliteBases.forEach(sat => {
                 if (sat.alive &&
                     impactX >= sat.x && impactX <= sat.x + sat.width &&
                     impactY >= sat.y && impactY <= sat.y + sat.height) {
                     sat.alive = false;
-                    // Optional: Create small explosion effect on satellite hit
-                    createExplosion(impactX, impactY, EXPLOSION_RADIUS_START, sat.color);
+                    createExplosion(impactX, impactY, EXPLOSION_RADIUS_START, sat.outlineColor); // Use outlineColor for explosion
                 }
             });
+
+            // Check Cities (only if impact low enough)
+            if (impactY >= canvas.height - GROUND_HEIGHT - CITY_HEIGHT) {
+                 cities.forEach(city => { if (city.alive && impactX >= city.x && impactX <= city.x + city.width) { city.alive = false; } });
+            }
+            // Check Bases (only if impact low enough)
+            if (impactY >= canvas.height - GROUND_HEIGHT - BASE_HEIGHT) {
+                bases.forEach(base => { if (base.alive && impactX >= base.x && impactX <= base.x + base.width) { if (impactY >= base.y) {base.alive = false;} } });
+            }
         }
 
 
         // --- Game Flow ---
-        // Updated initLevel to reset satellite ammo
-        function initLevel() {
-            incomingMissiles = []; playerMissiles = []; explosions = [];
-            bases.forEach(b => { if (b.alive) b.ammo = selectedDifficultyAmmo; });
-            satelliteBases.forEach(s => { if (s.alive) s.ammo = SATELLITE_AMMO_START; }); // Reset satellite ammo
-            missilesToSpawn = MISSILES_PER_LEVEL_BASE + (level - 1) * 4;
-            enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE + (level - 1) * 0.15; enemyMissileSpeed = Math.min(enemyMissileSpeed, 3.0);
-            updateUI();
-        }
-        function startGame() { if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } score = 0; level = 1; isGameOver = false; isPaused = false; transitioningLevel = false; gameHasStarted = true; bonusMissileCount = 0; storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; satelliteBases = []; // Clear satellites
+        function initLevel() { incomingMissiles = []; playerMissiles = []; explosions = []; bases.forEach(b => { if (b.alive) b.ammo = selectedDifficultyAmmo; }); satelliteBases.forEach(s => { if (s.alive) s.ammo = selectedDifficultyAmmo; }); missilesToSpawn = MISSILES_PER_LEVEL_BASE + (level - 1) * 4; enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE + (level - 1) * 0.15; enemyMissileSpeed = Math.min(enemyMissileSpeed, 3.0); updateUI(); }
+        function startGame() { if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } score = 0; level = 1; isGameOver = false; isPaused = false; transitioningLevel = false; gameHasStarted = true; bonusMissileCount = 0; storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; satelliteBases = [];
             startMenuContainer.style.display = 'none'; canvas.style.display = 'block'; uiContainer.style.display = 'flex'; controlsContainer.style.display = 'flex'; screenshotButton.style.display = 'inline-block'; hideMessage(); pauseOverlay.style.display = 'none';
             cities = []; const citySpacing = (canvas.width - 6 * CITY_WIDTH) / 7; for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 1) + CITY_WIDTH * i)); for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 4) + CITY_WIDTH * (i + 3))); cities.forEach(c => c.alive = true);
             bases = []; const basePositions = [canvas.width * 0.15, canvas.width * 0.5, canvas.width * 0.85]; bases.push(createBase(basePositions[0] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[1] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[2] - BASE_WIDTH / 2)); bases.forEach(b => b.alive = true);
@@ -254,16 +189,8 @@
         }
         function nextLevel() { level++; let bonusEarned = calculateBonus(); score += bonusEarned; const citiesSurvived = cities.filter(c => c.alive).length; const citiesLost = 6 - citiesSurvived; let bonusChangeMsg = ""; if (citiesLost > 0) { const lostBonus = Math.min(bonusMissileCount, citiesLost); if (lostBonus > 0) { bonusChangeMsg = `Lost ${lostBonus} bonus missile${lostBonus > 1 ? 's' : ''}!`; bonusMissileCount -= lostBonus; } } else { bonusMissileCount++; bonusChangeMsg = `PERFECT! +1 Bonus Missile!`; } bonusMissileCount = Math.max(0, bonusMissileCount); if (bonusMissileCount > 0) { bonusChangeMsg += ` (Total +${bonusMissileCount} active next level)`; } else if (bonusChangeMsg !== "" && citiesLost > 0) { bonusChangeMsg += ` (Bonus Fire deactivated)`; } else { bonusChangeMsg = "";} showMessage(`LEVEL ${level - 1} CLEARED`, `Score Bonus: $${bonusEarned}`, "", bonusChangeMsg); goToStoreButton.style.display = 'inline-block'; skipStoreButton.style.display = 'inline-block'; pauseButton.disabled = true; }
         function proceedToNextLevel() { storeModal.style.display = 'none'; hideMessage(); initLevel(); transitioningLevel = false; pauseButton.disabled = false; if (!isPaused && !gameLoopId) { gameLoop(); } }
-        // Updated calculateBonus to include satellite ammo
-        function calculateBonus() {
-             let bonus = 0;
-             cities.forEach(city => { if (city.alive) bonus += POINTS_PER_CITY; });
-             bases.forEach(base => { if (base.alive) bonus += base.ammo * POINTS_PER_AMMO; });
-             satelliteBases.forEach(sat => { if (sat.alive) bonus += sat.ammo * POINTS_PER_AMMO; }); // Add satellite ammo bonus
-             return bonus;
-        }
+        function calculateBonus() { let bonus = 0; cities.forEach(city => { if (city.alive) bonus += POINTS_PER_CITY; }); bases.forEach(base => { if (base.alive) bonus += base.ammo * POINTS_PER_AMMO; }); satelliteBases.forEach(sat => { if (sat.alive) bonus += sat.ammo * POINTS_PER_AMMO; }); return bonus; }
         function checkLevelEnd() { if (transitioningLevel || isGameOver || isPaused) return; if (missilesToSpawn <= 0 && incomingMissiles.every(m => !m.alive) && explosions.every(e => !e.alive)) { transitioningLevel = true; nextLevel(); } }
-        // Game over condition still only checks ground bases and cities
         function checkGameOverConditions() { if (isGameOver || !gameHasStarted) return; const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; if (basesRemaining === 0 || citiesRemaining === 0) { gameOver(); } }
         function gameOver() { if (isGameOver) return; isGameOver = true; gameHasStarted = false; transitioningLevel = false; isPaused = false; bonusMissileCount = 0; const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; let reason = ""; if (basesRemaining === 0 && citiesRemaining === 0) { reason = "All bases and cities destroyed!"; } else if (basesRemaining === 0) { reason = "All bases destroyed!"; } else if (citiesRemaining === 0) { reason = "All cities destroyed!"; } showMessage("GAME OVER", `Final Score: $${score}`, `${reason} Level: ${level}`); restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = true; pauseOverlay.style.display = 'none'; bonusIndicator.style.display = 'none'; storeModal.style.display = 'none'; }
 
@@ -280,152 +207,33 @@
         function hideMessage() { messageBox.style.display = 'none'; goToStoreButton.style.display = 'none'; skipStoreButton.style.display = 'none'; }
 
         // --- Store Logic ---
-        function updateStoreUI() {
-            storeScoreDisplay.textContent = `Current Score: $${score}`;
-            stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`;
-            stockBaseDisplay.textContent = `Stock: ${storeStockBase}`;
-            stockCityDisplay.textContent = `Stock: ${storeStockCity}`;
-
-            const canRebuildBase = bases.some(b => !b.alive);
-            const canRebuildCity = cities.some(c => !c.alive);
-            const activeSatellites = satelliteBases.filter(s => s.alive).length;
-
-            buySatelliteButton.disabled = // Enable satellite button
-                score < COST_SATELLITE ||
-                storeStockSatellite <= 0 ||
-                activeSatellites >= MAX_ACTIVE_SATELLITES; // Check max active limit
-
-            buyBaseButton.disabled = score < COST_BASE || storeStockBase <= 0 || !canRebuildBase;
-            buyCityButton.disabled = score < COST_CITY || storeStockCity <= 0 || !canRebuildCity;
-        }
-
+        function updateStoreUI() { storeScoreDisplay.textContent = `Current Score: $${score}`; stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`; stockBaseDisplay.textContent = `Stock: ${storeStockBase}`; stockCityDisplay.textContent = `Stock: ${storeStockCity}`; const canRebuildBase = bases.some(b => !b.alive); const canRebuildCity = cities.some(c => !c.alive); const activeSatellites = satelliteBases.filter(s => s.alive).length; buySatelliteButton.disabled = score < COST_SATELLITE || storeStockSatellite <= 0 || activeSatellites >= MAX_ACTIVE_SATELLITES; buyBaseButton.disabled = score < COST_BASE || storeStockBase <= 0 || !canRebuildBase; buyCityButton.disabled = score < COST_CITY || storeStockCity <= 0 || !canRebuildCity; }
         function findAndRebuildBase() { const deadBaseIndex = bases.findIndex(b => !b.alive); if (deadBaseIndex !== -1) { bases[deadBaseIndex].alive = true; bases[deadBaseIndex].ammo = selectedDifficultyAmmo; console.log(`Base at index ${deadBaseIndex} rebuilt.`); return true; } console.log("No dead bases found to rebuild."); return false; }
         function findAndRebuildCity() { const deadCityIndex = cities.findIndex(c => !c.alive); if (deadCityIndex !== -1) { cities[deadCityIndex].alive = true; console.log(`City at index ${deadCityIndex} rebuilt.`); return true; } console.log("No dead cities found to rebuild."); return false; }
         function buyReplacementBase() { if (score >= COST_BASE && storeStockBase > 0) { if (findAndRebuildBase()) { score -= COST_BASE; storeStockBase--; updateStoreUI(); updateUI(); } else { console.log("Purchase failed: No bases to rebuild."); } } else { console.log("Purchase failed: Cannot afford or out of stock."); } }
         function buyReplacementCity() { if (score >= COST_CITY && storeStockCity > 0) { if (findAndRebuildCity()) { score -= COST_CITY; storeStockCity--; updateStoreUI(); updateUI(); } else { console.log("Purchase failed: No cities to rebuild."); } } else { console.log("Purchase failed: Cannot afford or out of stock."); } }
-
-        // *** NEW Buy Satellite Logic ***
-        function buySatellite() {
-            const activeSatellites = satelliteBases.filter(s => s.alive).length;
-            if (score >= COST_SATELLITE && storeStockSatellite > 0 && activeSatellites < MAX_ACTIVE_SATELLITES) {
-                // Find an available slot (0, 1, or 2 corresponding to ground bases)
-                let placed = false;
-                for (let i = 0; i < 3; i++) {
-                    // Check if a satellite already exists at this horizontal position
-                    const groundBaseXCenter = bases[i].x + bases[i].width / 2; // Use original ground base pos
-                    const satelliteX = groundBaseXCenter - SATELLITE_WIDTH / 2; // Center satellite over base pos
-                    const positionOccupied = satelliteBases.some(s => s.alive && Math.abs(s.x - satelliteX) < 1); // Check if x pos is taken
-
-                    if (!positionOccupied) {
-                        score -= COST_SATELLITE;
-                        storeStockSatellite--;
-                        const newSatellite = createSatelliteBase(satelliteX, SATELLITE_Y_POS);
-                        satelliteBases.push(newSatellite);
-                        console.log(`Satellite purchased and placed at slot ${i}`);
-                        placed = true;
-                        break; // Exit loop once placed
-                    }
-                }
-                if (!placed) {
-                     console.log("Purchase failed: Could not find placement slot (this shouldn't happen if MAX check is correct).");
-                }
-                updateStoreUI();
-                updateUI(); // Update main score display
-            } else {
-                console.log("Purchase failed: Cannot afford, out of stock, or max satellites active.");
-            }
-        }
+        function buySatellite() { const activeSatellites = satelliteBases.filter(s => s.alive).length; if (score >= COST_SATELLITE && storeStockSatellite > 0 && activeSatellites < MAX_ACTIVE_SATELLITES) { let placed = false; for (let i = 0; i < 3; i++) { const groundBaseXCenter = bases[i].x + bases[i].width / 2; const satelliteX = groundBaseXCenter - SATELLITE_WIDTH / 2; const positionOccupied = satelliteBases.some(s => s.alive && Math.abs(s.x - satelliteX) < 1); if (!positionOccupied) { score -= COST_SATELLITE; storeStockSatellite--; const newSatellite = createSatelliteBase(satelliteX, SATELLITE_Y_POS); satelliteBases.push(newSatellite); console.log(`Satellite purchased and placed at slot ${i}`); placed = true; break; } } if (!placed) { console.log("Purchase failed: Could not find placement slot."); } updateStoreUI(); updateUI(); } else { console.log("Purchase failed: Cannot afford, out of stock, or max satellites active."); } }
 
         // --- Drawing Functions ---
         function drawBackground() { ctx.fillStyle = '#00001a'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'white'; for (let i = 0; i < 100; i++) { let x = Math.random() * canvas.width; let y = Math.random() * (canvas.height - GROUND_HEIGHT); let radius = Math.random() * 1.5; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#3b2e1a'; ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT); }
-        // Updated drawGameObjects to draw satellites
-        function drawGameObjects() {
-            cities.forEach(city => city.draw());
-            bases.forEach(base => base.draw());
-            satelliteBases.forEach(sat => sat.draw()); // Draw satellites
-            incomingMissiles.forEach(missile => missile.draw());
-            playerMissiles.forEach(missile => missile.draw());
-            explosions.forEach(explosion => explosion.draw());
-        }
+        function drawGameObjects() { cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); satelliteBases.forEach(sat => sat.draw()); incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw()); }
 
         // --- Update Functions ---
-        function updateGameObjects() { if (!isGameOver && !transitioningLevel && missilesToSpawn > 0 && Math.random() < 0.015 * (1 + level * 0.1)) { incomingMissiles.push(createIncomingMissile()); missilesToSpawn--; } incomingMissiles.forEach(missile => missile.update()); playerMissiles.forEach(missile => missile.update()); explosions.forEach(explosion => explosion.update()); /* Satellites don't have update logic currently */ incomingMissiles = incomingMissiles.filter(missile => missile.alive); playerMissiles = playerMissiles.filter(missile => missile.alive); explosions = explosions.filter(explosion => explosion.alive); }
+        function updateGameObjects() { if (!isGameOver && !transitioningLevel && missilesToSpawn > 0 && Math.random() < 0.015 * (1 + level * 0.1)) { incomingMissiles.push(createIncomingMissile()); missilesToSpawn--; } incomingMissiles.forEach(missile => missile.update()); playerMissiles.forEach(missile => missile.update()); explosions.forEach(explosion => explosion.update()); incomingMissiles = incomingMissiles.filter(missile => missile.alive); playerMissiles = playerMissiles.filter(missile => missile.alive); explosions = explosions.filter(explosion => explosion.alive); }
         function updateUI() { scoreDisplay.textContent = `SCORE: $${score}`; levelDisplay.textContent = `LEVEL: ${level}`; const livingCities = cities.filter(c => c.alive).length; citiesLeftDisplay.textContent = `CITIES: ${livingCities}`; if (bonusMissileCount > 0) { bonusIndicator.textContent = `BONUS FIRE +${bonusMissileCount}!`; bonusIndicator.style.display = 'inline-block'; } else { bonusIndicator.style.display = 'none'; } }
 
         // --- Game Loop ---
         function gameLoop() { if (isPaused) { gameLoopId = null; return; } checkGameOverConditions(); if (isGameOver && explosions.length === 0 && !transitioningLevel) { if (!gameHasStarted) { /* Handled by onload */ } gameLoopId = null; return; } drawBackground(); if (!isGameOver && !transitioningLevel) { updateGameObjects(); } explosions.forEach(explosion => explosion.update()); explosions = explosions.filter(explosion => explosion.alive); drawGameObjects(); updateUI(); if (!isGameOver && !transitioningLevel) { checkLevelEnd(); } if (!isGameOver || explosions.length > 0) { gameLoopId = requestAnimationFrame(gameLoop); } else { gameLoopId = null; } }
 
         // --- Event Listeners ---
-        // Updated Click Listener to include satellites
-        canvas.addEventListener('click', (event) => {
-            if (isGameOver || isPaused || transitioningLevel || !gameHasStarted) return;
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
-            const clickX = (event.clientX - rect.left) * scaleX;
-            const clickY = (event.clientY - rect.top) * scaleY;
-            if (clickY < 20 || clickY > canvas.height - GROUND_HEIGHT) return; // Prevent firing too high/low
-
-            let nearestSource = null; // Can be base or satellite
-            let minDistance = Infinity;
-
-            // Check ground bases
-            bases.forEach(base => {
-                if (base.alive && base.ammo > 0) {
-                    const sourceCenterX = base.x + base.width / 2;
-                    const sourceTopY = base.y; // Fire from top of base
-                    const d = distance(clickX, clickY, sourceCenterX, sourceTopY);
-                    if (d < minDistance) {
-                        minDistance = d;
-                        nearestSource = base;
-                    }
-                }
-            });
-
-            // Check satellite bases
-            satelliteBases.forEach(sat => {
-                 if (sat.alive && sat.ammo > 0) {
-                    const sourceCenterX = sat.x + sat.width / 2;
-                    const sourceTopY = sat.y + sat.height; // Fire from bottom of satellite body
-                    const d = distance(clickX, clickY, sourceCenterX, sourceTopY);
-                    if (d < minDistance) { // If satellite is closer than the closest ground base
-                        minDistance = d;
-                        nearestSource = sat;
-                    }
-                }
-            });
-
-
-            if (nearestSource) {
-                const startX = nearestSource.x + nearestSource.width / 2;
-                // Adjust start Y based on whether it's a base or satellite
-                const startY = nearestSource.isSatellite ? nearestSource.y + nearestSource.height : nearestSource.y;
-                const totalMissilesToFire = 1 + bonusMissileCount;
-                const actualMissilesToFire = Math.min(totalMissilesToFire, nearestSource.ammo);
-
-                if (actualMissilesToFire > 0) {
-                    nearestSource.ammo -= actualMissilesToFire;
-                    for (let i = 0; i < actualMissilesToFire; i++) {
-                        const currentOffset = (i - (actualMissilesToFire - 1) / 2) * BONUS_FIRE_SPREAD;
-                        playerMissiles.push(createPlayerMissile(startX + currentOffset, startY, clickX, clickY));
-                    }
-                }
-            }
-        });
-
+        canvas.addEventListener('click', (event) => { if (isGameOver || isPaused || transitioningLevel || !gameHasStarted) return; const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height; const clickX = (event.clientX - rect.left) * scaleX; const clickY = (event.clientY - rect.top) * scaleY; if (clickY < 20 || clickY > canvas.height - GROUND_HEIGHT) return; let nearestSource = null; let minDistance = Infinity; bases.forEach(base => { if (base.alive && base.ammo > 0) { const sourceCenterX = base.x + base.width / 2; const sourceTopY = base.y; const d = distance(clickX, clickY, sourceCenterX, sourceTopY); if (d < minDistance) { minDistance = d; nearestSource = base; } } }); satelliteBases.forEach(sat => { if (sat.alive && sat.ammo > 0) { const sourceCenterX = sat.x + sat.width / 2; const sourceTopY = sat.y + sat.height; const d = distance(clickX, clickY, sourceCenterX, sourceTopY); if (d < minDistance) { minDistance = d; nearestSource = sat; } } }); if (nearestSource) { const startX = nearestSource.x + nearestSource.width / 2; const startY = nearestSource.isSatellite ? nearestSource.y + nearestSource.height : nearestSource.y; const totalMissilesToFire = 1 + bonusMissileCount; const actualMissilesToFire = Math.min(totalMissilesToFire, nearestSource.ammo); if (actualMissilesToFire > 0) { nearestSource.ammo -= actualMissilesToFire; for (let i = 0; i < actualMissilesToFire; i++) { const currentOffset = (i - (actualMissilesToFire - 1) / 2) * BONUS_FIRE_SPREAD; playerMissiles.push(createPlayerMissile(startX + currentOffset, startY, clickX, clickY)); } } } });
         restartButton.addEventListener('click', () => { if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } isGameOver = true; gameHasStarted = false; isPaused = false; transitioningLevel = false; difficultySelected = false; bonusMissileCount = 0; storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; satelliteBases = []; startMenuContainer.style.display = 'flex'; canvas.style.display = 'none'; uiContainer.style.display = 'none'; controlsContainer.style.display = 'none'; pauseOverlay.style.display = 'none'; hideMessage(); actualStartButton.style.display = 'none'; document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected')); bonusIndicator.style.display = 'none'; storeModal.style.display = 'none';});
         pauseButton.addEventListener('click', togglePause); screenshotButton.addEventListener('click', saveScreenshot);
-        // Store Buttons
-        storeContinueButton.addEventListener('click', proceedToNextLevel);
-        buyBaseButton.addEventListener('click', buyReplacementBase);
-        buyCityButton.addEventListener('click', buyReplacementCity);
-        buySatelliteButton.addEventListener('click', buySatellite); // Added listener
-        // Intermediate Message Box Buttons
+        storeContinueButton.addEventListener('click', proceedToNextLevel); buyBaseButton.addEventListener('click', buyReplacementBase); buyCityButton.addEventListener('click', buyReplacementCity); buySatelliteButton.addEventListener('click', buySatellite);
         goToStoreButton.addEventListener('click', () => { hideMessage(); updateStoreUI(); storeModal.style.display = 'block'; });
         skipStoreButton.addEventListener('click', proceedToNextLevel);
-        // Difficulty Buttons
         document.querySelectorAll('.difficulty-button').forEach(button => { button.addEventListener('click', (event) => { selectedDifficultyAmmo = parseInt(event.target.getAttribute('data-ammo'), 10); difficultySelected = true; document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected')); event.target.classList.add('selected'); actualStartButton.style.display = 'inline-block'; actualStartButton.disabled = false; }); });
         actualStartButton.addEventListener('click', () => { if (difficultySelected) { startGame(); } else { console.warn("Please select a difficulty first."); } });
-        // Pause Key
         window.addEventListener('keydown', (event) => { if (event.code === 'Space' && !isGameOver && !transitioningLevel && gameHasStarted && storeModal.style.display === 'none' && messageBox.style.display === 'none' ) { event.preventDefault(); togglePause(); } });
 
         // --- Initial Setup ---
