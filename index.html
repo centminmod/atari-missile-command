@@ -10,7 +10,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
+            padding-top: 30px;
             min-height: 100vh;
             background-color: #000;
             margin: 0;
@@ -19,22 +20,30 @@
             overflow: hidden;
         }
 
+        h1#mainTitle {
+            color: #ff0000;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px #ffff00;
+            display: block; /* Visible initially */
+        }
+
         #gameCanvas {
             background-color: #111;
-            display: block;
+            display: none; /* Hidden initially */
             border: 2px solid #00ff00;
             box-shadow: 0 0 15px #00ff00;
             cursor: crosshair;
-            max-width: 100%; /* Allows canvas to shrink */
-            height: auto;    /* Maintains aspect ratio */
-            image-rendering: pixelated; /* Optional: Keep pixels sharp if scaled */
+            max-width: 100%;
+            height: auto;
+            image-rendering: pixelated;
             position: relative;
         }
 
         #uiContainer {
-            display: flex;
+            display: none; /* Hidden initially */
             justify-content: space-between;
-            width: 800px; /* Match canvas internal width */
+            width: 800px;
             max-width: 95%;
             padding: 10px 0;
             font-size: 14px;
@@ -42,11 +51,38 @@
 
         #controlsContainer {
             margin-top: 15px;
-            display: flex;
+            display: none; /* Hidden initially */
             flex-wrap: wrap;
             justify-content: center;
             gap: 15px;
         }
+
+        /* Start Menu Container (Title + Difficulty + Start Button) */
+        #startMenuContainer {
+             display: flex; /* Show initially */
+             flex-direction: column;
+             align-items: center;
+        }
+
+
+        /* Difficulty Selection Styles */
+        #difficultySelection {
+            display: flex; /* Part of start menu */
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 0; /* Reduced margin as it's inside container */
+            padding: 20px;
+            border: 2px solid #ffff00;
+            border-radius: 10px;
+            background-color: rgba(30, 30, 0, 0.5);
+        }
+         #difficultySelection h3 {
+             margin: 0 0 15px 0;
+             color: #ffff00;
+             font-size: 18px;
+             text-align: center;
+         }
 
         button { /* General button style */
             font-family: 'Press Start 2P', cursive;
@@ -57,16 +93,49 @@
             font-size: 16px;
             cursor: pointer;
             box-shadow: 0 0 10px #00ff00 inset;
-            transition: background-color 0.3s, box-shadow 0.3s, color 0.3s;
+            transition: background-color 0.3s, box-shadow 0.3s, color 0.3s, border-color 0.3s;
             border-radius: 5px;
             white-space: nowrap;
         }
+         /* Difficulty buttons */
+        .difficulty-button {
+            border-color: #ffff00;
+            color: #ffff00;
+            box-shadow: 0 0 10px #ffff00 inset;
+            min-width: 200px;
+            text-align: center;
+        }
+        .difficulty-button:hover:not(:disabled), .difficulty-button:focus:not(:disabled) {
+             box-shadow: 0 0 15px #ffff00 inset, 0 0 10px #ffff00;
+             background-color: #444;
+        }
+        /* Style for selected difficulty */
+        .difficulty-button.selected {
+            background-color: #555500; /* Darker yellow background */
+            box-shadow: 0 0 15px #ffff00 inset, 0 0 15px #ffff00; /* Brighter glow */
+            color: #fff;
+        }
+
+
+        /* Start Game button (appears after difficulty selection) */
+        #actualStartButton {
+            margin-top: 25px; /* Space below difficulty box */
+            display: none; /* Hidden initially */
+            /* Uses default green button style */
+        }
+
 
         button:hover:not(:disabled), button:focus:not(:disabled) {
             background-color: #444;
-            box-shadow: 0 0 15px #00ff00 inset, 0 0 10px #00ff00;
+            /* Keep specific glows for difficulty buttons */
+            /* box-shadow: 0 0 15px #00ff00 inset, 0 0 10px #00ff00; */
             outline: none;
         }
+         /* General hover for non-difficulty buttons */
+         button:not(.difficulty-button):hover:not(:disabled) {
+             box-shadow: 0 0 15px #00ff00 inset, 0 0 10px #00ff00;
+         }
+
 
         button:active:not(:disabled) {
             background-color: #222;
@@ -78,24 +147,15 @@
             box-shadow: none;
         }
 
-        /* General Message Box */
+        /* General Message Box - Hidden Initially */
         #messageBox {
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.85);
-            border: 3px solid #ff0000;
-            padding: 30px;
-            text-align: center;
-            font-size: 24px;
-            color: #ff0000;
+            background-color: rgba(0, 0, 0, 0.85); border: 3px solid #ff0000;
+            padding: 30px; text-align: center; font-size: 24px; color: #ff0000;
             display: none; /* Hidden by default */
-            z-index: 10;
-            box-shadow: 0 0 20px #ff0000;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 500px;
+            z-index: 10; box-shadow: 0 0 20px #ff0000; border-radius: 10px;
+            width: 80%; max-width: 500px;
         }
         #messageBox h2 { margin: 0 0 15px 0; font-size: 32px; }
         #messageBox p { margin: 5px 0 15px 0; font-size: 16px; color: #ffff00; }
@@ -103,10 +163,8 @@
 
         /* Pause Overlay */
         #pauseOverlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: #ffff00;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); color: #ffff00;
             display: flex; align-items: center; justify-content: center;
             font-size: 48px; text-shadow: 3px 3px #ff0000;
             z-index: 15; display: none; pointer-events: none;
@@ -116,30 +174,48 @@
 </head>
 <body>
 
+    
+    <div id="startMenuContainer"> 
+        <h1 id="mainTitle">MISSILE COMMAND</h1>
+        <div id="difficultySelection">
+            <h3>SELECT DIFFICULTY</h3>
+            <button class="difficulty-button" data-ammo="50">Level 1 (50 Ammo)</button>
+            <button class="difficulty-button" data-ammo="30">Level 2 (30 Ammo)</button>
+            <button class="difficulty-button" data-ammo="20">Level 3 (20 Ammo)</button>
+            <button class="difficulty-button" data-ammo="15">Level 4 (15 Ammo)</button>
+            <button class="difficulty-button" data-ammo="10">Level 5 (10 Ammo)</button>
+        </div>
+        <button id="actualStartButton">Start Game</button> 
+    </div>
+
+    
     <div id="uiContainer">
         <div id="score">SCORE: 0</div>
         <div id="level">LEVEL: 1</div>
         <div id="citiesLeft">CITIES: 6</div>
     </div>
 
+    
     <div style="position: relative;">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         <div id="pauseOverlay">PAUSED</div>
     </div>
 
+    
     <div id="controlsContainer">
-        <button id="startButton">Start Game</button>
         <button id="restartButton" style="display: none;">Restart Game</button>
         <button id="pauseButton" style="display: none;">Pause</button>
-        <button id="screenshotButton">Save Screenshot</button>
+        <button id="screenshotButton" style="display: none;">Save Screenshot</button>
     </div>
 
+    
     <div id="messageBox">
-        <h2 id="messageTitle">MISSILE COMMAND</h2>
-        <p id="messageText">Protect your cities!</p>
-        <p id="messageSubText">Click to fire from the nearest base.</p>
+        <h2 id="messageTitle"></h2>
+        <p id="messageText"></p>
+        <p id="messageSubText"></p>
         <button id="continueButton">Continue</button>
     </div>
+
 
     <script>
         // --- Canvas and Context ---
@@ -147,10 +223,9 @@
         const ctx = canvas.getContext('2d');
 
         // --- UI Elements ---
-        const scoreDisplay = document.getElementById('score'); /* ... */
+        const scoreDisplay = document.getElementById('score');
         const levelDisplay = document.getElementById('level');
         const citiesLeftDisplay = document.getElementById('citiesLeft');
-        const startButton = document.getElementById('startButton');
         const restartButton = document.getElementById('restartButton');
         const pauseButton = document.getElementById('pauseButton');
         const screenshotButton = document.getElementById('screenshotButton');
@@ -160,183 +235,75 @@
         const messageSubText = document.getElementById('messageSubText');
         const pauseOverlay = document.getElementById('pauseOverlay');
         const continueButton = document.getElementById('continueButton');
+        const uiContainer = document.getElementById('uiContainer');
+        const controlsContainer = document.getElementById('controlsContainer');
+        const difficultySelectionDiv = document.getElementById('difficultySelection');
+        const startMenuContainer = document.getElementById('startMenuContainer'); // Container for title+difficulty+start
+        const actualStartButton = document.getElementById('actualStartButton'); // The new start button
 
         // --- Game Constants & State Variables ---
-        const GROUND_HEIGHT = 50;
-        const BASE_WIDTH = 40; const BASE_HEIGHT = 25; // Adjusted base height slightly
-        const CITY_WIDTH = 50; const CITY_HEIGHT = 30; // Max height, individual buildings vary
+        const GROUND_HEIGHT = 50; /* ... */
+        const BASE_WIDTH = 40; const BASE_HEIGHT = 25; const CITY_WIDTH = 50; const CITY_HEIGHT = 30;
         const MISSILE_SPEED_PLAYER = 5; const MISSILE_SPEED_ENEMY_BASE = 0.5;
         const EXPLOSION_RADIUS_START = 5; const EXPLOSION_RADIUS_MAX = 40; const EXPLOSION_DURATION = 45;
         const POINTS_PER_MISSILE = 25; const POINTS_PER_CITY = 100; const POINTS_PER_AMMO = 5;
-        const MISSILES_PER_LEVEL_BASE = 8; const BASE_AMMO_START = 10;
+        const MISSILES_PER_LEVEL_BASE = 8;
+        let selectedDifficultyAmmo = 10; // Default
+
         let score = 0; let level = 1; let cities = []; let bases = []; let incomingMissiles = [];
         let playerMissiles = []; let explosions = []; let isGameOver = true; let gameLoopId = null;
         let missilesToSpawn = 0; let enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE;
         let transitioningLevel = false; let isPaused = false; let gameHasStarted = false;
+        let difficultySelected = false; // Track if difficulty has been chosen
 
         // --- Utility Functions ---
         function distance(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return Math.sqrt(dx * dx + dy * dy); }
         function getRandomTarget() { const aliveCities = cities.filter(c => c.alive); const aliveBases = bases.filter(b => b.alive); let possibleTargets = []; if (aliveCities.length > 0) { possibleTargets = [...aliveCities]; if (Math.random() < 0.25 && aliveBases.length > 0) { possibleTargets.push(...aliveBases); } } else { possibleTargets = [...aliveBases]; } if (possibleTargets.length === 0) { return { x: canvas.width / 2, y: canvas.height - GROUND_HEIGHT }; } const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)]; return { x: target.x + (target.width / 2), y: target.y }; }
 
         // --- Game Object Factories ---
-
-        // *** UPDATED City Drawing ***
-        function createCity(x) {
-            // Pre-calculate building details for this city instance
-            const buildings = [];
-            const numBuildings = 3 + Math.floor(Math.random() * 3); // 3 to 5 buildings
-            let currentX = x;
-            const totalBuildingWidth = CITY_WIDTH * 0.9; // Leave small gaps
-            const baseBuildingWidth = totalBuildingWidth / numBuildings;
-
-            for (let i = 0; i < numBuildings; i++) {
-                const buildingHeight = (CITY_HEIGHT * 0.6) + (Math.random() * CITY_HEIGHT * 0.4); // Vary height
-                const buildingWidth = baseBuildingWidth * (0.8 + Math.random() * 0.4); // Vary width slightly
-                const gap = (baseBuildingWidth - buildingWidth) / 2;
-                buildings.push({
-                    x: currentX + gap,
-                    y: canvas.height - GROUND_HEIGHT - buildingHeight,
-                    w: buildingWidth,
-                    h: buildingHeight,
-                    color: `hsl(180, 100%, ${35 + Math.random() * 15}%)` // Shades of cyan/blue
-                });
-                currentX += baseBuildingWidth;
-            }
-
-            return {
-                x: x, // Keep original x for targeting/collision reference
-                y: canvas.height - GROUND_HEIGHT - CITY_HEIGHT, // Keep original y reference
-                width: CITY_WIDTH, // Keep original width reference
-                height: CITY_HEIGHT, // Keep original height reference
-                alive: true,
-                buildings: buildings, // Store building details
-                draw() {
-                    if (!this.alive) return;
-
-                    this.buildings.forEach(b => {
-                        // Draw building block
-                        ctx.fillStyle = b.color;
-                        ctx.fillRect(b.x, b.y, b.w, b.h);
-
-                        // Draw simple windows (optional)
-                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Dark semi-transparent
-                        const windowSize = Math.min(b.w, b.h) * 0.15;
-                        const cols = Math.floor(b.w / (windowSize * 2.5));
-                        const rows = Math.floor(b.h / (windowSize * 3));
-                        if (cols > 0 && rows > 0) {
-                            const xSpacing = b.w / cols;
-                            const ySpacing = b.h / rows;
-                            for (let r = 0; r < rows; r++) {
-                                for (let c = 0; c < cols; c++) {
-                                    ctx.fillRect(
-                                        b.x + xSpacing * (c + 0.5) - windowSize / 2,
-                                        b.y + ySpacing * (r + 0.5) - windowSize / 2,
-                                        windowSize, windowSize
-                                    );
-                                }
-                            }
-                        }
-
-                        // Draw simple outline
-                        ctx.strokeStyle = '#006666'; // Dark cyan outline
-                        ctx.lineWidth = 1;
-                        ctx.strokeRect(b.x, b.y, b.w, b.h);
-                    });
-                }
-            };
-        }
-
-        // *** UPDATED Base Drawing ***
-        function createBase(x) {
-            const baseY = canvas.height - GROUND_HEIGHT - BASE_HEIGHT;
-            return {
-                x: x,
-                y: baseY, // Use calculated base Y
-                width: BASE_WIDTH,
-                height: BASE_HEIGHT,
-                color: '#dddd00', // Slightly lighter yellow
-                outlineColor: '#aaaa00', // Darker yellow outline
-                launcherColor: '#999999', // Grey launcher
-                alive: true,
-                ammo: BASE_AMMO_START,
-                draw() {
-                    if (!this.alive) return;
-
-                    // Draw main bunker shape (trapezoid)
-                    ctx.fillStyle = this.color;
-                    ctx.beginPath();
-                    ctx.moveTo(this.x, this.y + this.height); // Bottom left
-                    ctx.lineTo(this.x + this.width * 0.2, this.y); // Top left
-                    ctx.lineTo(this.x + this.width * 0.8, this.y); // Top right
-                    ctx.lineTo(this.x + this.width, this.y + this.height); // Bottom right
-                    ctx.closePath();
-                    ctx.fill();
-
-                    // Draw outline
-                    ctx.strokeStyle = this.outlineColor;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-
-                    // Draw simple launcher on top
-                    const launcherWidth = this.width * 0.15;
-                    const launcherHeight = this.height * 0.4;
-                    ctx.fillStyle = this.launcherColor;
-                    ctx.fillRect(
-                        this.x + this.width / 2 - launcherWidth / 2,
-                        this.y - launcherHeight,
-                        launcherWidth,
-                        launcherHeight
-                    );
-                    // Small detail on launcher
-                    ctx.fillStyle = '#666666';
-                     ctx.fillRect(
-                        this.x + this.width / 2 - launcherWidth / 2,
-                        this.y - launcherHeight * 0.3, // Small line near top
-                        launcherWidth,
-                        2
-                    );
-
-
-                    // Display ammo count inside the base
-                    ctx.fillStyle = '#000'; // Black text
-                    ctx.font = '12px "Press Start 2P"'; // Slightly larger font
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle'; // Center vertically
-                    ctx.fillText(this.ammo, this.x + this.width / 2, this.y + this.height / 2);
-                }
-            };
-        }
-
+        function createCity(x) { const buildings = []; const numBuildings = 3 + Math.floor(Math.random() * 3); let currentX = x; const totalBuildingWidth = CITY_WIDTH * 0.9; const baseBuildingWidth = totalBuildingWidth / numBuildings; for (let i = 0; i < numBuildings; i++) { const buildingHeight = (CITY_HEIGHT * 0.6) + (Math.random() * CITY_HEIGHT * 0.4); const buildingWidth = baseBuildingWidth * (0.8 + Math.random() * 0.4); const gap = (baseBuildingWidth - buildingWidth) / 2; buildings.push({ x: currentX + gap, y: canvas.height - GROUND_HEIGHT - buildingHeight, w: buildingWidth, h: buildingHeight, color: `hsl(180, 100%, ${35 + Math.random() * 15}%)` }); currentX += baseBuildingWidth; } return { x: x, y: canvas.height - GROUND_HEIGHT - CITY_HEIGHT, width: CITY_WIDTH, height: CITY_HEIGHT, alive: true, buildings: buildings, draw() { if (!this.alive) return; this.buildings.forEach(b => { ctx.fillStyle = b.color; ctx.fillRect(b.x, b.y, b.w, b.h); ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; const windowSize = Math.min(b.w, b.h) * 0.15; const cols = Math.floor(b.w / (windowSize * 2.5)); const rows = Math.floor(b.h / (windowSize * 3)); if (cols > 0 && rows > 0) { const xSpacing = b.w / cols; const ySpacing = b.h / rows; for (let r = 0; r < rows; r++) { for (let c = 0; c < cols; c++) { ctx.fillRect( b.x + xSpacing * (c + 0.5) - windowSize / 2, b.y + ySpacing * (r + 0.5) - windowSize / 2, windowSize, windowSize ); } } } ctx.strokeStyle = '#006666'; ctx.lineWidth = 1; ctx.strokeRect(b.x, b.y, b.w, b.h); }); } }; }
+        function createBase(x) { const baseY = canvas.height - GROUND_HEIGHT - BASE_HEIGHT; return { x: x, y: baseY, width: BASE_WIDTH, height: BASE_HEIGHT, color: '#dddd00', outlineColor: '#aaaa00', launcherColor: '#999999', alive: true, ammo: selectedDifficultyAmmo, draw() { if (!this.alive) return; ctx.fillStyle = this.color; ctx.beginPath(); ctx.moveTo(this.x, this.y + this.height); ctx.lineTo(this.x + this.width * 0.2, this.y); ctx.lineTo(this.x + this.width * 0.8, this.y); ctx.lineTo(this.x + this.width, this.y + this.height); ctx.closePath(); ctx.fill(); ctx.strokeStyle = this.outlineColor; ctx.lineWidth = 2; ctx.stroke(); const launcherWidth = this.width * 0.15; const launcherHeight = this.height * 0.4; ctx.fillStyle = this.launcherColor; ctx.fillRect( this.x + this.width / 2 - launcherWidth / 2, this.y - launcherHeight, launcherWidth, launcherHeight ); ctx.fillStyle = '#666666'; ctx.fillRect( this.x + this.width / 2 - launcherWidth / 2, this.y - launcherHeight * 0.3, launcherWidth, 2 ); ctx.fillStyle = '#000'; ctx.font = '12px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(this.ammo, this.x + this.width / 2, this.y + this.height / 2); } }; }
         function createIncomingMissile() { const startX = Math.random() * canvas.width; const target = getRandomTarget(); const angle = Math.atan2(target.y - 0, target.x - startX); return { x: startX, y: 0, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * enemyMissileSpeed, dy: Math.sin(angle) * enemyMissileSpeed, color: '#ff0000', trailColor: 'rgba(255, 100, 100, 0.5)', alive: true, trail: [{x: startX, y: 0}], update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 15) { this.trail.shift(); } if (this.y >= this.targetY || this.y >= canvas.height - GROUND_HEIGHT) { this.alive = false; const impactY = Math.min(this.targetY, canvas.height - GROUND_HEIGHT); createExplosion(this.x, impactY, EXPLOSION_RADIUS_MAX / 2, this.color); checkGroundImpact(this.x, impactY); } }, draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 2, this.y - 2, 4, 4); } }; }
         function createPlayerMissile(startX, startY, targetX, targetY) { const angle = Math.atan2(targetY - startY, targetX - startX); return { x: startX, y: startY, targetX: targetX, targetY: targetY, dx: Math.cos(angle) * MISSILE_SPEED_PLAYER, dy: Math.sin(angle) * MISSILE_SPEED_PLAYER, color: '#00ff00', trailColor: 'rgba(100, 255, 100, 0.5)', alive: true, trail: [{x: startX, y: startY}], update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 10) { this.trail.shift(); } const distToTarget = distance(this.x, this.y, this.targetX, this.targetY); const distTraveled = distance(startX, startY, this.x, this.y); const totalDist = distance(startX, startY, this.targetX, this.targetY); if (distTraveled >= totalDist || distToTarget < MISSILE_SPEED_PLAYER) { this.alive = false; createExplosion(this.targetX, this.targetY, EXPLOSION_RADIUS_START, this.color); } }, draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 1, this.y - 1, 3, 3); } }; }
         function createExplosion(x, y, startRadius, color) { explosions.push({ x: x, y: y, radius: startRadius, maxRadius: EXPLOSION_RADIUS_MAX, duration: EXPLOSION_DURATION, currentFrame: 0, color: color, alive: true, update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = EXPLOSION_DURATION * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (EXPLOSION_DURATION - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if(this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } }, draw() { if (!this.alive) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const intensity = Math.sin((this.currentFrame / this.duration) * Math.PI); const r = parseInt(this.color.slice(1, 3), 16); const g = parseInt(this.color.slice(3, 5), 16); const b = parseInt(this.color.slice(5, 7), 16); ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.6})`; ctx.fill(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3 * intensity, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`; ctx.fill(); } }); }
 
         // --- Collision Detection ---
         function checkExplosionCollisions(explosion) { incomingMissiles.forEach(missile => { if (missile.alive) { const dist = distance(explosion.x, explosion.y, missile.x, missile.y); if (dist < explosion.radius) { missile.alive = false; score += POINTS_PER_MISSILE; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } } }); }
-        // Updated ground impact to check against city bounding box, not individual buildings
-        function checkGroundImpact(impactX, impactY) {
-            // Use city's overall bounding box for hit detection simplicity
-            if (impactY < canvas.height - GROUND_HEIGHT - CITY_HEIGHT) { return; }
-             cities.forEach(city => {
-                if (city.alive && impactX >= city.x && impactX <= city.x + city.width) {
-                    // Check Y against the original CITY_HEIGHT reference level
-                    if (impactY >= canvas.height - GROUND_HEIGHT - CITY_HEIGHT) {
-                        city.alive = false;
-                    }
-                }
-            });
-            bases.forEach(base => {
-                if (base.alive && impactX >= base.x && impactX <= base.x + base.width) {
-                    if (impactY >= base.y) { // Use base's actual y
-                        base.alive = false;
-                    }
-                }
-            });
+        function checkGroundImpact(impactX, impactY) { if (impactY < canvas.height - GROUND_HEIGHT - CITY_HEIGHT) { return; } cities.forEach(city => { if (city.alive && impactX >= city.x && impactX <= city.x + city.width) { if (impactY >= canvas.height - GROUND_HEIGHT - CITY_HEIGHT) { city.alive = false; } } }); bases.forEach(base => { if (base.alive && impactX >= base.x && impactX <= base.x + base.width) { if (impactY >= base.y) { base.alive = false; } } }); }
+
+        // --- Game Flow ---
+        function initLevel() { incomingMissiles = []; playerMissiles = []; explosions = []; bases.forEach(b => { if (b.alive) b.ammo = selectedDifficultyAmmo; }); missilesToSpawn = MISSILES_PER_LEVEL_BASE + (level - 1) * 4; enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE + (level - 1) * 0.15; enemyMissileSpeed = Math.min(enemyMissileSpeed, 3.0); updateUI(); }
+
+        // startGame is now triggered by actualStartButton
+        function startGame() {
+            if (!difficultySelected) { // Prevent starting if no difficulty chosen
+                 console.warn("Difficulty not selected!");
+                 // Optionally provide user feedback here
+                 return;
+            }
+            score = 0; level = 1; isGameOver = false; isPaused = false; transitioningLevel = false; gameHasStarted = true;
+
+            // Hide start menu, show game elements
+            startMenuContainer.style.display = 'none';
+            canvas.style.display = 'block';
+            uiContainer.style.display = 'flex';
+            controlsContainer.style.display = 'flex';
+            screenshotButton.style.display = 'inline-block';
+            hideMessage();
+            pauseOverlay.style.display = 'none';
+
+            cities = []; const citySpacing = (canvas.width - 6 * CITY_WIDTH) / 7; for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 1) + CITY_WIDTH * i)); for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 4) + CITY_WIDTH * (i + 3))); cities.forEach(c => c.alive = true);
+            bases = []; const basePositions = [canvas.width * 0.15, canvas.width * 0.5, canvas.width * 0.85]; bases.push(createBase(basePositions[0] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[1] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[2] - BASE_WIDTH / 2)); bases.forEach(b => b.alive = true);
+
+            initLevel();
+
+            restartButton.style.display = 'inline-block';
+            pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = false;
+
+            if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; }
+            gameLoop();
         }
 
-        // --- Game Flow (No changes needed) ---
-        function initLevel() { incomingMissiles = []; playerMissiles = []; explosions = []; bases.forEach(b => { if (b.alive) b.ammo = BASE_AMMO_START; }); missilesToSpawn = MISSILES_PER_LEVEL_BASE + (level - 1) * 4; enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE + (level - 1) * 0.15; enemyMissileSpeed = Math.min(enemyMissileSpeed, 3.0); updateUI(); }
-        function startGame() { score = 0; level = 1; isGameOver = false; isPaused = false; transitioningLevel = false; gameHasStarted = true; cities = []; const citySpacing = (canvas.width - 6 * CITY_WIDTH) / 7; for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 1) + CITY_WIDTH * i)); for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 4) + CITY_WIDTH * (i + 3))); cities.forEach(c => c.alive = true); bases = []; const basePositions = [canvas.width * 0.15, canvas.width * 0.5, canvas.width * 0.85]; bases.push(createBase(basePositions[0] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[1] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[2] - BASE_WIDTH / 2)); bases.forEach(b => b.alive = true); initLevel(); hideMessage(); pauseOverlay.style.display = 'none'; startButton.style.display = 'none'; restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = false; screenshotButton.disabled = false; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } gameLoop(); }
         function nextLevel() { level++; let bonusEarned = calculateBonus(); score += bonusEarned; showMessage(`LEVEL ${level - 1} CLEARED`, `Bonus: ${bonusEarned}`, "Click Continue for next wave!"); continueButton.style.display = 'inline-block'; continueButton.disabled = true; pauseButton.disabled = true; setTimeout(() => { if (transitioningLevel) { continueButton.disabled = false; } }, 500); }
         function proceedToNextLevel() { hideMessage(); initLevel(); transitioningLevel = false; pauseButton.disabled = false; if (!isPaused && !gameLoopId) { gameLoop(); } }
         function calculateBonus() { let bonus = 0; cities.forEach(city => { if (city.alive) bonus += POINTS_PER_CITY; }); bases.forEach(base => { if (base.alive) bonus += base.ammo * POINTS_PER_AMMO; }); return bonus; }
@@ -344,15 +311,15 @@
         function checkGameOverConditions() { if (isGameOver || !gameHasStarted) return; const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; if (basesRemaining === 0 || citiesRemaining === 0) { gameOver(); } }
         function gameOver() { if (isGameOver) return; isGameOver = true; gameHasStarted = false; transitioningLevel = false; isPaused = false; const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; let reason = ""; if (basesRemaining === 0 && citiesRemaining === 0) { reason = "All bases and cities destroyed!"; } else if (basesRemaining === 0) { reason = "All bases destroyed!"; } else if (citiesRemaining === 0) { reason = "All cities destroyed!"; } showMessage("GAME OVER", `Final Score: ${score}`, `${reason} Level: ${level}`); continueButton.style.display = 'none'; restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = true; pauseOverlay.style.display = 'none'; }
 
-        // --- Pause/Resume Logic (No changes needed) ---
+        // --- Pause/Resume Logic ---
         function pauseGame() { if (isGameOver || transitioningLevel || !gameHasStarted) return; isPaused = true; pauseOverlay.style.display = 'flex'; pauseButton.textContent = 'Resume'; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } }
         function resumeGame() { if (isGameOver || transitioningLevel || !isPaused) return; isPaused = false; pauseOverlay.style.display = 'none'; pauseButton.textContent = 'Pause'; if (!gameLoopId) { gameLoop(); } }
         function togglePause() { if (isPaused) { resumeGame(); } else { pauseGame(); } }
 
-        // --- Screenshot Logic (No changes needed) ---
+        // --- Screenshot Logic ---
         async function saveScreenshot() { const originalText = screenshotButton.textContent; screenshotButton.textContent = 'Saving...'; screenshotButton.disabled = true; try { if (!navigator.clipboard || !navigator.clipboard.write) { throw new Error('Clipboard API not supported or requires secure context (HTTPS/localhost).'); } canvas.toBlob(async (blob) => { if (!blob) { throw new Error('Canvas could not be converted to Blob.'); } try { const item = new ClipboardItem({ 'image/png': blob }); await navigator.clipboard.write([item]); screenshotButton.textContent = 'Copied!'; console.log('Screenshot copied to clipboard.'); } catch (err) { console.error('Failed to copy screenshot:', err); screenshotButton.textContent = 'Copy Failed!'; alert(`Failed to copy to clipboard:\n${err.message}\nMake sure you're on HTTPS/localhost and grant permission.`); } finally { setTimeout(() => { screenshotButton.textContent = originalText; screenshotButton.disabled = false; }, 2000); } }, 'image/png'); } catch (err) { console.error('Screenshot error:', err); screenshotButton.textContent = 'Error!'; alert(`Screenshot Error:\n${err.message}`); setTimeout(() => { screenshotButton.textContent = originalText; screenshotButton.disabled = false; }, 2000); } }
 
-        // --- Message Display (No changes needed) ---
+        // --- Message Display ---
         function showMessage(title, text, subtext = "") { messageTitle.textContent = title; messageText.textContent = text; if (subtext) { messageSubText.textContent = subtext; messageSubText.style.display = 'block'; } else { messageSubText.style.display = 'none'; } continueButton.style.display = 'none'; messageBox.style.display = 'block'; }
         function hideMessage() { messageBox.style.display = 'none'; continueButton.style.display = 'none'; }
 
@@ -360,19 +327,82 @@
         function drawBackground() { ctx.fillStyle = '#00001a'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'white'; for (let i = 0; i < 100; i++) { let x = Math.random() * canvas.width; let y = Math.random() * (canvas.height - GROUND_HEIGHT); let radius = Math.random() * 1.5; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#3b2e1a'; ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT); }
         function drawGameObjects() { cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw()); }
 
-        // --- Update Functions (No changes needed) ---
+        // --- Update Functions ---
         function updateGameObjects() { if (!isGameOver && !transitioningLevel && missilesToSpawn > 0 && Math.random() < 0.015 * (1 + level * 0.1)) { incomingMissiles.push(createIncomingMissile()); missilesToSpawn--; } incomingMissiles.forEach(missile => missile.update()); playerMissiles.forEach(missile => missile.update()); explosions.forEach(explosion => explosion.update()); incomingMissiles = incomingMissiles.filter(missile => missile.alive); playerMissiles = playerMissiles.filter(missile => missile.alive); explosions = explosions.filter(explosion => explosion.alive); }
         function updateUI() { scoreDisplay.textContent = `SCORE: ${score}`; levelDisplay.textContent = `LEVEL: ${level}`; const livingCities = cities.filter(c => c.alive).length; citiesLeftDisplay.textContent = `CITIES: ${livingCities}`; }
 
-        // --- Game Loop (No changes needed) ---
-        function gameLoop() { if (isPaused) { gameLoopId = null; return; } checkGameOverConditions(); if (isGameOver && explosions.length === 0 && !transitioningLevel) { if (!gameHasStarted) { showMessage("MISSILE COMMAND", "Protect your cities!", "Click START to play."); } gameLoopId = null; return; } drawBackground(); if (!isGameOver && !transitioningLevel) { updateGameObjects(); } explosions.forEach(explosion => explosion.update()); explosions = explosions.filter(explosion => explosion.alive); drawGameObjects(); updateUI(); if (!isGameOver && !transitioningLevel) { checkLevelEnd(); } if (!isGameOver || explosions.length > 0) { gameLoopId = requestAnimationFrame(gameLoop); } else { gameLoopId = null; } }
+        // --- Game Loop ---
+        function gameLoop() { if (isPaused) { gameLoopId = null; return; } checkGameOverConditions(); if (isGameOver && explosions.length === 0 && !transitioningLevel) { if (!gameHasStarted) { /* Initial message handled by onload now */ } gameLoopId = null; return; } drawBackground(); if (!isGameOver && !transitioningLevel) { updateGameObjects(); } explosions.forEach(explosion => explosion.update()); explosions = explosions.filter(explosion => explosion.alive); drawGameObjects(); updateUI(); if (!isGameOver && !transitioningLevel) { checkLevelEnd(); } if (!isGameOver || explosions.length > 0) { gameLoopId = requestAnimationFrame(gameLoop); } else { gameLoopId = null; } }
 
         // --- Event Listeners ---
         canvas.addEventListener('click', (event) => { if (isGameOver || isPaused || transitioningLevel || !gameHasStarted) return; const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height; const clickX = (event.clientX - rect.left) * scaleX; const clickY = (event.clientY - rect.top) * scaleY; if (clickY < 20 || clickY > canvas.height - GROUND_HEIGHT) return; let nearestBase = null; let minDistance = Infinity; bases.forEach(base => { if (base.alive && base.ammo > 0) { const baseCenterX = base.x + base.width / 2; const baseTopY = base.y; const d = distance(clickX, clickY, baseCenterX, baseTopY); if (d < minDistance) { minDistance = d; nearestBase = base; } } }); if (nearestBase) { nearestBase.ammo--; const startX = nearestBase.x + nearestBase.width / 2; const startY = nearestBase.y; playerMissiles.push(createPlayerMissile(startX, startY, clickX, clickY)); } });
-        startButton.addEventListener('click', startGame); restartButton.addEventListener('click', startGame); pauseButton.addEventListener('click', togglePause); screenshotButton.addEventListener('click', saveScreenshot); continueButton.addEventListener('click', proceedToNextLevel); window.addEventListener('keydown', (event) => { if (event.code === 'Space' && !isGameOver && !transitioningLevel && gameHasStarted) { event.preventDefault(); togglePause(); } });
 
-        // --- Initial Setup (No changes needed) ---
-        window.onload = () => { drawBackground(); cities = []; bases = []; const citySpacing = (canvas.width - 6 * CITY_WIDTH) / 7; for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 1) + CITY_WIDTH * i)); for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 4) + CITY_WIDTH * (i + 3))); cities.forEach(c => c.alive = false); const basePositions = [canvas.width * 0.15, canvas.width * 0.5, canvas.width * 0.85]; bases.push(createBase(basePositions[0] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[1] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[2] - BASE_WIDTH / 2)); bases.forEach(b => b.alive = false); drawGameObjects(); showMessage("MISSILE COMMAND", "Protect your cities!", "Click START to play."); restartButton.style.display = 'none'; pauseButton.style.display = 'none'; pauseButton.disabled = true; screenshotButton.disabled = true; startButton.style.display = 'inline-block'; continueButton.style.display = 'none'; };
+        restartButton.addEventListener('click', () => {
+             if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; }
+             isGameOver = true; gameHasStarted = false; isPaused = false; transitioningLevel = false; difficultySelected = false; // Reset difficulty selection flag
+             // Show start menu, hide game elements
+             startMenuContainer.style.display = 'flex';
+             canvas.style.display = 'none';
+             uiContainer.style.display = 'none';
+             controlsContainer.style.display = 'none';
+             pauseOverlay.style.display = 'none';
+             hideMessage();
+             actualStartButton.style.display = 'none'; // Hide start button
+             // Remove 'selected' class from all difficulty buttons
+             document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected'));
+        });
+        pauseButton.addEventListener('click', togglePause);
+        screenshotButton.addEventListener('click', saveScreenshot);
+        continueButton.addEventListener('click', proceedToNextLevel);
+        window.addEventListener('keydown', (event) => { if (event.code === 'Space' && !isGameOver && !transitioningLevel && gameHasStarted) { event.preventDefault(); togglePause(); } });
+
+        // Difficulty button listeners - updated
+        document.querySelectorAll('.difficulty-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                // Set ammo
+                selectedDifficultyAmmo = parseInt(event.target.getAttribute('data-ammo'), 10);
+                difficultySelected = true; // Mark difficulty as chosen
+
+                // Update visual selection
+                document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected'));
+                event.target.classList.add('selected');
+
+                // Show the actual start button
+                actualStartButton.style.display = 'inline-block';
+                actualStartButton.disabled = false; // Ensure it's enabled
+
+                // DO NOT start game here
+            });
+        });
+
+        // Listener for the NEW start button
+        actualStartButton.addEventListener('click', () => {
+            // Only start if a difficulty has actually been selected
+            if (difficultySelected) {
+                startGame();
+            } else {
+                // Optional: Add feedback if start is clicked without selection
+                console.warn("Please select a difficulty first.");
+            }
+        });
+
+
+        // --- Initial Setup ---
+        window.onload = () => {
+            // Show start menu container, hide others
+            startMenuContainer.style.display = 'flex';
+            canvas.style.display = 'none';
+            uiContainer.style.display = 'none';
+            controlsContainer.style.display = 'none';
+            messageBox.style.display = 'none'; // Keep message box hidden initially
+            actualStartButton.style.display = 'none'; // Keep actual start button hidden
+
+            // Ensure buttons are in correct initial state
+            restartButton.style.display = 'none';
+            pauseButton.style.display = 'none';
+            screenshotButton.style.display = 'none';
+            continueButton.style.display = 'none';
+        };
 
     </script>
 
