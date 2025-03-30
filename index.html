@@ -1,448 +1,608 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Missile Command in HTML/JS</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #fff;
-      font-family: sans-serif;
-      user-select: none;
-      text-align: center;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missile Command</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #000;
+            margin: 0;
+            font-family: 'Press Start 2P', cursive; /* Apply arcade font */
+            color: #00ff00; /* Green text color */
+            overflow: hidden; /* Prevent scrollbars */
+        }
 
-    #gameContainer {
-      position: relative;
-      margin: 0 auto;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 800px;
-      height: 600px;
-      border: 2px solid #888;
-      background: #000;
-      overflow: hidden;
-      cursor: crosshair;
-    }
+        #gameCanvas {
+            background-color: #111; /* Dark background for the game area */
+            display: block; /* Remove extra space below canvas */
+            border: 2px solid #00ff00; /* Green border */
+            box-shadow: 0 0 15px #00ff00; /* Green glow effect */
+            cursor: crosshair; /* Indicate targeting */
+            max-width: 100%; /* Ensure canvas fits smaller screens */
+            height: auto; /* Maintain aspect ratio */
+            position: relative; /* Needed for pause overlay positioning */
+        }
 
-    #info {
-      margin-top: 10px;
-    }
+        #uiContainer {
+            display: flex;
+            justify-content: space-between; /* Space out UI elements */
+            width: 800px; /* Match canvas width */
+            max-width: 95%; /* Responsive width */
+            padding: 10px 0;
+            font-size: 14px; /* Smaller font for UI */
+        }
 
-    .button {
-      background-color: #444;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 20px;
-      margin: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    }
+        #controlsContainer {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            justify-content: center; /* Center buttons */
+            gap: 15px; /* Space between buttons */
+        }
 
-    .button:hover {
-      background-color: #666;
-    }
+        button {
+            font-family: 'Press Start 2P', cursive; /* Arcade font for buttons */
+            background-color: #333; /* Dark button background */
+            color: #00ff00; /* Green text */
+            border: 2px solid #00ff00;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00ff00 inset; /* Inner glow */
+            transition: background-color 0.3s, box-shadow 0.3s, color 0.3s;
+            border-radius: 5px; /* Slightly rounded corners */
+            white-space: nowrap; /* Prevent text wrapping */
+        }
 
-    #menu {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.8);
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-      visibility: visible;
-    }
+        button:hover:not(:disabled), button:focus:not(:disabled) {
+            background-color: #444;
+            box-shadow: 0 0 15px #00ff00 inset, 0 0 10px #00ff00; /* Brighter glow on hover */
+            outline: none;
+        }
 
-    #menu.hidden {
-      visibility: hidden;
-    }
-  </style>
+        button:active:not(:disabled) {
+            background-color: #222;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+
+        /* General Message Box (Game Over, Level Cleared) */
+        #messageBox {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            border: 3px solid #ff0000; /* Red border for messages */
+            padding: 30px;
+            text-align: center;
+            font-size: 24px;
+            color: #ff0000; /* Red text */
+            display: none; /* Hidden by default */
+            z-index: 10;
+            box-shadow: 0 0 20px #ff0000;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+        }
+        #messageBox h2 {
+            margin: 0 0 15px 0;
+            font-size: 32px;
+        }
+        #messageBox p {
+             margin: 5px 0;
+             font-size: 16px;
+             color: #ffff00; /* Yellow subtext */
+        }
+
+        /* Pause Overlay Specific Style */
+        #pauseOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black */
+            color: #ffff00; /* Yellow pause text */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            text-shadow: 3px 3px #ff0000; /* Red shadow for visibility */
+            z-index: 15; /* Above messageBox if needed */
+            display: none; /* Hidden by default */
+            pointer-events: none; /* Allow clicks through to canvas if needed (though game is paused) */
+        }
+
+    </style>
 </head>
 <body>
-  <h1>Missile Command (HTML/JS Version)</h1>
-  <div id="gameContainer">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="menu">
-      <h2>Missile Command</h2>
-      <p>Defend your cities from incoming missiles!</p>
-      <button class="button" id="startButton">Start Game</button>
-      <br/>
-      <p style="font-size: 14px;">Move mouse to aim. Click to fire from the nearest base. Good luck!</p>
+
+    
+    <div id="uiContainer">
+        <div id="score">SCORE: 0</div>
+        <div id="level">LEVEL: 1</div>
+        <div id="citiesLeft">CITIES: 6</div>
     </div>
-  </div>
-  <div id="info"></div>
 
-  <script>
-    // Basic constants
-    const CANVAS_WIDTH = 800;
-    const CANVAS_HEIGHT = 600;
-    const CITY_COUNT = 6;
-    const BASE_COUNT = 6; // We have 6 bases.
-    const BASE_Y = 540;
-    const CITY_Y = 580;
+    
+    <div style="position: relative;"> 
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="pauseOverlay">PAUSED</div> 
+    </div>
 
-    // Positions for 6 cities
-    let cityPositions = [
-      { x: 80, alive: true },
-      { x: 200, alive: true },
-      { x: 320, alive: true },
-      { x: 480, alive: true },
-      { x: 600, alive: true },
-      { x: 720, alive: true },
-    ];
+    
+    <div id="controlsContainer">
+        <button id="startButton">Start Game</button>
+        <button id="restartButton" style="display: none;">Restart Game</button>
+        <button id="pauseButton" style="display: none;">Pause</button> 
+        <button id="screenshotButton">Save Screenshot</button> 
+    </div>
 
-    // Positions for 6 bases (one aligned under each city)
-    let basePositions = [
-      { x: 80, y: BASE_Y, alive: true },
-      { x: 200, y: BASE_Y, alive: true },
-      { x: 320, y: BASE_Y, alive: true },
-      { x: 480, y: BASE_Y, alive: true },
-      { x: 600, y: BASE_Y, alive: true },
-      { x: 720, y: BASE_Y, alive: true },
-    ];
+    
+    <div id="messageBox">
+        <h2 id="messageTitle">MISSILE COMMAND</h2>
+        <p id="messageText">Protect your cities!</p>
+        <p>Click to fire from the nearest base.</p>
+    </div>
 
-    // Keep track of player's score, level, etc.
-    let score = 0;
-    let level = 1;
-    let citiesLeft = CITY_COUNT;
+    <script>
+        // --- Canvas and Context ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-    // Arrays to store game objects
-    let enemyMissiles = [];
-    let friendlyMissiles = [];
-    let explosions = [];
+        // --- UI Elements ---
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const citiesLeftDisplay = document.getElementById('citiesLeft');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const pauseButton = document.getElementById('pauseButton'); // New
+        const screenshotButton = document.getElementById('screenshotButton'); // New
+        const messageBox = document.getElementById('messageBox');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const pauseOverlay = document.getElementById('pauseOverlay'); // New
 
-    // Game state
-    let isGameRunning = false;
-    let isGameOver = false;
+        // --- Game Constants ---
+        const GROUND_HEIGHT = 50;
+        const BASE_WIDTH = 40;
+        const BASE_HEIGHT = 30;
+        const CITY_WIDTH = 50;
+        const CITY_HEIGHT = 30;
+        const MISSILE_SPEED_PLAYER = 5;
+        const MISSILE_SPEED_ENEMY_BASE = 0.5;
+        const EXPLOSION_RADIUS_START = 5;
+        const EXPLOSION_RADIUS_MAX = 40;
+        const EXPLOSION_DURATION = 45;
+        const POINTS_PER_MISSILE = 25;
+        const POINTS_PER_CITY = 100;
+        const POINTS_PER_AMMO = 5;
+        const MISSILES_PER_LEVEL_BASE = 8;
+        const BASE_AMMO_START = 10;
+        const LEVEL_CLEAR_DELAY = 8000; // *** UPDATED: 8 seconds delay ***
 
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const info = document.getElementById('info');
-    const menu = document.getElementById('menu');
-    const startButton = document.getElementById('startButton');
+        // --- Game State Variables ---
+        let score = 0;
+        let level = 1;
+        let cities = [];
+        let bases = [];
+        let incomingMissiles = [];
+        let playerMissiles = [];
+        let explosions = [];
+        let isGameOver = true;
+        let gameLoopId = null;
+        let missilesToSpawn = 0;
+        let enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE;
+        let transitioningLevel = false;
+        let isPaused = false; // *** NEW: Pause state ***
+        let gameHasStarted = false; // Track if game has actually begun
 
-    startButton.addEventListener('click', startGame);
-
-    // Fire a missile on canvas click
-    canvas.addEventListener('click', (evt) => {
-      if (!isGameRunning || isGameOver) return;
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = evt.clientX - rect.left;
-      const mouseY = evt.clientY - rect.top;
-
-      // Find the nearest alive base
-      let bestBase = null;
-      let bestDist = Infinity;
-      for (let i = 0; i < basePositions.length; i++) {
-        const b = basePositions[i];
-        if (!b.alive) continue;
-        let dx = b.x - mouseX;
-        let dy = b.y - mouseY;
-        let distSq = dx * dx + dy * dy;
-        if (distSq < bestDist) {
-          bestDist = distSq;
-          bestBase = b;
+        // --- Utility Functions ---
+        function distance(x1, y1, x2, y2) {
+            const dx = x1 - x2;
+            const dy = y1 - y2;
+            return Math.sqrt(dx * dx + dy * dy);
         }
-      }
 
-      if (bestBase) {
-        // Fire a friendly missile
-        friendlyMissiles.push({
-          x: bestBase.x,
-          y: bestBase.y,
-          targetX: mouseX,
-          targetY: mouseY,
-          speed: 5,
-        });
-      }
-    });
-
-    function startGame() {
-      resetGame();
-      menu.classList.add('hidden');
-      isGameRunning = true;
-      isGameOver = false;
-      requestAnimationFrame(gameLoop);
-    }
-
-    function resetGame() {
-      // Reset all states, ensuring array lengths match the constants
-      cityPositions = [
-        { x: 80, alive: true },
-        { x: 200, alive: true },
-        { x: 320, alive: true },
-        { x: 480, alive: true },
-        { x: 600, alive: true },
-        { x: 720, alive: true },
-      ];
-
-      basePositions = [
-        { x: 80, y: BASE_Y, alive: true },
-        { x: 200, y: BASE_Y, alive: true },
-        { x: 320, y: BASE_Y, alive: true },
-        { x: 480, y: BASE_Y, alive: true },
-        { x: 600, y: BASE_Y, alive: true },
-        { x: 720, y: BASE_Y, alive: true },
-      ];
-
-      if (cityPositions.length !== CITY_COUNT) {
-        throw new Error(`Mismatch: cityPositions length ${cityPositions.length} != CITY_COUNT ${CITY_COUNT}`);
-      }
-      if (basePositions.length !== BASE_COUNT) {
-        throw new Error(`Mismatch: basePositions length ${basePositions.length} != BASE_COUNT ${BASE_COUNT}`);
-      }
-
-      citiesLeft = CITY_COUNT;
-      score = 0;
-      level = 1;
-
-      enemyMissiles = [];
-      friendlyMissiles = [];
-      explosions = [];
-
-      lastSpawnTime = performance.now();
-      waveCount = 0;
-
-      // Test spawn for array bounds
-      for (let test = 0; test < 5; test++) {
-        let testCount = Math.floor(Math.random() * 5 + 1);
-        spawnEnemyMissiles(testCount);
-      }
-      enemyMissiles = [];
-    }
-
-    let lastSpawnTime = 0;
-    const spawnInterval = 2000; // spawn wave every 2 seconds
-    let waveCount = 0;
-
-    function gameLoop(timestamp) {
-      if (!isGameRunning) return;
-      update();
-      draw();
-      if (!isGameOver) {
-        requestAnimationFrame(gameLoop);
-      }
-    }
-
-    function update() {
-      let now = performance.now();
-      // Spawn enemy missiles periodically
-      if (now - lastSpawnTime > spawnInterval) {
-        spawnEnemyMissiles(level + waveCount);
-        waveCount++;
-        lastSpawnTime = now;
-      }
-
-      // Update enemy missiles
-      for (let i = enemyMissiles.length - 1; i >= 0; i--) {
-        const m = enemyMissiles[i];
-        let dx = m.targetX - m.x;
-        let dy = m.targetY - m.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-        let step = m.speed;
-        if (dist < step) {
-          // Reached target
-          createExplosion(m.targetX, m.targetY, 30);
-          checkHit(m.targetX, m.targetY);
-          enemyMissiles.splice(i, 1);
-        } else {
-          m.x += (dx / dist) * step;
-          m.y += (dy / dist) * step;
-        }
-      }
-
-      // Update friendly missiles
-      for (let i = friendlyMissiles.length - 1; i >= 0; i--) {
-        const fm = friendlyMissiles[i];
-        let dx = fm.targetX - fm.x;
-        let dy = fm.targetY - fm.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-        let step = fm.speed;
-        if (dist < step) {
-          createExplosion(fm.targetX, fm.targetY, 40);
-          friendlyMissiles.splice(i, 1);
-        } else {
-          fm.x += (dx / dist) * step;
-          fm.y += (dy / dist) * step;
-        }
-      }
-
-      // Update explosions
-      for (let i = explosions.length - 1; i >= 0; i--) {
-        const e = explosions[i];
-        e.radius += e.expansionSpeed;
-        if (e.radius > e.maxRadius) {
-          explosions.splice(i, 1);
-        } else {
-          // Check collisions with enemy missiles
-          for (let j = enemyMissiles.length - 1; j >= 0; j--) {
-            const m = enemyMissiles[j];
-            let dist = Math.sqrt((m.x - e.x) * (m.x - e.x) + (m.y - e.y) * (m.y - e.y));
-            if (dist < e.radius) {
-              score += 25; // for destroying an enemy missile
-              createExplosion(m.x, m.y, 15);
-              enemyMissiles.splice(j, 1);
+        function getRandomTarget() {
+            const possibleTargets = [...cities.filter(c => c.alive), ...bases.filter(b => b.alive)];
+            if (possibleTargets.length === 0) {
+                return { x: canvas.width / 2, y: canvas.height - GROUND_HEIGHT };
             }
-          }
+            const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+            return { x: target.x + (target.width / 2), y: target.y };
         }
-      }
 
-      // Check city count
-      citiesLeft = cityPositions.filter(c => c.alive).length;
-      if (citiesLeft === 0) {
-        endGame();
-      }
-
-      // Increase level as score grows
-      if (score > level * 500) {
-        level++;
-      }
-
-      updateInfo();
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-      // Draw ground
-      ctx.fillStyle = '#444';
-      ctx.fillRect(0, 590, CANVAS_WIDTH, 10);
-
-      // Draw cities
-      for (let c of cityPositions) {
-        if (c.alive) {
-          ctx.fillStyle = 'lime';
-          ctx.fillRect(c.x - 15, CITY_Y - 15, 30, 15);
-        } else {
-          ctx.fillStyle = 'red';
-          ctx.fillRect(c.x - 15, CITY_Y - 15, 30, 15);
+        // --- Game Object Factories (No changes needed here) ---
+        function createCity(x) { /* ... (same as before) ... */
+            return { x: x, y: canvas.height - GROUND_HEIGHT - CITY_HEIGHT, width: CITY_WIDTH, height: CITY_HEIGHT, color: '#00ffff', alive: true,
+                draw() { if (!this.alive) return; ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.width, this.height); ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x + this.width / 2, this.y - 10); ctx.lineTo(this.x + this.width, this.y); ctx.closePath(); ctx.fillStyle = '#00aaaa'; ctx.fill(); }
+            };
         }
-      }
-
-      // Draw bases
-      for (let b of basePositions) {
-        if (b.alive) {
-          ctx.fillStyle = 'blue';
-          ctx.beginPath();
-          ctx.moveTo(b.x, b.y);
-          ctx.lineTo(b.x - 20, b.y + 20);
-          ctx.lineTo(b.x + 20, b.y + 20);
-          ctx.closePath();
-          ctx.fill();
-        } else {
-          ctx.fillStyle = 'darkred';
-          ctx.fillRect(b.x - 15, b.y, 30, 20);
+        function createBase(x) { /* ... (same as before) ... */
+             return { x: x, y: canvas.height - GROUND_HEIGHT - BASE_HEIGHT, width: BASE_WIDTH, height: BASE_HEIGHT, color: '#ffff00', alive: true, ammo: BASE_AMMO_START,
+                draw() { if (!this.alive) return; ctx.fillStyle = this.color; ctx.beginPath(); ctx.moveTo(this.x, this.y + this.height); ctx.lineTo(this.x + this.width / 2, this.y); ctx.lineTo(this.x + this.width, this.y + this.height); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#000'; ctx.font = '10px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillText(this.ammo, this.x + this.width / 2, this.y + this.height - 5); }
+            };
         }
-      }
-
-      // Draw enemy missiles
-      ctx.strokeStyle = 'red';
-      for (let m of enemyMissiles) {
-        ctx.beginPath();
-        ctx.moveTo(m.x, m.y);
-        ctx.lineTo(m.x, m.y + 5);
-        ctx.stroke();
-      }
-
-      // Draw friendly missiles
-      ctx.strokeStyle = 'white';
-      for (let fm of friendlyMissiles) {
-        ctx.beginPath();
-        ctx.moveTo(fm.x, fm.y);
-        ctx.lineTo(fm.x, fm.y + 5);
-        ctx.stroke();
-      }
-
-      // Draw explosions
-      for (let e of explosions) {
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.radius, 0, 2 * Math.PI);
-        ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
-        ctx.fill();
-      }
-    }
-
-    // This function spawns enemy missiles at random x, targeting a random city/base.
-    // Slowed down speed from 1 + Math.random()*1.5 to 0.5 + Math.random()*1.0
-    function spawnEnemyMissiles(count) {
-      for (let i = 0; i < count; i++) {
-        let startX = Math.random() * CANVAS_WIDTH;
-        let startY = -10;
-        let targetIndex = Math.floor(Math.random() * (CITY_COUNT + BASE_COUNT));
-        let tx, ty;
-        if (targetIndex < CITY_COUNT) {
-          const c = cityPositions[targetIndex];
-          tx = c.x;
-          ty = CITY_Y;
-        } else {
-          let bIndex = targetIndex - CITY_COUNT;
-          const b = basePositions[bIndex];
-          tx = b.x;
-          ty = b.y;
+        function createIncomingMissile() { /* ... (same as before) ... */
+            const startX = Math.random() * canvas.width; const target = getRandomTarget(); const angle = Math.atan2(target.y - 0, target.x - startX);
+            return { x: startX, y: 0, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * enemyMissileSpeed, dy: Math.sin(angle) * enemyMissileSpeed, color: '#ff0000', trailColor: 'rgba(255, 100, 100, 0.5)', alive: true, trail: [{x: startX, y: 0}],
+                update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 15) { this.trail.shift(); } if (this.y >= this.targetY || this.y >= canvas.height - GROUND_HEIGHT) { this.alive = false; const impactY = Math.min(this.targetY, canvas.height - GROUND_HEIGHT); createExplosion(this.x, impactY, EXPLOSION_RADIUS_MAX / 2, this.color); checkGroundImpact(this.x, impactY); } },
+                draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 2, this.y - 2, 4, 4); }
+            };
         }
-        // SLIGHTLY SLOWER MISSILES
-        let speed = 0.5 + Math.random() * 1.0; // range: [0.5..1.5]
-        enemyMissiles.push({ x: startX, y: startY, targetX: tx, targetY: ty, speed: speed });
-      }
-    }
-
-    function createExplosion(x, y, maxRadius) {
-      explosions.push({
-        x: x,
-        y: y,
-        radius: 0,
-        maxRadius: maxRadius,
-        expansionSpeed: 2
-      });
-    }
-
-    function checkHit(x, y) {
-      // Check bases
-      for (let b of basePositions) {
-        if (b.alive) {
-          let dx = x - b.x;
-          let dy = y - b.y;
-          if (Math.sqrt(dx * dx + dy * dy) < 20) {
-            b.alive = false;
-            return;
-          }
+        function createPlayerMissile(startX, startY, targetX, targetY) { /* ... (same as before) ... */
+            const angle = Math.atan2(targetY - startY, targetX - startX);
+             return { x: startX, y: startY, targetX: targetX, targetY: targetY, dx: Math.cos(angle) * MISSILE_SPEED_PLAYER, dy: Math.sin(angle) * MISSILE_SPEED_PLAYER, color: '#00ff00', trailColor: 'rgba(100, 255, 100, 0.5)', alive: true, trail: [{x: startX, y: startY}],
+                update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 10) { this.trail.shift(); } const distToTarget = distance(this.x, this.y, this.targetX, this.targetY); const distTraveled = distance(startX, startY, this.x, this.y); const totalDist = distance(startX, startY, this.targetX, this.targetY); if (distTraveled >= totalDist || distToTarget < MISSILE_SPEED_PLAYER) { this.alive = false; createExplosion(this.targetX, this.targetY, EXPLOSION_RADIUS_START, this.color); } },
+                draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 1, this.y - 1, 3, 3); }
+            };
         }
-      }
-
-      // Check cities
-      for (let c of cityPositions) {
-        if (c.alive) {
-          let dx = x - c.x;
-          let dy = y - (CITY_Y - 8);
-          if (Math.sqrt(dx * dx + dy * dy) < 16) {
-            c.alive = false;
-            return;
-          }
+        function createExplosion(x, y, startRadius, color) { /* ... (same as before) ... */
+            explosions.push({ x: x, y: y, radius: startRadius, maxRadius: EXPLOSION_RADIUS_MAX, duration: EXPLOSION_DURATION, currentFrame: 0, color: color, alive: true,
+                update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = EXPLOSION_DURATION * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (EXPLOSION_DURATION - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if(this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } },
+                draw() { if (!this.alive) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const intensity = Math.sin((this.currentFrame / this.duration) * Math.PI); const r = parseInt(this.color.slice(1, 3), 16); const g = parseInt(this.color.slice(3, 5), 16); const b = parseInt(this.color.slice(5, 7), 16); ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.6})`; ctx.fill(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3 * intensity, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`; ctx.fill(); }
+            });
         }
-      }
-    }
 
-    function endGame() {
-      isGameRunning = false;
-      isGameOver = true;
-      menu.classList.remove('hidden');
-      menu.innerHTML = `<h2>Game Over</h2>\n<p>Your final score: ${score}</p>\n<button class='button' onclick='startGame()'>Play Again</button>`;
-    }
+        // --- Collision Detection (No changes needed here) ---
+        function checkExplosionCollisions(explosion) { /* ... (same as before) ... */
+             incomingMissiles.forEach(missile => { if (missile.alive) { const dist = distance(explosion.x, explosion.y, missile.x, missile.y); if (dist < explosion.radius) { missile.alive = false; score += POINTS_PER_MISSILE; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } } });
+        }
+        function checkGroundImpact(impactX, impactY) { /* ... (same as before) ... */
+            if (impactY < canvas.height - GROUND_HEIGHT - CITY_HEIGHT) { return; } let hit = false; cities.forEach(city => { if (city.alive && impactX >= city.x && impactX <= city.x + city.width) { if (impactY >= city.y) { city.alive = false; hit = true; } } }); bases.forEach(base => { if (base.alive && impactX >= base.x && impactX <= base.x + base.width) { if (impactY >= base.y) { base.alive = false; hit = true; } } });
+        }
 
-    function updateInfo() {
-      info.innerHTML = `Score: ${score} &nbsp;&nbsp; Level: ${level} &nbsp;&nbsp; Cities Left: ${citiesLeft}`;
-    }
+        // --- Game Flow ---
+        function initLevel() {
+            incomingMissiles = [];
+            playerMissiles = [];
+            explosions = [];
+            bases.forEach(b => { if (b.alive) b.ammo = BASE_AMMO_START; });
+            missilesToSpawn = MISSILES_PER_LEVEL_BASE + (level - 1) * 4;
+            enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE + (level - 1) * 0.15;
+            enemyMissileSpeed = Math.min(enemyMissileSpeed, 3.0);
+            updateUI();
+        }
 
-    // ALWAYS ask user for expected behavior if unclear
-    // e.g. Should we skip spawning missiles if all bases/cities are dead?
-    // Let us know your preference.
-  </script>
+        function startGame() {
+            score = 0;
+            level = 1;
+            isGameOver = false;
+            isPaused = false; // Ensure not paused on start
+            transitioningLevel = false;
+            gameHasStarted = true; // Mark that the game has officially started
+
+            // Reset cities/bases and make them alive
+            cities = [];
+            const citySpacing = (canvas.width - 6 * CITY_WIDTH) / 7;
+            for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 1) + CITY_WIDTH * i));
+            for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 4) + CITY_WIDTH * (i + 3)));
+            cities.forEach(c => c.alive = true);
+
+            bases = [];
+            const basePositions = [canvas.width * 0.15, canvas.width * 0.5, canvas.width * 0.85];
+            bases.push(createBase(basePositions[0] - BASE_WIDTH / 2));
+            bases.push(createBase(basePositions[1] - BASE_WIDTH / 2));
+            bases.push(createBase(basePositions[2] - BASE_WIDTH / 2));
+            bases.forEach(b => b.alive = true);
+
+            initLevel();
+            hideMessage();
+            pauseOverlay.style.display = 'none'; // Hide pause overlay
+            startButton.style.display = 'none';
+            restartButton.style.display = 'inline-block';
+            pauseButton.style.display = 'inline-block'; // Show pause button
+            pauseButton.textContent = 'Pause'; // Ensure button text is correct
+            pauseButton.disabled = false; // Enable pause button
+            screenshotButton.disabled = false; // Enable screenshot button
+
+            // Cancel any existing loop before starting anew
+            if (gameLoopId) {
+                cancelAnimationFrame(gameLoopId);
+                gameLoopId = null;
+            }
+            gameLoop(); // Start the loop
+        }
+
+        function nextLevel() {
+            level++;
+            let bonusEarned = calculateBonus();
+            score += bonusEarned;
+
+            showMessage(`LEVEL ${level - 1} CLEARED`, `Bonus: ${bonusEarned}`, "Prepare for next wave!");
+            pauseButton.disabled = true; // Disable pausing during transition
+
+            setTimeout(() => {
+                 hideMessage();
+                 initLevel();
+                 transitioningLevel = false;
+                 pauseButton.disabled = false; // Re-enable pausing
+                 // Resume game loop automatically if it was paused during transition (unlikely but safe)
+                 if (!isPaused && !gameLoopId) {
+                    gameLoop();
+                 }
+            }, LEVEL_CLEAR_DELAY); // Use constant for delay
+        }
+
+        function calculateBonus() { /* ... (same as before) ... */
+             let bonus = 0; cities.forEach(city => { if (city.alive) bonus += POINTS_PER_CITY; }); bases.forEach(base => { if (base.alive) bonus += base.ammo * POINTS_PER_AMMO; }); return bonus;
+        }
+
+        function checkLevelEnd() {
+            if (transitioningLevel || isGameOver || isPaused) return; // Don't check if paused
+
+            if (missilesToSpawn <= 0 && incomingMissiles.every(m => !m.alive) && explosions.every(e => !e.alive)) {
+                 const citiesRemaining = cities.filter(c => c.alive).length;
+                 if (citiesRemaining === 0) {
+                     gameOver();
+                 } else {
+                     transitioningLevel = true;
+                     nextLevel();
+                 }
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            gameHasStarted = false; // Game is no longer in an active, playable state
+            transitioningLevel = false;
+            isPaused = false; // Cannot be paused when game is over
+            showMessage("GAME OVER", `Final Score: ${score}`, `Level Reached: ${level}`);
+            restartButton.style.display = 'inline-block';
+            pauseButton.style.display = 'inline-block'; // Keep visible but disable
+            pauseButton.textContent = 'Pause';
+            pauseButton.disabled = true;
+            pauseOverlay.style.display = 'none'; // Hide pause overlay
+            // Loop continues only for final explosions via gameLoop check
+        }
+
+        // --- Pause/Resume Logic ---
+        function pauseGame() {
+            if (isGameOver || transitioningLevel || !gameHasStarted) return; // Can't pause if game over, transitioning or not started
+            isPaused = true;
+            pauseOverlay.style.display = 'flex'; // Show pause overlay
+            pauseButton.textContent = 'Resume';
+            // Stop the game loop
+            if (gameLoopId) {
+                cancelAnimationFrame(gameLoopId);
+                gameLoopId = null; // Important to nullify the ID
+            }
+        }
+
+        function resumeGame() {
+            if (isGameOver || transitioningLevel || !isPaused) return; // Can only resume if paused
+            isPaused = false;
+            pauseOverlay.style.display = 'none'; // Hide pause overlay
+            pauseButton.textContent = 'Pause';
+            // Restart the game loop if it's not already running
+            if (!gameLoopId) {
+                gameLoop();
+            }
+        }
+
+        function togglePause() {
+            if (isPaused) {
+                resumeGame();
+            } else {
+                pauseGame();
+            }
+        }
+
+        // --- Screenshot Logic ---
+        async function saveScreenshot() {
+            const originalText = screenshotButton.textContent;
+            screenshotButton.textContent = 'Saving...';
+            screenshotButton.disabled = true;
+
+            try {
+                // Check for clipboard API support
+                if (!navigator.clipboard || !navigator.clipboard.write) {
+                    throw new Error('Clipboard API not supported or requires secure context (HTTPS/localhost).');
+                }
+
+                // Get canvas data as a blob
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                         throw new Error('Canvas could not be converted to Blob.');
+                    }
+                    try {
+                        // Create a clipboard item
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        // Write to clipboard
+                        await navigator.clipboard.write([item]);
+
+                        screenshotButton.textContent = 'Copied!';
+                        console.log('Screenshot copied to clipboard.');
+
+                    } catch (err) {
+                        console.error('Failed to copy screenshot:', err);
+                        screenshotButton.textContent = 'Copy Failed!';
+                         // Optionally show error to user in message box or console
+                         alert(`Failed to copy to clipboard:\n${err.message}\nMake sure you're on HTTPS/localhost and grant permission.`);
+                    } finally {
+                         // Reset button text after a delay
+                        setTimeout(() => {
+                            screenshotButton.textContent = originalText;
+                            screenshotButton.disabled = false;
+                        }, 2000);
+                    }
+                }, 'image/png');
+
+            } catch (err) {
+                console.error('Screenshot error:', err);
+                screenshotButton.textContent = 'Error!';
+                alert(`Screenshot Error:\n${err.message}`); // Inform user
+                 setTimeout(() => {
+                    screenshotButton.textContent = originalText;
+                    screenshotButton.disabled = false;
+                }, 2000);
+            }
+        }
+
+
+        // --- Message Display ---
+        function showMessage(title, text, subtext = "") { /* ... (same as before) ... */
+             messageTitle.textContent = title; messageText.textContent = text; messageBox.style.display = 'block'; const subP = messageBox.querySelector('p:last-of-type'); if (subtext) { subP.textContent = subtext; subP.style.display = 'block'; } else { subP.style.display = 'none'; }
+        }
+        function hideMessage() { /* ... (same as before) ... */
+             messageBox.style.display = 'none';
+        }
+
+        // --- Drawing Functions (No changes needed here) ---
+        function drawBackground() { /* ... (same as before) ... */
+            ctx.fillStyle = '#00001a'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'white'; for (let i = 0; i < 100; i++) { let x = Math.random() * canvas.width; let y = Math.random() * (canvas.height - GROUND_HEIGHT); let radius = Math.random() * 1.5; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#3b2e1a'; ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
+        }
+        function drawGameObjects() { /* ... (same as before) ... */
+             cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw());
+        }
+
+        // --- Update Functions ---
+        function updateGameObjects() {
+            // Spawn new incoming missiles only if game running & not transitioning
+            if (!isGameOver && !transitioningLevel && missilesToSpawn > 0 && Math.random() < 0.015 * (1 + level * 0.1)) {
+                incomingMissiles.push(createIncomingMissile());
+                missilesToSpawn--;
+            }
+
+            // Update all objects (missiles, explosions)
+            incomingMissiles.forEach(missile => missile.update());
+            playerMissiles.forEach(missile => missile.update());
+            explosions.forEach(explosion => explosion.update());
+
+            // Remove dead objects
+            incomingMissiles = incomingMissiles.filter(missile => missile.alive);
+            playerMissiles = playerMissiles.filter(missile => missile.alive);
+            explosions = explosions.filter(explosion => explosion.alive);
+        }
+
+        function updateUI() { /* ... (same as before) ... */
+             scoreDisplay.textContent = `SCORE: ${score}`; levelDisplay.textContent = `LEVEL: ${level}`; const livingCities = cities.filter(c => c.alive).length; citiesLeftDisplay.textContent = `CITIES: ${livingCities}`;
+        }
+
+        // --- Game Loop ---
+        function gameLoop() {
+            // If paused, stop the loop for this frame
+            if (isPaused) {
+                gameLoopId = null; // Ensure ID is cleared so resume works
+                return;
+            }
+
+            // Stop loop completely ONLY if game over AND all explosions finished
+            if (isGameOver && explosions.length === 0 && !transitioningLevel) {
+                 if (cities.filter(c => c.alive).length === 0 && score > 0) {
+                    gameOver();
+                 } else if (!gameHasStarted) { // Show initial message if game hasn't started properly
+                     showMessage("MISSILE COMMAND", "Protect your cities!", "Click START to play.");
+                 }
+                 gameLoopId = null;
+                 return;
+            }
+
+            drawBackground();
+
+            // Only update game logic if not game over or transitioning
+            if (!isGameOver && !transitioningLevel) {
+                 updateGameObjects();
+            }
+            // Always update explosions even if game is over or transitioning, until they fade
+            explosions.forEach(explosion => explosion.update());
+            explosions = explosions.filter(explosion => explosion.alive);
+
+            drawGameObjects();
+            updateUI();
+
+            // Only check level end if game is active
+            if (!isGameOver && !transitioningLevel) {
+                 checkLevelEnd();
+            }
+
+            // Request next frame
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        // --- Event Listeners ---
+        canvas.addEventListener('click', (event) => {
+            // Ignore clicks if game over, paused, transitioning, or not started
+            if (isGameOver || isPaused || transitioningLevel || !gameHasStarted) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            if (clickY < 20 || clickY > canvas.height - GROUND_HEIGHT) return;
+
+            let nearestBase = null;
+            let minDistance = Infinity;
+            bases.forEach(base => {
+                if (base.alive && base.ammo > 0) {
+                    const baseCenterX = base.x + base.width / 2; const baseTopY = base.y;
+                    const d = distance(clickX, clickY, baseCenterX, baseTopY);
+                    if (d < minDistance) { minDistance = d; nearestBase = base; }
+                }
+            });
+
+            if (nearestBase) {
+                nearestBase.ammo--;
+                const startX = nearestBase.x + nearestBase.width / 2; const startY = nearestBase.y;
+                playerMissiles.push(createPlayerMissile(startX, startY, clickX, clickY));
+            }
+        });
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame); // Restart also calls startGame
+        pauseButton.addEventListener('click', togglePause); // New
+        screenshotButton.addEventListener('click', saveScreenshot); // New
+
+        // Pause with Spacebar
+        window.addEventListener('keydown', (event) => {
+            // Only toggle pause if spacebar is pressed AND the game is actively running
+            if (event.code === 'Space' && !isGameOver && !transitioningLevel && gameHasStarted) {
+                event.preventDefault(); // Prevent default spacebar action (like scrolling)
+                togglePause();
+            }
+        });
+
+
+        // --- Initial Setup ---
+         window.onload = () => {
+            drawBackground();
+            // Setup initial structures (but don't mark as alive yet)
+            const citySpacing = (canvas.width - 6 * CITY_WIDTH) / 7;
+             cities = []; bases = []; // Ensure arrays are empty
+            for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 1) + CITY_WIDTH * i));
+            for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 4) + CITY_WIDTH * (i + 3)));
+             cities.forEach(c => c.alive = false);
+
+            const basePositions = [canvas.width * 0.15, canvas.width * 0.5, canvas.width * 0.85];
+             bases.push(createBase(basePositions[0] - BASE_WIDTH / 2));
+             bases.push(createBase(basePositions[1] - BASE_WIDTH / 2));
+             bases.push(createBase(basePositions[2] - BASE_WIDTH / 2));
+             bases.forEach(b => b.alive = false);
+
+             drawGameObjects();
+             showMessage("MISSILE COMMAND", "Protect your cities!", "Click START to play.");
+             restartButton.style.display = 'none';
+             pauseButton.style.display = 'none'; // Hide initially
+             pauseButton.disabled = true; // Disable initially
+             screenshotButton.disabled = true; // Disable initially until game starts/renders something meaningful
+             startButton.style.display = 'inline-block';
+         };
+
+    </script>
+
 </body>
 </html>
