@@ -88,6 +88,7 @@
         </div>
     </div>
 
+    
     <div id="storeModal">
         <h2>Inter-Level Store</h2>
         <div id="storeScore">Current Score: $0</div>
@@ -115,6 +116,15 @@
             </div>
             <button class="buyButton" id="buyCityButton">BUY</button>
         </div>
+        
+        <div class="storeItem">
+            <div class="storeItemInfo">
+                <span>Base Shield (Max 3 Active)</span>
+                <span class="itemCost">Cost: $250</span>
+                <span class="itemStock" id="stockShield">Stock: 100</span>
+            </div>
+            <button class="buyButton" id="buyShieldButton">BUY</button>
+        </div>
         <button id="storeContinueButton">Continue to Next Level</button>
     </div>
 
@@ -124,14 +134,24 @@
         const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score'); const levelDisplay = document.getElementById('level'); const citiesLeftDisplay = document.getElementById('citiesLeft'); const restartButton = document.getElementById('restartButton'); const pauseButton = document.getElementById('pauseButton'); const screenshotButton = document.getElementById('screenshotButton'); const messageBox = document.getElementById('messageBox'); const messageTitle = document.getElementById('messageTitle'); const messageText = document.getElementById('messageText'); const messageSubText = document.getElementById('messageSubText'); const messageBonusText = document.getElementById('messageBonusText'); const pauseOverlay = document.getElementById('pauseOverlay'); const uiContainer = document.getElementById('uiContainer'); const controlsContainer = document.getElementById('controlsContainer'); const difficultySelectionDiv = document.getElementById('difficultySelection'); const startMenuContainer = document.getElementById('startMenuContainer'); const actualStartButton = document.getElementById('actualStartButton'); const bonusIndicator = document.getElementById('bonusIndicator');
         const goToStoreButton = document.getElementById('goToStoreButton'); const skipStoreButton = document.getElementById('skipStoreButton');
-        const storeModal = document.getElementById('storeModal'); const storeScoreDisplay = document.getElementById('storeScore'); const stockSatelliteDisplay = document.getElementById('stockSatellite'); const stockBaseDisplay = document.getElementById('stockBase'); const stockCityDisplay = document.getElementById('stockCity'); const buySatelliteButton = document.getElementById('buySatelliteButton'); const buyBaseButton = document.getElementById('buyBaseButton'); const buyCityButton = document.getElementById('buyCityButton'); const storeContinueButton = document.getElementById('storeContinueButton');
+        const storeModal = document.getElementById('storeModal'); const storeScoreDisplay = document.getElementById('storeScore'); const stockSatelliteDisplay = document.getElementById('stockSatellite'); const stockBaseDisplay = document.getElementById('stockBase'); const stockCityDisplay = document.getElementById('stockCity'); const stockShieldDisplay = document.getElementById('stockShield'); /* New */ const buySatelliteButton = document.getElementById('buySatelliteButton'); const buyBaseButton = document.getElementById('buyBaseButton'); const buyCityButton = document.getElementById('buyCityButton'); const buyShieldButton = document.getElementById('buyShieldButton'); /* New */ const storeContinueButton = document.getElementById('storeContinueButton');
 
         // --- Game Constants & State Variables ---
         const GROUND_HEIGHT = 50; const BASE_WIDTH = 40; const BASE_HEIGHT = 25; const CITY_WIDTH = 50; const CITY_HEIGHT = 30; const MISSILE_SPEED_PLAYER = 5; const MISSILE_SPEED_ENEMY_BASE = 0.5; const EXPLOSION_RADIUS_START = 5; const EXPLOSION_RADIUS_MAX = 40; const EXPLOSION_DURATION = 45; const POINTS_PER_MISSILE = 25; const POINTS_PER_CITY = 100; const POINTS_PER_AMMO = 5; const MISSILES_PER_LEVEL_BASE = 8; let selectedDifficultyAmmo = 60; const BONUS_FIRE_SPREAD = 8;
-        const COST_SATELLITE = 4000; const COST_BASE = 1000; const COST_CITY = 2000; const MAX_STOCK = 6; const MAX_ACTIVE_SATELLITES = 3;
-        const SATELLITE_Y_POS = canvas.height * 0.4; const SATELLITE_WIDTH = 35; const SATELLITE_HEIGHT = 25;
+        const COST_SATELLITE = 4000; const COST_BASE = 1000; const COST_CITY = 2000; const COST_SHIELD = 250; /* New */ const MAX_STOCK = 6; const MAX_SHIELD_STOCK = 100; /* New */ const MAX_ACTIVE_SATELLITES = 3; const SATELLITE_Y_POS = canvas.height * 0.4; const SATELLITE_WIDTH = 35; const SATELLITE_HEIGHT = 25;
+        const SHIELD_STRENGTH_START = 100; const SHIELD_DAMAGE_PER_HIT = 25; /* New */
+        // Shield visual constants
+        const SHIELD_COLOR_FULL = 'rgba(0, 150, 255, 0.6)'; // Blue
+        const SHIELD_COLOR_75 = 'rgba(0, 255, 150, 0.6)'; // Greenish
+        const SHIELD_COLOR_50 = 'rgba(255, 255, 0, 0.6)'; // Yellow
+        const SHIELD_COLOR_25 = 'rgba(255, 100, 0, 0.6)'; // Orange/Red
+        const SHIELD_FLASH_COLOR = 'rgba(255, 255, 255, 0.8)';
+        const SHIELD_FLASH_DURATION = 5; // frames
+
         let score = 0; let level = 1; let cities = []; let bases = []; let incomingMissiles = []; let playerMissiles = []; let explosions = []; let isGameOver = true; let gameLoopId = null; let missilesToSpawn = 0; let enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE; let transitioningLevel = false; let isPaused = false; let gameHasStarted = false; let difficultySelected = false; let bonusMissileCount = 0;
-        let storeStockSatellite = MAX_STOCK; let storeStockBase = MAX_STOCK; let storeStockCity = MAX_STOCK; let satelliteBases = [];
+        let storeStockSatellite = MAX_STOCK; let storeStockBase = MAX_STOCK; let storeStockCity = MAX_STOCK; let storeStockShield = MAX_SHIELD_STOCK; /* New */
+        let satelliteBases = [];
+        let baseShields = [null, null, null]; // Stores shield state: { alive: boolean, strength: number, flashTimer: number } for each base index
 
         // --- Utility Functions ---
         function distance(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return Math.sqrt(dx * dx + dy * dy); }
@@ -143,43 +163,57 @@
         function createSatelliteBase(x, y) { return { x: x, y: y, width: SATELLITE_WIDTH, height: SATELLITE_HEIGHT, bodyColor: '#b0b0b0', panelColor: '#3333cc', panelHighlight: '#6666ff', outlineColor: '#777777', antennaColor: '#dddddd', lightColor: '#ff0000', alive: true, ammo: selectedDifficultyAmmo, isSatellite: true, draw() { if (!this.alive) return; const bodyW = this.width * 0.5; const bodyH = this.height; const bodyX = this.x + (this.width - bodyW) / 2; const panelW = this.width * 0.25; const panelH = this.height * 0.8; const panelY = this.y + (bodyH - panelH) / 2; ctx.fillStyle = this.panelColor; ctx.fillRect(this.x, panelY, panelW, panelH); ctx.fillRect(this.x + this.width - panelW, panelY, panelW, panelH); ctx.strokeStyle = this.panelHighlight; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(this.x + panelW / 2, panelY); ctx.lineTo(this.x + panelW / 2, panelY + panelH); ctx.moveTo(this.x + this.width - panelW / 2, panelY); ctx.lineTo(this.x + this.width - panelW / 2, panelY + panelH); ctx.moveTo(this.x, panelY + panelH / 3); ctx.lineTo(this.x + panelW, panelY + panelH / 3); ctx.moveTo(this.x, panelY + panelH * 2/3); ctx.lineTo(this.x + panelW, panelY + panelH * 2/3); ctx.moveTo(this.x + this.width - panelW, panelY + panelH / 3); ctx.lineTo(this.x + this.width, panelY + panelH / 3); ctx.moveTo(this.x + this.width - panelW, panelY + panelH * 2/3); ctx.lineTo(this.x + this.width, panelY + panelH * 2/3); ctx.stroke(); ctx.fillStyle = this.bodyColor; ctx.beginPath(); ctx.moveTo(bodyX, this.y + bodyH * 0.2); ctx.lineTo(bodyX + bodyW * 0.1, this.y); ctx.lineTo(bodyX + bodyW * 0.9, this.y); ctx.lineTo(bodyX + bodyW, this.y + bodyH * 0.2); ctx.lineTo(bodyX + bodyW, this.y + bodyH * 0.8); ctx.lineTo(bodyX + bodyW * 0.9, this.y + bodyH); ctx.lineTo(bodyX + bodyW * 0.1, this.y + bodyH); ctx.lineTo(bodyX, this.y + bodyH * 0.8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = this.outlineColor; ctx.lineWidth = 1; ctx.stroke(); const dishRadius = bodyW * 0.3; const dishY = this.y - dishRadius * 0.6; ctx.strokeStyle = this.antennaColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bodyX + bodyW / 2, dishY, dishRadius, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); ctx.beginPath(); ctx.moveTo(bodyX + bodyW / 2, this.y); ctx.lineTo(bodyX + bodyW / 2, dishY); ctx.stroke(); const nozzleWidth = bodyW * 0.2; const nozzleHeight = bodyH * 0.25; ctx.fillStyle = this.outlineColor; ctx.fillRect(bodyX + (bodyW / 2) - (nozzleWidth / 2), this.y + bodyH, nozzleWidth, nozzleHeight); ctx.fillStyle = this.lightColor; if (Math.floor(Date.now() / 500) % 2 === 0) { ctx.beginPath(); ctx.arc(bodyX + bodyW / 2, this.y + bodyH / 2, 2, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#ffff00'; ctx.font = '10px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(this.ammo, this.x + this.width / 2, this.y + bodyH + nozzleHeight + 3); } }; }
         function createIncomingMissile() { const startX = Math.random() * canvas.width; const target = getRandomTarget(); const angle = Math.atan2(target.y - 0, target.x - startX); return { x: startX, y: 0, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * enemyMissileSpeed, dy: Math.sin(angle) * enemyMissileSpeed, color: '#ff0000', trailColor: 'rgba(255, 100, 100, 0.5)', alive: true, trail: [{x: startX, y: 0}], update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 15) { this.trail.shift(); } if (this.y >= this.targetY || this.y >= canvas.height - GROUND_HEIGHT) { this.alive = false; const impactY = Math.min(this.targetY, canvas.height - GROUND_HEIGHT); createExplosion(this.x, impactY, EXPLOSION_RADIUS_MAX / 2, this.color); checkObjectImpact(this.x, impactY); } }, draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 2, this.y - 2, 4, 4); } }; }
         function createPlayerMissile(startX, startY, targetX, targetY) { const angle = Math.atan2(targetY - startY, targetX - startX); return { x: startX, y: startY, targetX: targetX, targetY: targetY, dx: Math.cos(angle) * MISSILE_SPEED_PLAYER, dy: Math.sin(angle) * MISSILE_SPEED_PLAYER, color: '#00ff00', trailColor: 'rgba(100, 255, 100, 0.5)', alive: true, trail: [{x: startX, y: startY}], update() { if (!this.alive) return; this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 10) { this.trail.shift(); } const distToTarget = distance(this.x, this.y, this.targetX, this.targetY); const distTraveled = distance(startX, startY, this.x, this.y); const totalDist = distance(startX, startY, this.targetX, this.targetY); if (distTraveled >= totalDist || distToTarget < MISSILE_SPEED_PLAYER) { this.alive = false; createExplosion(this.targetX, this.targetY, EXPLOSION_RADIUS_START, this.color); } }, draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 1, this.y - 1, 3, 3); } }; }
-        function createExplosion(x, y, startRadius, color) {
-            // Add a check for undefined color just in case
-             if (typeof color !== 'string' || !color.startsWith('#')) {
-                console.warn("Invalid color passed to createExplosion:", color, "Using default grey.");
-                color = '#888888'; // Default explosion color if invalid
-            }
-            explosions.push({ x: x, y: y, radius: startRadius, maxRadius: EXPLOSION_RADIUS_MAX, duration: EXPLOSION_DURATION, currentFrame: 0, color: color, alive: true, update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = EXPLOSION_DURATION * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (EXPLOSION_DURATION - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if(this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } }, draw() { if (!this.alive) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const intensity = Math.sin((this.currentFrame / this.duration) * Math.PI); const r = parseInt(this.color.slice(1, 3), 16); const g = parseInt(this.color.slice(3, 5), 16); const b = parseInt(this.color.slice(5, 7), 16); ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.6})`; ctx.fill(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3 * intensity, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`; ctx.fill(); } });
-        }
+        function createExplosion(x, y, startRadius, color) { if (typeof color !== 'string' || !color.startsWith('#')) { console.warn("Invalid color passed to createExplosion:", color, "Using default grey."); color = '#888888'; } explosions.push({ x: x, y: y, radius: startRadius, maxRadius: EXPLOSION_RADIUS_MAX, duration: EXPLOSION_DURATION, currentFrame: 0, color: color, alive: true, update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = EXPLOSION_DURATION * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (EXPLOSION_DURATION - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if(this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } }, draw() { if (!this.alive) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const intensity = Math.sin((this.currentFrame / this.duration) * Math.PI); const r = parseInt(this.color.slice(1, 3), 16); const g = parseInt(this.color.slice(3, 5), 16); const b = parseInt(this.color.slice(5, 7), 16); ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.6})`; ctx.fill(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3 * intensity, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`; ctx.fill(); } }); }
 
         // --- Collision Detection ---
         function checkExplosionCollisions(explosion) { incomingMissiles.forEach(missile => { if (missile.alive) { const dist = distance(explosion.x, explosion.y, missile.x, missile.y); if (dist < explosion.radius) { missile.alive = false; score += POINTS_PER_MISSILE; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } } }); }
-        // Updated checkObjectImpact
+        // Updated checkObjectImpact for shields
         function checkObjectImpact(impactX, impactY) {
-            // Check Satellites first (higher up)
-            satelliteBases.forEach(sat => {
-                if (sat.alive &&
-                    impactX >= sat.x && impactX <= sat.x + sat.width &&
-                    impactY >= sat.y && impactY <= sat.y + sat.height) {
-                    sat.alive = false;
-                    createExplosion(impactX, impactY, EXPLOSION_RADIUS_START, sat.outlineColor); // Use outlineColor for explosion
-                }
-            });
+            // Check Shields FIRST
+            for (let i = 0; i < baseShields.length; i++) {
+                const shield = baseShields[i];
+                if (shield && shield.alive) {
+                    const base = bases[i]; // Corresponding base
+                    const shieldCenterX = base.x + base.width / 2;
+                    const shieldRadius = (base.width / 2) + CITY_WIDTH / 2 + 5; // Approx radius to cover base + half city + gap
+                    const shieldTopY = base.y - shieldRadius * 0.5; // Approx top Y of the arc visual
 
-            // Check Cities (only if impact low enough)
-            if (impactY >= canvas.height - GROUND_HEIGHT - CITY_HEIGHT) {
-                 cities.forEach(city => { if (city.alive && impactX >= city.x && impactX <= city.x + city.width) { city.alive = false; } });
+                    // Simple Bounding Box Check for the shield coverage area
+                    const shieldLeftX = shieldCenterX - shieldRadius;
+                    const shieldRightX = shieldCenterX + shieldRadius;
+                    const shieldBottomY = base.y; // Shield protects down to base top
+
+                    if (impactX >= shieldLeftX && impactX <= shieldRightX &&
+                        impactY >= shieldTopY && impactY <= shieldBottomY)
+                    {
+                        // Hit the shield!
+                        shield.strength -= SHIELD_DAMAGE_PER_HIT;
+                        shield.flashTimer = SHIELD_FLASH_DURATION; // Start flash
+                        console.log(`Shield ${i} hit! Strength: ${shield.strength}`);
+                        if (shield.strength <= 0) {
+                            shield.alive = false;
+                            console.log(`Shield ${i} destroyed!`);
+                            // Optional: Bigger explosion for shield break?
+                            createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 1.5, '#ffffff');
+                        } else {
+                             // Small flash effect
+                             createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 0.5, SHIELD_FLASH_COLOR);
+                        }
+                        return; // IMPORTANT: Stop further checks if shield took the hit
+                    }
+                }
             }
-            // Check Bases (only if impact low enough)
-            if (impactY >= canvas.height - GROUND_HEIGHT - BASE_HEIGHT) {
-                bases.forEach(base => { if (base.alive && impactX >= base.x && impactX <= base.x + base.width) { if (impactY >= base.y) {base.alive = false;} } });
-            }
+
+            // If no shield hit, check other objects
+            satelliteBases.forEach(sat => { if (sat.alive && impactX >= sat.x && impactX <= sat.x + sat.width && impactY >= sat.y && impactY <= sat.y + sat.height) { sat.alive = false; createExplosion(impactX, impactY, EXPLOSION_RADIUS_START, sat.outlineColor); } });
+            if (impactY >= canvas.height - GROUND_HEIGHT - CITY_HEIGHT) { cities.forEach(city => { if (city.alive && impactX >= city.x && impactX <= city.x + city.width) { city.alive = false; } }); }
+            if (impactY >= canvas.height - GROUND_HEIGHT - BASE_HEIGHT) { bases.forEach(base => { if (base.alive && impactX >= base.x && impactX <= base.x + base.width) { if (impactY >= base.y) {base.alive = false;} } }); }
         }
 
 
         // --- Game Flow ---
         function initLevel() { incomingMissiles = []; playerMissiles = []; explosions = []; bases.forEach(b => { if (b.alive) b.ammo = selectedDifficultyAmmo; }); satelliteBases.forEach(s => { if (s.alive) s.ammo = selectedDifficultyAmmo; }); missilesToSpawn = MISSILES_PER_LEVEL_BASE + (level - 1) * 4; enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE + (level - 1) * 0.15; enemyMissileSpeed = Math.min(enemyMissileSpeed, 3.0); updateUI(); }
-        function startGame() { if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } score = 0; level = 1; isGameOver = false; isPaused = false; transitioningLevel = false; gameHasStarted = true; bonusMissileCount = 0; storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; satelliteBases = [];
+        function startGame() { if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } score = 0; level = 1; isGameOver = false; isPaused = false; transitioningLevel = false; gameHasStarted = true; bonusMissileCount = 0; storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; storeStockShield = MAX_SHIELD_STOCK; /* Reset shield stock */ satelliteBases = []; baseShields = [null, null, null]; /* Reset shields */
             startMenuContainer.style.display = 'none'; canvas.style.display = 'block'; uiContainer.style.display = 'flex'; controlsContainer.style.display = 'flex'; screenshotButton.style.display = 'inline-block'; hideMessage(); pauseOverlay.style.display = 'none';
             cities = []; const citySpacing = (canvas.width - 6 * CITY_WIDTH) / 7; for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 1) + CITY_WIDTH * i)); for (let i = 0; i < 3; i++) cities.push(createCity(citySpacing * (i + 4) + CITY_WIDTH * (i + 3))); cities.forEach(c => c.alive = true);
             bases = []; const basePositions = [canvas.width * 0.15, canvas.width * 0.5, canvas.width * 0.85]; bases.push(createBase(basePositions[0] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[1] - BASE_WIDTH / 2)); bases.push(createBase(basePositions[2] - BASE_WIDTH / 2)); bases.forEach(b => b.alive = true);
@@ -192,7 +226,7 @@
         function calculateBonus() { let bonus = 0; cities.forEach(city => { if (city.alive) bonus += POINTS_PER_CITY; }); bases.forEach(base => { if (base.alive) bonus += base.ammo * POINTS_PER_AMMO; }); satelliteBases.forEach(sat => { if (sat.alive) bonus += sat.ammo * POINTS_PER_AMMO; }); return bonus; }
         function checkLevelEnd() { if (transitioningLevel || isGameOver || isPaused) return; if (missilesToSpawn <= 0 && incomingMissiles.every(m => !m.alive) && explosions.every(e => !e.alive)) { transitioningLevel = true; nextLevel(); } }
         function checkGameOverConditions() { if (isGameOver || !gameHasStarted) return; const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; if (basesRemaining === 0 || citiesRemaining === 0) { gameOver(); } }
-        function gameOver() { if (isGameOver) return; isGameOver = true; gameHasStarted = false; transitioningLevel = false; isPaused = false; bonusMissileCount = 0; const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; let reason = ""; if (basesRemaining === 0 && citiesRemaining === 0) { reason = "All bases and cities destroyed!"; } else if (basesRemaining === 0) { reason = "All bases destroyed!"; } else if (citiesRemaining === 0) { reason = "All cities destroyed!"; } showMessage("GAME OVER", `Final Score: $${score}`, `${reason} Level: ${level}`); restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = true; pauseOverlay.style.display = 'none'; bonusIndicator.style.display = 'none'; storeModal.style.display = 'none'; }
+        function gameOver() { if (isGameOver) return; isGameOver = true; gameHasStarted = false; transitioningLevel = false; isPaused = false; bonusMissileCount = 0; baseShields = [null, null, null]; /* Clear shields */ const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; let reason = ""; if (basesRemaining === 0 && citiesRemaining === 0) { reason = "All bases and cities destroyed!"; } else if (basesRemaining === 0) { reason = "All bases destroyed!"; } else if (citiesRemaining === 0) { reason = "All cities destroyed!"; } showMessage("GAME OVER", `Final Score: $${score}`, `${reason} Level: ${level}`); restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = true; pauseOverlay.style.display = 'none'; bonusIndicator.style.display = 'none'; storeModal.style.display = 'none'; }
 
         // --- Pause/Resume Logic ---
         function pauseGame() { if (isGameOver || transitioningLevel || !gameHasStarted || storeModal.style.display === 'block' || messageBox.style.display === 'block') return; isPaused = true; pauseOverlay.style.display = 'flex'; pauseButton.textContent = 'Resume'; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } }
@@ -207,16 +241,104 @@
         function hideMessage() { messageBox.style.display = 'none'; goToStoreButton.style.display = 'none'; skipStoreButton.style.display = 'none'; }
 
         // --- Store Logic ---
-        function updateStoreUI() { storeScoreDisplay.textContent = `Current Score: $${score}`; stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`; stockBaseDisplay.textContent = `Stock: ${storeStockBase}`; stockCityDisplay.textContent = `Stock: ${storeStockCity}`; const canRebuildBase = bases.some(b => !b.alive); const canRebuildCity = cities.some(c => !c.alive); const activeSatellites = satelliteBases.filter(s => s.alive).length; buySatelliteButton.disabled = score < COST_SATELLITE || storeStockSatellite <= 0 || activeSatellites >= MAX_ACTIVE_SATELLITES; buyBaseButton.disabled = score < COST_BASE || storeStockBase <= 0 || !canRebuildBase; buyCityButton.disabled = score < COST_CITY || storeStockCity <= 0 || !canRebuildCity; }
+        function updateStoreUI() {
+            storeScoreDisplay.textContent = `Current Score: $${score}`;
+            stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`;
+            stockBaseDisplay.textContent = `Stock: ${storeStockBase}`;
+            stockCityDisplay.textContent = `Stock: ${storeStockCity}`;
+            stockShieldDisplay.textContent = `Stock: ${storeStockShield}`; // Update shield stock
+
+            const canRebuildBase = bases.some(b => !b.alive);
+            const canRebuildCity = cities.some(c => !c.alive);
+            const activeSatellites = satelliteBases.filter(s => s.alive).length;
+            // Check if any base slot is available for a new shield
+            const canBuyShield = baseShields.some((shield, index) => bases[index].alive && (!shield || !shield.alive));
+
+            buySatelliteButton.disabled = score < COST_SATELLITE || storeStockSatellite <= 0 || activeSatellites >= MAX_ACTIVE_SATELLITES;
+            buyBaseButton.disabled = score < COST_BASE || storeStockBase <= 0 || !canRebuildBase;
+            buyCityButton.disabled = score < COST_CITY || storeStockCity <= 0 || !canRebuildCity;
+            buyShieldButton.disabled = score < COST_SHIELD || storeStockShield <= 0 || !canBuyShield; // Update shield button state
+        }
         function findAndRebuildBase() { const deadBaseIndex = bases.findIndex(b => !b.alive); if (deadBaseIndex !== -1) { bases[deadBaseIndex].alive = true; bases[deadBaseIndex].ammo = selectedDifficultyAmmo; console.log(`Base at index ${deadBaseIndex} rebuilt.`); return true; } console.log("No dead bases found to rebuild."); return false; }
         function findAndRebuildCity() { const deadCityIndex = cities.findIndex(c => !c.alive); if (deadCityIndex !== -1) { cities[deadCityIndex].alive = true; console.log(`City at index ${deadCityIndex} rebuilt.`); return true; } console.log("No dead cities found to rebuild."); return false; }
         function buyReplacementBase() { if (score >= COST_BASE && storeStockBase > 0) { if (findAndRebuildBase()) { score -= COST_BASE; storeStockBase--; updateStoreUI(); updateUI(); } else { console.log("Purchase failed: No bases to rebuild."); } } else { console.log("Purchase failed: Cannot afford or out of stock."); } }
         function buyReplacementCity() { if (score >= COST_CITY && storeStockCity > 0) { if (findAndRebuildCity()) { score -= COST_CITY; storeStockCity--; updateStoreUI(); updateUI(); } else { console.log("Purchase failed: No cities to rebuild."); } } else { console.log("Purchase failed: Cannot afford or out of stock."); } }
         function buySatellite() { const activeSatellites = satelliteBases.filter(s => s.alive).length; if (score >= COST_SATELLITE && storeStockSatellite > 0 && activeSatellites < MAX_ACTIVE_SATELLITES) { let placed = false; for (let i = 0; i < 3; i++) { const groundBaseXCenter = bases[i].x + bases[i].width / 2; const satelliteX = groundBaseXCenter - SATELLITE_WIDTH / 2; const positionOccupied = satelliteBases.some(s => s.alive && Math.abs(s.x - satelliteX) < 1); if (!positionOccupied) { score -= COST_SATELLITE; storeStockSatellite--; const newSatellite = createSatelliteBase(satelliteX, SATELLITE_Y_POS); satelliteBases.push(newSatellite); console.log(`Satellite purchased and placed at slot ${i}`); placed = true; break; } } if (!placed) { console.log("Purchase failed: Could not find placement slot."); } updateStoreUI(); updateUI(); } else { console.log("Purchase failed: Cannot afford, out of stock, or max satellites active."); } }
+        // *** NEW Buy Shield Logic ***
+        function buyShield() {
+             if (score >= COST_SHIELD && storeStockShield > 0) {
+                 // Find the first alive base that doesn't have an alive shield
+                 let shieldPlaced = false;
+                 for (let i = 0; i < bases.length; i++) {
+                     if (bases[i].alive && (!baseShields[i] || !baseShields[i].alive)) {
+                         score -= COST_SHIELD;
+                         storeStockShield--;
+                         baseShields[i] = { alive: true, strength: SHIELD_STRENGTH_START, flashTimer: 0 }; // Add flashTimer
+                         console.log(`Shield purchased for base ${i}`);
+                         shieldPlaced = true;
+                         break; // Place only one shield per purchase
+                     }
+                 }
+                 if (!shieldPlaced) {
+                     console.log("Purchase failed: No available base for a shield.");
+                 }
+                 updateStoreUI();
+                 updateUI();
+             } else {
+                 console.log("Purchase failed: Cannot afford or out of stock.");
+             }
+        }
+
 
         // --- Drawing Functions ---
         function drawBackground() { ctx.fillStyle = '#00001a'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'white'; for (let i = 0; i < 100; i++) { let x = Math.random() * canvas.width; let y = Math.random() * (canvas.height - GROUND_HEIGHT); let radius = Math.random() * 1.5; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#3b2e1a'; ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT); }
-        function drawGameObjects() { cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); satelliteBases.forEach(sat => sat.draw()); incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw()); }
+        // Updated drawGameObjects to draw shields
+        function drawGameObjects() {
+            cities.forEach(city => city.draw());
+            bases.forEach(base => base.draw());
+            satelliteBases.forEach(sat => sat.draw());
+
+            // Draw Shields
+            for (let i = 0; i < baseShields.length; i++) {
+                const shield = baseShields[i];
+                if (shield && shield.alive) {
+                    const base = bases[i];
+                    const shieldCenterX = base.x + base.width / 2;
+                    const shieldRadius = (base.width / 2) + CITY_WIDTH / 2 + 5; // Approx radius
+                    const shieldTopY = base.y - shieldRadius * 0.1; // Start arc slightly above base
+
+                    // Determine color based on strength
+                    let shieldColor = SHIELD_COLOR_25; // Default to lowest health color
+                    if (shield.strength > 75) shieldColor = SHIELD_COLOR_FULL;
+                    else if (shield.strength > 50) shieldColor = SHIELD_COLOR_75;
+                    else if (shield.strength > 25) shieldColor = SHIELD_COLOR_50;
+
+                    // Apply flash effect if timer > 0
+                    if (shield.flashTimer > 0) {
+                         shieldColor = SHIELD_FLASH_COLOR;
+                         shield.flashTimer--; // Decrement flash timer
+                    }
+
+
+                    ctx.beginPath();
+                    ctx.arc(shieldCenterX, base.y, shieldRadius, Math.PI * 1.05, Math.PI * 1.95); // Wide, shallow arc
+                    ctx.strokeStyle = shieldColor;
+                    ctx.lineWidth = 3; // Make shield line thicker
+                    // Add glow effect based on strength? Optional
+                    // ctx.shadowColor = shieldColor;
+                    // ctx.shadowBlur = shield.strength / 10;
+                    ctx.stroke();
+                    // Reset shadow if used
+                    // ctx.shadowColor = 'transparent';
+                    // ctx.shadowBlur = 0;
+                    ctx.lineWidth = 1; // Reset line width
+                }
+            }
+
+            incomingMissiles.forEach(missile => missile.draw());
+            playerMissiles.forEach(missile => missile.draw());
+            explosions.forEach(explosion => explosion.draw());
+        }
 
         // --- Update Functions ---
         function updateGameObjects() { if (!isGameOver && !transitioningLevel && missilesToSpawn > 0 && Math.random() < 0.015 * (1 + level * 0.1)) { incomingMissiles.push(createIncomingMissile()); missilesToSpawn--; } incomingMissiles.forEach(missile => missile.update()); playerMissiles.forEach(missile => missile.update()); explosions.forEach(explosion => explosion.update()); incomingMissiles = incomingMissiles.filter(missile => missile.alive); playerMissiles = playerMissiles.filter(missile => missile.alive); explosions = explosions.filter(explosion => explosion.alive); }
@@ -227,9 +349,9 @@
 
         // --- Event Listeners ---
         canvas.addEventListener('click', (event) => { if (isGameOver || isPaused || transitioningLevel || !gameHasStarted) return; const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height; const clickX = (event.clientX - rect.left) * scaleX; const clickY = (event.clientY - rect.top) * scaleY; if (clickY < 20 || clickY > canvas.height - GROUND_HEIGHT) return; let nearestSource = null; let minDistance = Infinity; bases.forEach(base => { if (base.alive && base.ammo > 0) { const sourceCenterX = base.x + base.width / 2; const sourceTopY = base.y; const d = distance(clickX, clickY, sourceCenterX, sourceTopY); if (d < minDistance) { minDistance = d; nearestSource = base; } } }); satelliteBases.forEach(sat => { if (sat.alive && sat.ammo > 0) { const sourceCenterX = sat.x + sat.width / 2; const sourceTopY = sat.y + sat.height; const d = distance(clickX, clickY, sourceCenterX, sourceTopY); if (d < minDistance) { minDistance = d; nearestSource = sat; } } }); if (nearestSource) { const startX = nearestSource.x + nearestSource.width / 2; const startY = nearestSource.isSatellite ? nearestSource.y + nearestSource.height : nearestSource.y; const totalMissilesToFire = 1 + bonusMissileCount; const actualMissilesToFire = Math.min(totalMissilesToFire, nearestSource.ammo); if (actualMissilesToFire > 0) { nearestSource.ammo -= actualMissilesToFire; for (let i = 0; i < actualMissilesToFire; i++) { const currentOffset = (i - (actualMissilesToFire - 1) / 2) * BONUS_FIRE_SPREAD; playerMissiles.push(createPlayerMissile(startX + currentOffset, startY, clickX, clickY)); } } } });
-        restartButton.addEventListener('click', () => { if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } isGameOver = true; gameHasStarted = false; isPaused = false; transitioningLevel = false; difficultySelected = false; bonusMissileCount = 0; storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; satelliteBases = []; startMenuContainer.style.display = 'flex'; canvas.style.display = 'none'; uiContainer.style.display = 'none'; controlsContainer.style.display = 'none'; pauseOverlay.style.display = 'none'; hideMessage(); actualStartButton.style.display = 'none'; document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected')); bonusIndicator.style.display = 'none'; storeModal.style.display = 'none';});
+        restartButton.addEventListener('click', () => { if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } isGameOver = true; gameHasStarted = false; isPaused = false; transitioningLevel = false; difficultySelected = false; bonusMissileCount = 0; storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; storeStockShield = MAX_SHIELD_STOCK; /* Reset */ satelliteBases = []; baseShields = [null, null, null]; /* Reset */ startMenuContainer.style.display = 'flex'; canvas.style.display = 'none'; uiContainer.style.display = 'none'; controlsContainer.style.display = 'none'; pauseOverlay.style.display = 'none'; hideMessage(); actualStartButton.style.display = 'none'; document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected')); bonusIndicator.style.display = 'none'; storeModal.style.display = 'none';});
         pauseButton.addEventListener('click', togglePause); screenshotButton.addEventListener('click', saveScreenshot);
-        storeContinueButton.addEventListener('click', proceedToNextLevel); buyBaseButton.addEventListener('click', buyReplacementBase); buyCityButton.addEventListener('click', buyReplacementCity); buySatelliteButton.addEventListener('click', buySatellite);
+        storeContinueButton.addEventListener('click', proceedToNextLevel); buyBaseButton.addEventListener('click', buyReplacementBase); buyCityButton.addEventListener('click', buyReplacementCity); buySatelliteButton.addEventListener('click', buySatellite); buyShieldButton.addEventListener('click', buyShield); /* Added listener */
         goToStoreButton.addEventListener('click', () => { hideMessage(); updateStoreUI(); storeModal.style.display = 'block'; });
         skipStoreButton.addEventListener('click', proceedToNextLevel);
         document.querySelectorAll('.difficulty-button').forEach(button => { button.addEventListener('click', (event) => { selectedDifficultyAmmo = parseInt(event.target.getAttribute('data-ammo'), 10); difficultySelected = true; document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected')); event.target.classList.add('selected'); actualStartButton.style.display = 'inline-block'; actualStartButton.disabled = false; }); });
