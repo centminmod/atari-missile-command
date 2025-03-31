@@ -11,7 +11,9 @@
             height: 100%; /* Ensure body takes full height */
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Prevent scrollbars */
+            /* Changed overflow to auto to allow scrolling if footer makes page long */
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         body {
             display: flex;
@@ -36,12 +38,10 @@
         }
 
         /* --- Game Canvas Container --- */
-        /* Added a container for better centering and aspect ratio control */
         #canvasContainer {
             position: relative; /* Needed for absolute positioning of overlays */
             width: 100%;
             max-width: 800px; /* Max width like original */
-            /* Maintain aspect ratio (800/600 = 4/3) */
             aspect-ratio: 800 / 600;
             margin: 0 auto; /* Center the container */
         }
@@ -53,11 +53,10 @@
             border: 2px solid #00ff00;
             box-shadow: 0 0 15px #00ff00;
             cursor: crosshair;
-            /* Make canvas fill its container */
             width: 100%;
             height: 100%;
-            image-rendering: pixelated; /* Keep pixels sharp */
-            position: absolute; /* Position within the container */
+            image-rendering: pixelated;
+            position: absolute;
             top: 0;
             left: 0;
         }
@@ -65,33 +64,33 @@
         /* --- UI Container (Score, Level, etc.) --- */
         #uiContainer {
             display: none; /* Hidden initially */
-            flex-wrap: wrap; /* Allow items to wrap */
-            justify-content: space-around; /* Space out items */
+            flex-wrap: wrap;
+            justify-content: space-around;
             align-items: center;
-            width: 100%; /* Take full width */
-            max-width: 800px; /* Limit max width */
+            width: 100%;
+            max-width: 800px;
             padding: 8px 0;
-            font-size: clamp(10px, 2.5vw, 14px); /* Responsive font size */
-            gap: 10px; /* Add gap between items */
+            font-size: clamp(10px, 2.5vw, 14px);
+            gap: 10px;
         }
         #bonusIndicator {
-            color: #ffaa00; /* Orange for bonus */
+            color: #ffaa00;
             font-weight: bold;
             text-shadow: 1px 1px #000;
-            display: none; /* Hidden initially */
-            order: 5; /* Position it last in the flex row */
-            text-align: center; /* Center text if it wraps */
+            display: none;
+            order: 5;
+            text-align: center;
         }
 
         /* --- Controls Container (Buttons below canvas) --- */
         #controlsContainer {
             margin-top: 10px;
             display: none; /* Hidden initially */
-            flex-wrap: wrap; /* Allow buttons to wrap */
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 10px; /* Space between buttons */
+            gap: 10px;
             width: 100%;
-            max-width: 800px; /* Limit width */
+            max-width: 800px;
         }
 
         /* --- Special Weapons UI Area --- */
@@ -99,15 +98,15 @@
             background-color: #222;
             border: 1px solid #444;
             border-radius: 8px;
-            padding: 8px 10px; /* Slightly reduced padding */
+            padding: 8px 10px;
             margin-top: 10px;
             display: none; /* Hidden initially */
-            flex-wrap: wrap; /* Allow wrapping */
-            gap: 15px; /* Reduced gap */
+            flex-wrap: wrap;
+            gap: 15px;
             justify-content: center;
             align-items: center;
-            width: auto; /* Fit content */
-            max-width: 95%; /* Limit width */
+            width: auto;
+            max-width: 95%;
         }
         .weaponControl {
             display: flex;
@@ -131,7 +130,7 @@
             cursor: not-allowed;
         }
         .weaponIcon {
-            font-size: clamp(18px, 4vw, 24px); /* Responsive icon size */
+            font-size: clamp(18px, 4vw, 24px);
              width: 30px;
              height: 30px;
              line-height: 30px;
@@ -141,7 +140,7 @@
              margin-bottom: 4px;
         }
         .weaponCount {
-            font-size: clamp(10px, 2vw, 12px); /* Responsive count size */
+            font-size: clamp(10px, 2vw, 12px);
             color: #ffff00;
         }
 
@@ -151,27 +150,27 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 600px; /* Limit width */
+            max-width: 600px;
             padding: 10px;
             box-sizing: border-box;
         }
         #difficultySelection {
             display: flex;
             flex-direction: column;
-            align-items: stretch; /* Make buttons full width */
-            gap: 10px; /* Reduced gap */
+            align-items: stretch;
+            gap: 10px;
             margin-top: 0;
-            padding: 15px; /* Reduced padding */
+            padding: 15px;
             border: 2px solid #ffff00;
             border-radius: 10px;
             background-color: rgba(30, 30, 0, 0.5);
-            width: 100%; /* Take full width of container */
+            width: 100%;
             box-sizing: border-box;
         }
         #difficultySelection h3 {
             margin: 0 0 10px 0;
             color: #ffff00;
-            font-size: clamp(16px, 4vw, 18px); /* Responsive font size */
+            font-size: clamp(16px, 4vw, 18px);
             text-align: center;
         }
 
@@ -181,21 +180,21 @@
             background-color: #333;
             color: #00ff00;
             border: 2px solid #00ff00;
-            padding: 8px 15px; /* Slightly smaller padding */
-            font-size: clamp(12px, 3vw, 16px); /* Responsive font size */
+            padding: 8px 15px;
+            font-size: clamp(12px, 3vw, 16px);
             cursor: pointer;
-            box-shadow: 0 0 8px #00ff00 inset; /* Reduced shadow */
+            box-shadow: 0 0 8px #00ff00 inset;
             transition: background-color 0.3s, box-shadow 0.3s, color 0.3s, border-color 0.3s;
             border-radius: 5px;
             white-space: nowrap;
-            flex-grow: 0; /* Prevent buttons from growing excessively */
-            flex-shrink: 1; /* Allow buttons to shrink */
+            flex-grow: 0;
+            flex-shrink: 1;
         }
         .difficulty-button {
             border-color: #ffff00;
             color: #ffff00;
             box-shadow: 0 0 8px #ffff00 inset;
-            min-width: auto; /* Remove fixed min-width */
+            min-width: auto;
             text-align: center;
         }
         .difficulty-button:hover:not(:disabled),
@@ -209,7 +208,7 @@
             color: #fff;
         }
         #actualStartButton {
-            margin-top: 20px; /* Reduced margin */
+            margin-top: 20px;
             display: none;
         }
         button:hover:not(:disabled),
@@ -231,31 +230,32 @@
 
         /* --- Message Box --- */
         #messageBox {
-            position: absolute;
-            /* Center using absolute positioning and transform */
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9); /* Slightly more opaque */
+            background-color: rgba(0, 0, 0, 0.9);
             border: 3px solid #ff0000;
-            padding: 20px; /* Reduced padding */
+            padding: 20px;
             text-align: center;
             color: #ff0000;
             display: none;
-            z-index: 10;
+            z-index: 30;
             box-shadow: 0 0 20px #ff0000;
             border-radius: 10px;
-            width: 85%; /* Use percentage width */
-            max-width: 500px; /* Keep max width */
+            width: 85%;
+            max-width: 500px;
             box-sizing: border-box;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         #messageBox h2 {
             margin: 0 0 10px 0;
-            font-size: clamp(20px, 5vw, 32px); /* Responsive font size */
+            font-size: clamp(20px, 5vw, 32px);
         }
         #messageBox p {
             margin: 5px 0 10px 0;
-            font-size: clamp(12px, 3vw, 16px); /* Responsive font size */
+            font-size: clamp(12px, 3vw, 16px);
             color: #ffff00;
         }
         #messageBox p.bonus-alert {
@@ -266,7 +266,7 @@
         .messageBoxButtons {
             margin-top: 15px;
             display: flex;
-            flex-wrap: wrap; /* Allow buttons to wrap */
+            flex-wrap: wrap;
             justify-content: center;
             gap: 10px;
         }
@@ -283,10 +283,10 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.7);
             color: #ffff00;
-            display: none; /* Hidden initially */
+            display: none;
             align-items: center;
             justify-content: center;
-            font-size: clamp(30px, 10vw, 48px); /* Responsive font size */
+            font-size: clamp(30px, 10vw, 48px);
             text-shadow: 3px 3px #ff0000;
             z-index: 15;
             pointer-events: none;
@@ -294,43 +294,40 @@
 
         /* --- Inter-Level Store Modal --- */
         #storeModal {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%; /* Percentage width */
+            width: 90%;
             max-width: 600px;
             background-color: rgba(0, 20, 0, 0.9);
             border: 3px solid #00ff00;
             border-radius: 15px;
             box-shadow: 0 0 25px #00ff00;
-            padding: 15px; /* Reduced padding */
+            padding: 15px;
             z-index: 20;
             display: none;
             color: #00ff00;
-            font-size: clamp(11px, 2.5vw, 13.5px); /* Responsive font size */
+            font-size: clamp(11px, 2.5vw, 13.5px);
             box-sizing: border-box;
-            /* Allow scrolling if content overflows on small screens */
-            max-height: 80vh; /* Limit height */
-            overflow-y: auto; /* Add scrollbar if needed */
+            max-height: 80vh;
+            overflow-y: auto;
         }
         #storeModal h2 {
-            font-size: clamp(20px, 5vw, 28px); /* Responsive font size */
+            font-size: clamp(20px, 5vw, 28px);
             margin: 0 0 15px 0;
             text-align: center;
             color: #ffff00;
         }
         #storeScore {
-            font-size: clamp(14px, 3.5vw, 18px); /* Responsive font size */
+            font-size: clamp(14px, 3.5vw, 18px);
             margin-bottom: 15px;
             text-align: center;
             color: #fff;
         }
-        /* Container for 2-column layout */
         #storeItemsContainer {
             display: grid;
-            /* Use auto-fit to create responsive columns */
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Min width 180px, grow to fill */
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 10px;
             margin-bottom: 15px;
         }
@@ -356,12 +353,12 @@
         }
         .itemStock {
             color: #aaa;
-            font-size: clamp(10px, 2vw, 12px); /* Responsive font size */
+            font-size: clamp(10px, 2vw, 12px);
         }
         .buyButton {
-            padding: 6px 12px; /* Smaller padding */
-            font-size: clamp(11px, 2.5vw, 14px); /* Responsive font size */
-            min-width: auto; /* Remove min width */
+            padding: 6px 12px;
+            font-size: clamp(11px, 2.5vw, 14px);
+            min-width: auto;
             align-self: flex-end;
         }
         #storeContinueButton {
@@ -369,9 +366,32 @@
             margin: 20px auto 0 auto;
         }
 
+        /* --- Footer --- */
+        footer {
+            width: 100%;
+            max-width: 800px; /* Match other content width */
+            margin-top: 20px; /* Space above footer */
+            padding: 10px 0;
+            text-align: center;
+            border-top: 1px solid #005500; /* Subtle green border */
+            font-size: clamp(10px, 2.5vw, 12px); /* Smaller font size */
+        }
+        footer a {
+            color: #00ff00; /* Green links */
+            text-decoration: none;
+            margin: 0 10px; /* Spacing between links */
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+        footer a:hover,
+        footer a:focus {
+            color: #ffff00; /* Yellow hover */
+            text-shadow: 0 0 5px #ffff00; /* Yellow glow */
+            outline: none;
+        }
+
+
         /* --- Media Queries for Smaller Screens --- */
         @media (max-width: 768px) {
-            /* Further reduce gaps and padding on smaller tablets/large phones */
              #uiContainer { gap: 8px; padding: 5px 0; }
              #controlsContainer { gap: 8px; }
              #specialWeaponsUI { gap: 10px; padding: 6px 8px; }
@@ -380,19 +400,20 @@
              #messageBox { padding: 15px; }
              #storeModal { padding: 10px; }
              #storeItemsContainer { gap: 8px; }
+             footer { margin-top: 15px; }
+             footer a { margin: 0 8px; }
         }
 
         @media (max-width: 480px) {
-            /* Styles for small mobile screens */
             body { padding: 5px; }
             h1#mainTitle { font-size: 18px; margin-bottom: 10px; }
-            #uiContainer { font-size: 9px; gap: 5px; justify-content: space-between;} /* Ensure space */
+            #uiContainer { font-size: 9px; gap: 5px; justify-content: space-between;}
             #controlsContainer { gap: 5px; }
             #specialWeaponsUI { gap: 8px; padding: 5px; }
             #difficultySelection { padding: 8px; gap: 6px; }
             #difficultySelection h3 { font-size: 14px; margin-bottom: 8px; }
             button { padding: 5px 10px; font-size: 10px; }
-            .difficulty-button { font-size: 11px; } /* Keep difficulty slightly larger */
+            .difficulty-button { font-size: 11px; }
             #messageBox { padding: 10px; width: 90%; }
             #messageBox h2 { font-size: 18px; }
             #messageBox p { font-size: 11px; }
@@ -400,11 +421,13 @@
             #storeModal { padding: 8px; width: 95%; }
             #storeModal h2 { font-size: 18px; }
             #storeScore { font-size: 12px; }
-            #storeItemsContainer { grid-template-columns: 1fr; } /* Stack items in store */
+            #storeItemsContainer { grid-template-columns: 1fr; } /* Stack items */
             .storeItemInfo span { font-size: 10px; }
             .itemStock { font-size: 9px; }
             .buyButton { padding: 4px 8px; font-size: 10px; }
             #pauseOverlay { font-size: 24px; }
+            footer { margin-top: 10px; font-size: 9px; padding: 8px 0;}
+            footer a { display: block; margin: 5px auto; } /* Stack links vertically */
         }
 
     </style>
@@ -434,79 +457,6 @@
     <div id="canvasContainer">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         <div id="pauseOverlay">PAUSED</div>
-        <div id="messageBox">
-            <h2 id="messageTitle"></h2>
-            <p id="messageText"></p>
-            <p id="messageSubText"></p>
-            <p id="messageBonusText" class="bonus-alert"></p>
-            <div class="messageBoxButtons">
-                <button id="goToStoreButton">Go to Store</button>
-                <button id="skipStoreButton">Next Level</button>
-            </div>
-        </div>
-        <div id="storeModal">
-            <h2>Inter-Level Store</h2>
-            <div id="storeScore">Current Score: $0</div>
-            <div id="storeItemsContainer">
-                <div class="storeItem">
-                    <div class="storeItemInfo">
-                        <span>Sonic Wave</span>
-                        <span class="itemCost">Cost: $1000</span>
-                        <span class="itemStock" id="stockSonicWave">Stock: 6</span>
-                    </div>
-                    <button class="buyButton" id="buySonicWaveButton">BUY</button>
-                </div>
-                <div class="storeItem">
-                    <div class="storeItemInfo">
-                        <span>Mega Bomb</span>
-                        <span class="itemCost">Cost: $500</span>
-                        <span class="itemStock" id="stockBomb">Stock: 12</span>
-                    </div>
-                    <button class="buyButton" id="buyBombButton">BUY</button>
-                </div>
-                <div class="storeItem">
-                    <div class="storeItemInfo">
-                        <span>Satellite Base (Max 3)</span>
-                        <span class="itemCost">Cost: $4000</span>
-                        <span class="itemStock" id="stockSatellite">Stock: 6</span>
-                    </div>
-                    <button class="buyButton" id="buySatelliteButton">BUY</button>
-                </div>
-                <div class="storeItem">
-                    <div class="storeItemInfo">
-                        <span>Satellite Shield</span>
-                        <span class="itemCost">Cost: $250</span>
-                        <span class="itemStock" id="stockSatShield">Stock: 100</span>
-                    </div>
-                    <button class="buyButton" id="buySatShieldButton">BUY</button>
-                </div>
-                <div class="storeItem">
-                    <div class="storeItemInfo">
-                        <span>Replacement Base</span>
-                        <span class="itemCost">Cost: $1000</span>
-                        <span class="itemStock" id="stockBase">Stock: 6</span>
-                    </div>
-                    <button class="buyButton" id="buyBaseButton">BUY</button>
-                </div>
-                <div class="storeItem">
-                    <div class="storeItemInfo">
-                        <span>Replacement City</span>
-                        <span class="itemCost">Cost: $2000</span>
-                        <span class="itemStock" id="stockCity">Stock: 6</span>
-                    </div>
-                    <button class="buyButton" id="buyCityButton">BUY</button>
-                </div>
-                <div class="storeItem">
-                    <div class="storeItemInfo">
-                        <span>Base Shield</span>
-                        <span class="itemCost">Cost: $250</span>
-                        <span class="itemStock" id="stockShield">Stock: 100</span>
-                    </div>
-                    <button class="buyButton" id="buyShieldButton">BUY</button>
-                </div>
-            </div>
-            <button id="storeContinueButton">Continue to Next Level</button>
-        </div>
     </div>
 
     <div id="specialWeaponsUI">
@@ -525,6 +475,88 @@
         <button id="pauseButton" style="display: none;">Pause</button>
         <button id="screenshotButton" style="display: none;">Save Screenshot</button>
     </div>
+
+    <div id="messageBox">
+        <h2 id="messageTitle"></h2>
+        <p id="messageText"></p>
+        <p id="messageSubText"></p>
+        <p id="messageBonusText" class="bonus-alert"></p>
+        <div class="messageBoxButtons">
+            <button id="goToStoreButton">Go to Store</button>
+            <button id="skipStoreButton">Next Level</button>
+        </div>
+    </div>
+    <div id="storeModal">
+        <h2>Inter-Level Store</h2>
+        <div id="storeScore">Current Score: $0</div>
+        <div id="storeItemsContainer">
+            <div class="storeItem">
+                <div class="storeItemInfo">
+                    <span>Sonic Wave</span>
+                    <span class="itemCost">Cost: $1000</span>
+                    <span class="itemStock" id="stockSonicWave">Stock: 6</span>
+                </div>
+                <button class="buyButton" id="buySonicWaveButton">BUY</button>
+            </div>
+            <div class="storeItem">
+                <div class="storeItemInfo">
+                    <span>Mega Bomb</span>
+                    <span class="itemCost">Cost: $500</span>
+                    <span class="itemStock" id="stockBomb">Stock: 12</span>
+                </div>
+                <button class="buyButton" id="buyBombButton">BUY</button>
+            </div>
+            <div class="storeItem">
+                <div class="storeItemInfo">
+                    <span>Satellite Base (Max 3)</span>
+                    <span class="itemCost">Cost: $4000</span>
+                    <span class="itemStock" id="stockSatellite">Stock: 6</span>
+                </div>
+                <button class="buyButton" id="buySatelliteButton">BUY</button>
+            </div>
+            <div class="storeItem">
+                <div class="storeItemInfo">
+                    <span>Satellite Shield</span>
+                    <span class="itemCost">Cost: $250</span>
+                    <span class="itemStock" id="stockSatShield">Stock: 100</span>
+                </div>
+                <button class="buyButton" id="buySatShieldButton">BUY</button>
+            </div>
+            <div class="storeItem">
+                <div class="storeItemInfo">
+                    <span>Replacement Base</span>
+                    <span class="itemCost">Cost: $1000</span>
+                    <span class="itemStock" id="stockBase">Stock: 6</span>
+                </div>
+                <button class="buyButton" id="buyBaseButton">BUY</button>
+            </div>
+            <div class="storeItem">
+                <div class="storeItemInfo">
+                    <span>Replacement City</span>
+                    <span class="itemCost">Cost: $2000</span>
+                    <span class="itemStock" id="stockCity">Stock: 6</span>
+                </div>
+                <button class="buyButton" id="buyCityButton">BUY</button>
+            </div>
+            <div class="storeItem">
+                <div class="storeItemInfo">
+                    <span>Base Shield</span>
+                    <span class="itemCost">Cost: $250</span>
+                    <span class="itemStock" id="stockShield">Stock: 100</span>
+                </div>
+                <button class="buyButton" id="buyShieldButton">BUY</button>
+            </div>
+        </div>
+        <button id="storeContinueButton">Continue to Next Level</button>
+    </div>
+
+    
+
+<footer>
+        <a href="https://x.com/George_SLiu" target="_blank" rel="noopener noreferrer">Twitter</a>
+        <a href="https://www.threads.net/@george_sl_liu" target="_blank" rel="noopener noreferrer">Threads</a>
+        <a href="https://bsky.app/profile/georgesl.bsky.social" target="_blank" rel="noopener noreferrer">BlueSky</a>
+    </footer>
 
 
     <script>
