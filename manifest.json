@@ -1,0 +1,36 @@
+{
+  "name": "Missile Command",
+  "short_name": "Missile Cmd",
+  "description": "Missile Command - Atari Classic Clone Game",
+  "start_url": "/index.html", // Or just "/" if index.html is the default server page
+  "display": "standalone", // Opens in its own window, like a native app
+  "background_color": "#000000", // Color shown on the splash screen before the app loads
+  "theme_color": "#000000", // Color for the browser UI elements (like the title bar)
+  "orientation": "landscape", // Suggests the app is best viewed in landscape mode
+  "icons": [
+    {
+      "src": "android-launchericon-512-512.png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "android-launchericon-192-192.png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "android-launchericon-144-144.png",
+      "sizes": "144x144"
+    },
+    {
+      "src": "android-launchericon-96-96.png",
+      "sizes": "96x96"
+    },
+    {
+      "src": "android-launchericon-72-72.png",
+      "sizes": "72x72"
+    },
+    {
+      "src": "android-launchericon-48-48.png",
+      "sizes": "48x48"
+    }
+  ]
+}

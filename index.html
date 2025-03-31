@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description" content="Missile Command - Atari Classic Clone Game">
+    <meta name="theme-color" content="#000000"/>
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Missile Cmd">
     <title>Missile Command</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -622,16 +630,16 @@
         <a href="https://bsky.app/profile/georgesl.bsky.social" target="_blank" rel="noopener noreferrer">BlueSky</a>
 
         <a href="https://github.com/sponsors/centminmod" target="_blank" rel="noopener noreferrer">
-            <img src="https://img.shields.io/github/sponsors/centminmod" alt="GitHub Sponsors">
+            <img src="https://img.shields.io/github/sponsors/centminmod" alt="GitHub Sponsors" loading="lazy">
         </a>
         <a href="https://github.com/centminmod/atari-missile-command/stargazers" target="_blank" rel="noopener noreferrer">
-            <img src="https://img.shields.io/github/stars/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub stars">
+            <img src="https://img.shields.io/github/stars/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub stars" loading="lazy">
         </a>
         <a href="https://github.com/centminmod/atari-missile-command/network" target="_blank" rel="noopener noreferrer">
-            <img src="https://img.shields.io/github/forks/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub forks">
+            <img src="https://img.shields.io/github/forks/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub forks" loading="lazy">
         </a>
         <a href="https://github.com/centminmod/atari-missile-command/issues" target="_blank" rel="noopener noreferrer">
-            <img src="https://img.shields.io/github/issues/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub issues">
+            <img src="https://img.shields.io/github/issues/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub issues" loading="lazy">
         </a>
     </footer>
 
@@ -1618,6 +1626,24 @@
             pauseButton.style.display = 'none';
             screenshotButton.style.display = 'none';
             bonusIndicator.style.display = 'none';
+
+            // --- PWA: Register Service Worker ---
+            // Check if the browser supports service workers
+            if ('serviceWorker' in navigator) {
+                // Register the service worker file (sw.js)
+                navigator.serviceWorker.register('/sw.js') // Path relative to the root of your site
+                .then((registration) => {
+                    // Log success
+                    console.log('[Service Worker] registered with scope:', registration.scope);
+                })
+                .catch((error) => {
+                    // Log failure
+                    console.error('[Service Worker] registration failed:', error);
+                });
+            } else {
+                // Log if service workers are not supported
+                console.log('[Service Worker] not supported in this browser.');
+            }
         };
 
         // Optional: Add resize listener if complex dynamic resizing is needed,
