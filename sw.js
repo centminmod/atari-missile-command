@@ -2,7 +2,7 @@
 
 // --- Configuration ---
 // Increment this version number when you update any assets in urlsToCache
-const APP_VERSION = 'v3';
+const APP_VERSION = 'v4';
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
 
 // List of assets to cache on installation
@@ -17,8 +17,9 @@ const urlsToCache = [
   '/icons/android-launchericon-96-96.png',
   '/icons/android-launchericon-72-72.png',
   '/icons/android-launchericon-48-48.png',
-  // Cache the Google Font CSS (using no-cors mode)
-  'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap',
+  '/css/fonts.css',
+  '/fonts/press-start-2p-v15-latin-regular.woff2'
+  '/fonts/press-start-2p-v15-latin-regular.ttf'
 ];
 
 // --- Installation Event ---
