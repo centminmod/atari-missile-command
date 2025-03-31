@@ -296,23 +296,25 @@
         /* --- Inter-Level Store Modal --- */
         #storeModal {
             position: fixed;
-            top: 35%;
+            /* Change top to center it more reliably */
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%;
+            width: 90%; /* Or 95% in the media query */
             max-width: 600px;
+            /* Reduce max-height slightly for more breathing room */
+            max-height: 75vh; /* Try 75vh or even 70vh */
             background-color: rgba(0, 20, 0, 0.9);
             border: 3px solid #00ff00;
             border-radius: 15px;
             box-shadow: 0 0 25px #00ff00;
-            padding: 15px;
+            padding: 15px; /* Or adjusted padding from media query */
             z-index: 20;
-            display: none;
+            display: none; /* Initially hidden */
             color: #00ff00;
             font-size: clamp(11px, 2.5vw, 13.5px);
             box-sizing: border-box;
-            max-height: 80vh;
-            overflow-y: auto;
+            overflow-y: auto; /* Ensure this is still present */
         }
         #storeModal h2 {
             font-size: clamp(20px, 5vw, 28px);
@@ -403,6 +405,34 @@
              #storeItemsContainer { gap: 8px; }
              footer { margin-top: 15px; }
              footer a { margin: 0 8px; }
+            .storeItem {
+                flex-direction: row;      /* Arrange children (info, button) horizontally */
+                align-items: center;    /* Vertically center info and button in the row */
+                justify-content: space-between; /* Push info left, button right */
+                padding: 8px 10px;      /* Adjust padding */
+                min-height: 0;          /* Remove minimum height */
+                gap: 10px;              /* Add space between info and button */
+            }
+
+            .storeItemInfo {
+                margin-bottom: 0;       /* Remove bottom margin */
+                flex-grow: 1;           /* Allow info block to take up available space */
+            }
+
+            .storeItemInfo span {
+                display: block;
+                margin-bottom: 2px;     /* Slightly reduce space between info lines */
+                line-height: 1.2;       /* Adjust line height */
+                /* Base font size for this breakpoint (can be inherited or set here) */
+                /* font-size: 11px; /* Example if needed */
+            }
+
+            .buyButton {
+                align-self: center;
+                flex-shrink: 0;         /* Prevent button from shrinking */
+                 /* Use the general button padding defined above (6px 12px) */
+                 /* Or define specific padding if needed: padding: 5px 10px; */
+            }
         }
 
         @media (max-width: 480px) {
@@ -421,10 +451,30 @@
             #messageBox h2 { font-size: 18px; }
             #messageBox p { font-size: 11px; }
             .messageBoxButtons { gap: 8px; }
-            #storeModal { padding: 8px; width: 95%; }
+            #storeModal { padding: 8px; width: 95%; max-height: 70vh; }
             #storeModal h2 { font-size: 18px; }
             #storeScore { font-size: 12px; }
             #storeItemsContainer { grid-template-columns: 1fr; } /* Stack items */
+            /* Overrides for store items on the smallest screens */
+            .storeItem {
+                 padding: 6px 8px; /* Further reduced padding */
+                 gap: 8px;         /* Adjust gap if needed */
+                 /* inherits flex-direction: row etc. from 768px block */
+            }
+
+            .storeItemInfo span {
+                font-size: 10px;    /* Keep small font size */
+                margin-bottom: 1px; /* Further tighten lines */
+                line-height: 1.15;  /* Further tighten lines */
+            }
+            .itemStock {
+                font-size: 9px;     /* Keep small font size */
+            }
+            .buyButton {
+                padding: 4px 8px;   /* Keep specific small padding */
+                font-size: 10px;    /* Keep specific small font size */
+                 /* inherits flex-shrink: 0 etc. from 768px block */
+            }
             .storeItemInfo span { font-size: 10px; }
             .itemStock { font-size: 9px; }
             .buyButton { padding: 4px 8px; font-size: 10px; }
