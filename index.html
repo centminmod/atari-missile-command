@@ -292,7 +292,7 @@
             text-align: center;
             color: #fff; /* White score */
         }
-        /* *** NEW: Container for 2-column layout *** */
+        /* Container for 2-column layout */
         #storeItemsContainer {
             display: grid;
             grid-template-columns: repeat(2, 1fr); /* Two equal columns */
@@ -300,11 +300,6 @@
             margin-bottom: 20px; /* Space before continue button */
         }
         .storeItem {
-            /* Removed flex display, grid handles layout */
-            /* display: flex; */
-            /* justify-content: space-between; */
-            /* align-items: center; */
-            /* margin-bottom: 15px; */ /* Gap handles spacing */
             padding: 10px;
             background-color: rgba(0, 50, 0, 0.7); /* Darker green item background */
             border-radius: 5px;
@@ -315,8 +310,6 @@
             min-height: 100px; /* Ensure items have some height */
         }
         .storeItemInfo {
-            /* flex-grow: 1; */ /* Not needed with column layout */
-            /* margin-right: 15px; */ /* Not needed */
             margin-bottom: 10px; /* Space between info and button */
         }
         .storeItemInfo span {
@@ -458,8 +451,7 @@
                 </div>
                 <button class="buyButton" id="buyShieldButton">BUY</button>
             </div>
-            </div>
-        <button id="storeContinueButton">Continue to Next Level</button>
+            </div> <button id="storeContinueButton">Continue to Next Level</button>
     </div>
 
 
@@ -771,7 +763,10 @@
         function nextLevel() {
             level++; // Increment level counter
             let bonusEarned = calculateBonus(); // Calculate score bonus
-            score += bonusEarned;
+            score += bonusEarned; // Add bonus to score
+
+            // *** FIX: Update the main UI score display immediately ***
+            updateUI();
 
             // Calculate bonus missile changes based on city survival
             const citiesSurvived = cities.filter(c => c.alive).length;
@@ -808,6 +803,8 @@
             bombControl.classList.remove('armed');
 
             // Show level clear message with store options
+            // Note: The score displayed here (`bonusEarned`) is just the bonus amount,
+            // but the main score (updated above) and store score will show the total.
             showMessage(`LEVEL ${level - 1} CLEARED`, `Score Bonus: $${bonusEarned}`, "", bonusChangeMsg);
             goToStoreButton.style.display = 'inline-block'; // Show store button
             skipStoreButton.style.display = 'inline-block'; // Show skip button
