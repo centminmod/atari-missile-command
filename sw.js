@@ -123,6 +123,3 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
-```
-
-Remember to **increment the `APP_VERSION` constant** at the top whenever you make changes to your `index.html` or any other assets listed in `urlsToCache` that you want users to recei
