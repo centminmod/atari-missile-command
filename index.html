@@ -231,9 +231,10 @@
         /* --- Message Box --- */
         #messageBox {
             position: fixed;
-            top: 50%;
+            /* Adjusted top position - try 35% instead of 50% */
+            top: 35%;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%); /* Still center relative to the new top */
             background-color: rgba(0, 0, 0, 0.9);
             border: 3px solid #ff0000;
             padding: 20px;
@@ -295,7 +296,7 @@
         /* --- Inter-Level Store Modal --- */
         #storeModal {
             position: fixed;
-            top: 50%;
+            top: 35%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 90%;
@@ -415,6 +416,8 @@
             button { padding: 5px 10px; font-size: 10px; }
             .difficulty-button { font-size: 11px; }
             #messageBox { padding: 10px; width: 90%; }
+             /* Slightly adjust message box position for very small screens if needed */
+             /* #messageBox { top: 42%; } */
             #messageBox h2 { font-size: 18px; }
             #messageBox p { font-size: 11px; }
             .messageBoxButtons { gap: 8px; }
@@ -550,7 +553,7 @@
         <button id="storeContinueButton">Continue to Next Level</button>
     </div>
 
-    
+
 
 <footer>
         <a href="https://x.com/George_SLiu" target="_blank" rel="noopener noreferrer">Twitter</a>
