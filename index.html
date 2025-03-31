@@ -383,18 +383,26 @@
             max-width: 800px; /* Match other content width */
             margin-top: 20px; /* Space above footer */
             padding: 10px 0;
-            text-align: center;
+            /* text-align: center; Removed for flex */
             border-top: 1px solid #005500; /* Subtle green border */
             font-size: clamp(10px, 2.5vw, 12px); /* Smaller font size */
+            /* --- ADDED FLEXBOX FOR DESKTOP --- */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping if needed */
+            gap: 10px; /* Add gap between link groups */
         }
+        /* General link styling for the footer */
         footer a {
             color: #00ff00; /* Green links */
             text-decoration: none;
-            margin: 0 10px; /* Spacing between links */
+            /* margin: 0 10px; Adjusted below for within groups */
             transition: color 0.3s, text-shadow 0.3s;
             display: inline-block; /* Ensure links behave like blocks for margin */
             vertical-align: middle; /* Align links vertically */
             line-height: 1; /* Prevent extra line height */
+            margin: 0 5px; /* Spacing within a group */
         }
         footer a:hover,
         footer a:focus {
@@ -405,10 +413,17 @@
         /* Style for the badge images inside the footer links */
         footer a img {
             vertical-align: middle; /* Align badges vertically with text */
-            margin: 0 5px; /* Add small horizontal space around badges */
+            margin: 0 3px; /* Add small horizontal space around badges */
             height: 20px; /* Set a consistent height for badges */
             width: auto; /* Maintain aspect ratio */
         }
+        /* Link group containers - no specific style needed by default with flex */
+        footer .link-group {
+             /* display: block; Removed - Flex handles layout */
+             /* Add some margin between groups if flex gap isn't enough or preferred */
+             /* margin: 0 10px; */
+        }
+
 
         /* --- Media Queries for Smaller Screens --- */
         @media (max-width: 768px) {
@@ -420,9 +435,9 @@
              #messageBox { padding: 15px; }
              #storeModal { padding: 10px; }
              #storeItemsContainer { gap: 8px; }
-             footer { margin-top: 15px; }
-             footer a { margin: 0 8px; }
-             footer a img { margin: 0 3px; height: 18px; } /* Adjust badge spacing/size */
+             footer { margin-top: 15px; gap: 8px; /* Adjust gap */ }
+             footer a { margin: 0 4px; } /* Adjust link margin */
+             footer a img { margin: 0 2px; height: 18px; } /* Adjust badge spacing/size */
             .storeItem {
                 flex-direction: row;      /* Arrange children (info, button) horizontally */
                 align-items: center;    /* Vertically center info and button in the row */
@@ -497,10 +512,33 @@
             .itemStock { font-size: 9px; }
             .buyButton { padding: 4px 8px; font-size: 10px; }
             #pauseOverlay { font-size: 24px; }
-            footer { margin-top: 10px; font-size: 9px; padding: 8px 0;}
-            /* Stack all footer items vertically on small screens */
-            footer a { display: block; margin: 5px auto; }
-            footer a img { margin: 0 2px; height: 16px; } /* Adjust badge spacing/size */
+
+            /* --- FOOTER STYLES for < 480px --- */
+            footer {
+                margin-top: 10px;
+                font-size: 9px;
+                padding: 8px 0;
+                display: block; /* Override flex for stacking */
+                text-align: center; /* Center the block elements */
+            }
+            /* Ensure each group takes its own line */
+            footer .link-group {
+                display: block; /* Each group is a block element */
+                margin-bottom: 5px; /* Add space between the groups */
+                text-align: center; /* Center the links within the group */
+            }
+            /* Style links within each group to be inline */
+            footer .link-group a {
+                display: inline-block; /* Links are inline within their group */
+                margin: 2px 5px; /* Adjust spacing around links */
+                vertical-align: middle; /* Keep vertical alignment consistent */
+            }
+            /* Adjust badge size and margin for small screens */
+            footer .link-group a img {
+                margin: 0 2px;
+                height: 16px;
+            }
+            /* --- END FOOTER STYLES --- */
         }
 
     </style>
@@ -625,22 +663,25 @@
     </div>
 
     <footer>
-        <a href="https://x.com/George_SLiu" target="_blank" rel="noopener noreferrer">Twitter</a>
-        <a href="https://www.threads.net/@george_sl_liu" target="_blank" rel="noopener noreferrer">Threads</a>
-        <a href="https://bsky.app/profile/georgesl.bsky.social" target="_blank" rel="noopener noreferrer">BlueSky</a>
-
-        <a href="https://github.com/sponsors/centminmod" target="_blank" rel="noopener noreferrer">
-            <img src="https://img.shields.io/github/sponsors/centminmod" alt="GitHub Sponsors" loading="lazy">
-        </a>
-        <a href="https://github.com/centminmod/atari-missile-command/stargazers" target="_blank" rel="noopener noreferrer">
-            <img src="https://img.shields.io/github/stars/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub stars" loading="lazy">
-        </a>
-        <a href="https://github.com/centminmod/atari-missile-command/network" target="_blank" rel="noopener noreferrer">
-            <img src="https://img.shields.io/github/forks/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub forks" loading="lazy">
-        </a>
-        <a href="https://github.com/centminmod/atari-missile-command/issues" target="_blank" rel="noopener noreferrer">
-            <img src="https://img.shields.io/github/issues/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub issues" loading="lazy">
-        </a>
+        <div class="link-group social-links">
+            <a href="https://x.com/George_SLiu" target="_blank" rel="noopener noreferrer">Twitter</a>
+            <a href="https://www.threads.net/@george_sl_liu" target="_blank" rel="noopener noreferrer">Threads</a>
+            <a href="https://bsky.app/profile/georgesl.bsky.social" target="_blank" rel="noopener noreferrer">BlueSky</a>
+        </div>
+        <div class="link-group github-links">
+            <a href="https://github.com/sponsors/centminmod" target="_blank" rel="noopener noreferrer">
+                <img src="https://img.shields.io/github/sponsors/centminmod" alt="GitHub Sponsors" loading="lazy">
+            </a>
+            <a href="https://github.com/centminmod/atari-missile-command/stargazers" target="_blank" rel="noopener noreferrer">
+                <img src="https://img.shields.io/github/stars/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub stars" loading="lazy">
+            </a>
+            <a href="https://github.com/centminmod/atari-missile-command/network" target="_blank" rel="noopener noreferrer">
+                <img src="https://img.shields.io/github/forks/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub forks" loading="lazy">
+            </a>
+            <a href="https://github.com/centminmod/atari-missile-command/issues" target="_blank" rel="noopener noreferrer">
+                <img src="https://img.shields.io/github/issues/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub issues" loading="lazy">
+            </a>
+        </div>
     </footer>
 
     <script>
