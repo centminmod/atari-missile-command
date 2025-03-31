@@ -18,7 +18,7 @@ const urlsToCache = [
   '/icons/android-launchericon-72-72.png',
   '/icons/android-launchericon-48-48.png',
   '/css/fonts.css',
-  '/fonts/press-start-2p-v15-latin-regular.woff2'
+  '/fonts/press-start-2p-v15-latin-regular.woff2',
   '/fonts/press-start-2p-v15-latin-regular.ttf'
 ];
 
