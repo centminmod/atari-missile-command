@@ -1061,21 +1061,55 @@
                 if (shield && shield.alive) {
                     const base = bases[i];
                     const shieldCenterX = base.x + base.width / 2;
-                    // Shield radius needs to scale with base/city width
-                    const shieldRadius = (base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5;
-                    const shieldTopY = base.y - shieldRadius * 0.1;
-                    const shieldBottomY = base.y;
+                    // MODIFIED: Increase original radius calculation by 80% (multiply by 1.80) - per user diff
+                    const shieldRadius = 1.80 * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5);
 
-                    if (impactX >= shieldCenterX - shieldRadius && impactX <= shieldCenterX + shieldRadius &&
-                        impactY >= shieldTopY && impactY <= shieldBottomY) {
-                            const distFromCenter = distance(impactX, impactY, shieldCenterX, base.y);
-                            if (distFromCenter <= shieldRadius) {
-                                shield.strength -= SHIELD_DAMAGE_PER_HIT; shield.flashTimer = SHIELD_FLASH_DURATION;
-                                if (shield.strength <= 0) { shield.alive = false; createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 1.5, '#ffffff'); }
-                                else { createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 0.5, SHIELD_FLASH_COLOR); }
-                                return;
+                    // --- Shield Shape & Position Variables ---
+                    // MODIFIED: Changed -5 to -15 to move shield higher
+                    const shieldBottomEdgeY = base.y - 15; // Y coordinate of the shield's left/right ends
+                    const shieldApexY = shieldBottomEdgeY - shieldRadius * 0.3; // Y coordinate of the shield's highest point (apex)
+                    const startX = shieldCenterX - shieldRadius;
+                    const endX = shieldCenterX + shieldRadius;
+                    const shieldWidth = endX - startX; // Should be 2 * shieldRadius
+                    // --- End Shield Shape & Position Variables ---
+
+
+                    // --- COLLISION CHECK ---
+                    // 1. Quick check: Is the impact within the horizontal span of the shield?
+                    if (impactX >= startX && impactX <= endX) {
+                        // 2. Calculate the expected Y position on the shield curve at the impactX
+                        let y_on_curve;
+                        if (shieldWidth > 0) {
+                            const t = (impactX - startX) / shieldWidth; // Parameter t (0 to 1) along the curve width
+                            // Quadratic Bezier curve formula: y(t) = (1-t)^2*P0y + 2*(1-t)*t*P1y + t^2*P2y
+                            // P0y = shieldBottomEdgeY (start Y)
+                            // P1y = shieldApexY (control point Y)
+                            // P2y = shieldBottomEdgeY (end Y)
+                            const one_minus_t = 1 - t;
+                            y_on_curve = (one_minus_t * one_minus_t * shieldBottomEdgeY) +
+                                         (2 * one_minus_t * t * shieldApexY) +
+                                         (t * t * shieldBottomEdgeY);
+                        } else {
+                            // Avoid division by zero if shieldWidth is somehow zero
+                            y_on_curve = shieldBottomEdgeY;
+                        }
+
+                        // 3. CORRECTED CHECK: Check if the impact Y is AT or BELOW the calculated curve position.
+                        //    (Since Y increases downwards, missile hits when impactY >= y_on_curve)
+                        if (impactY >= y_on_curve) {
+                            // Collision detected!
+                            shield.strength -= SHIELD_DAMAGE_PER_HIT;
+                            shield.flashTimer = SHIELD_FLASH_DURATION;
+                            if (shield.strength <= 0) {
+                                shield.alive = false;
+                                createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 1.5, '#ffffff');
+                            } else {
+                                createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 0.5, SHIELD_FLASH_COLOR);
                             }
+                            return; // Impact handled by shield, stop checking other objects
+                        }
                     }
+                    // --- END COLLISION CHECK ---
                 }
             }
             // Check Satellite Shields
@@ -1448,20 +1482,37 @@
                 }
             });
 
-            // Draw Base Shields (scaling handled in impact check)
+            // Draw Base Shields
             for (let i = 0; i < baseShields.length; i++) {
                 const shield = baseShields[i];
                 if (shield && shield.alive) {
                     const base = bases[i];
                     const shieldCenterX = base.x + base.width / 2;
-                    const shieldRadius = (base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5; // Scaled radius
+                    // MODIFIED: Increase original radius calculation by 80% (multiply by 1.80) - per user diff
+                    const shieldRadius = 1.80 * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5);
                     let shieldColor = SHIELD_COLOR_25;
                     if (shield.strength > 75) shieldColor = SHIELD_COLOR_FULL;
                     else if (shield.strength > 50) shieldColor = SHIELD_COLOR_75;
                     else if (shield.strength > 25) shieldColor = SHIELD_COLOR_50;
                     if (shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; shield.flashTimer--; }
-                    ctx.beginPath(); ctx.arc(shieldCenterX, base.y, shieldRadius, Math.PI * 1.05, Math.PI * 1.95);
-                    ctx.strokeStyle = shieldColor; ctx.lineWidth = 3; ctx.stroke(); ctx.lineWidth = 1;
+
+                    // --- MODIFIED: Replacement for ctx.arc to draw a flatter shield ---
+                    const startX = shieldCenterX - shieldRadius;
+                    const endX = shieldCenterX + shieldRadius;
+                    // MODIFIED: Changed -5 to -15 to move shield higher
+                    const shieldTopY = base.y - 15; // Bottom edge Y coordinate (ends of the curve)
+                    // CORRECTED: Adjust the control point Y to be ABOVE shieldTopY for an upward curve.
+                    // Adjust the multiplier (0.3 here) to control flatness. Smaller = flatter, Larger = more curved.
+                    const controlY = shieldTopY - shieldRadius * 0.3;
+
+                    ctx.beginPath();
+                    ctx.moveTo(startX, shieldTopY);
+                    ctx.quadraticCurveTo(shieldCenterX, controlY, endX, shieldTopY);
+                    ctx.strokeStyle = shieldColor;
+                    ctx.lineWidth = 3; // Keep line width
+                    ctx.stroke();
+                    ctx.lineWidth = 1; // Reset line width for other drawings
+                    // --- End of modification ---
                 }
             }
 
