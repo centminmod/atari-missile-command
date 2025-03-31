@@ -384,6 +384,9 @@
             text-decoration: none;
             margin: 0 10px; /* Spacing between links */
             transition: color 0.3s, text-shadow 0.3s;
+            display: inline-block; /* Ensure links behave like blocks for margin */
+            vertical-align: middle; /* Align links vertically */
+            line-height: 1; /* Prevent extra line height */
         }
         footer a:hover,
         footer a:focus {
@@ -391,7 +394,13 @@
             text-shadow: 0 0 5px #ffff00; /* Yellow glow */
             outline: none;
         }
-
+        /* Style for the badge images inside the footer links */
+        footer a img {
+            vertical-align: middle; /* Align badges vertically with text */
+            margin: 0 5px; /* Add small horizontal space around badges */
+            height: 20px; /* Set a consistent height for badges */
+            width: auto; /* Maintain aspect ratio */
+        }
 
         /* --- Media Queries for Smaller Screens --- */
         @media (max-width: 768px) {
@@ -405,6 +414,7 @@
              #storeItemsContainer { gap: 8px; }
              footer { margin-top: 15px; }
              footer a { margin: 0 8px; }
+             footer a img { margin: 0 3px; height: 18px; } /* Adjust badge spacing/size */
             .storeItem {
                 flex-direction: row;      /* Arrange children (info, button) horizontally */
                 align-items: center;    /* Vertically center info and button in the row */
@@ -480,7 +490,9 @@
             .buyButton { padding: 4px 8px; font-size: 10px; }
             #pauseOverlay { font-size: 24px; }
             footer { margin-top: 10px; font-size: 9px; padding: 8px 0;}
-            footer a { display: block; margin: 5px auto; } /* Stack links vertically */
+            /* Stack all footer items vertically on small screens */
+            footer a { display: block; margin: 5px auto; }
+            footer a img { margin: 0 2px; height: 16px; } /* Adjust badge spacing/size */
         }
 
     </style>
@@ -539,6 +551,7 @@
             <button id="skipStoreButton">Next Level</button>
         </div>
     </div>
+
     <div id="storeModal">
         <h2>Inter-Level Store</h2>
         <div id="storeScore">Current Score: $0</div>
@@ -603,14 +616,24 @@
         <button id="storeContinueButton">Continue to Next Level</button>
     </div>
 
-
-
-<footer>
+    <footer>
         <a href="https://x.com/George_SLiu" target="_blank" rel="noopener noreferrer">Twitter</a>
         <a href="https://www.threads.net/@george_sl_liu" target="_blank" rel="noopener noreferrer">Threads</a>
         <a href="https://bsky.app/profile/georgesl.bsky.social" target="_blank" rel="noopener noreferrer">BlueSky</a>
-    </footer>
 
+        <a href="https://github.com/sponsors/centminmod" target="_blank" rel="noopener noreferrer">
+            <img src="https://img.shields.io/github/sponsors/centminmod" alt="GitHub Sponsors">
+        </a>
+        <a href="https://github.com/centminmod/atari-missile-command/stargazers" target="_blank" rel="noopener noreferrer">
+            <img src="https://img.shields.io/github/stars/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub stars">
+        </a>
+        <a href="https://github.com/centminmod/atari-missile-command/network" target="_blank" rel="noopener noreferrer">
+            <img src="https://img.shields.io/github/forks/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub forks">
+        </a>
+        <a href="https://github.com/centminmod/atari-missile-command/issues" target="_blank" rel="noopener noreferrer">
+            <img src="https://img.shields.io/github/issues/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub issues">
+        </a>
+    </footer>
 
     <script>
         // --- Canvas, Context, UI Elements ---
