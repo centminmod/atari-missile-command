@@ -376,7 +376,7 @@
         const PLANE_BOMB_SPEED = 1.0;
         const BASE_BOMBS_PER_PLANE = 10;
         const BOMBS_INCREASE_PER_WAVE = 1;
-        const PLANE_SPAWN_CHANCE = 0.025;
+        const PLANE_SPAWN_CHANCE = 0.025; // ADJUSTED: Further increased
         const PLANE_MIN_Y = INTERNAL_HEIGHT * 0.1;
         const PLANE_MAX_Y = INTERNAL_HEIGHT * 0.3;
         const PLANE_BOMB_DROP_INTERVAL_MIN = 80;
@@ -641,20 +641,25 @@
         }
 
         // --- Wave System Logic ---
-        // defineWaves, initWave, spawnEnemiesForWave, checkWaveEnd remain the same as previous version
+        // defineWaves, initWave, checkWaveEnd remain the same
         function defineWaves() {
+             // ADJUSTED: Increased enemy counts and introduced types earlier/more aggressively
              return [
-                 [{ type: 'missile', count: 18, speedFactor: 1.0 }], // Wave 1
-                 [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 2
-                 [{ type: 'missile', count: 26, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }], // Wave 3
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }], // Wave 4
-                 [{ type: 'plane', count: 24, variantChance: 0.2 }, { type: 'smart_bomb', count: 10, speedFactor: 1.1 }], // Wave 5
-                 [{ type: 'missile', count: 24, speedFactor: 1.35 }, { type: 'mirv', count: 4, speedFactor: 1.0 }], // Wave 6
-                 [{ type: 'missile', count: 20, speedFactor: 1.4 }, { type: 'smart_bomb', count: 6, speedFactor: 1.15 }, { type: 'plane', count: 3, variantChance: 0.35, speedFactor: 1.1 }], // Wave 7
-                 [{ type: 'mirv', count: 8, speedFactor: 1.15 }, { type: 'smart_bomb', count: 5, speedFactor: 1.2 }], // Wave 8
-                 [{ type: 'missile', count: 24, speedFactor: 1.6 }, { type: 'smart_bomb', count: 8, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.5, speedFactor: 1.2 }], // Wave 9
-                 [{ type: 'missile', count: 28, speedFactor: 1.7 }, { type: 'smart_bomb', count: 10, speedFactor: 1.5 }, { type: 'mirv', count: 7, speedFactor: 1.4 }, { type: 'plane', count: 5, variantChance: 0.6, speedFactor: 1.3 }], // Wave 10
-                 [{ type: 'missile', count: 36, speedFactor: 1.8 }, { type: 'smart_bomb', count: 12, speedFactor: 1.6 }, { type: 'mirv', count: 8, speedFactor: 1.5 }, { type: 'plane', count: 6, variantChance: 0.7, speedFactor: 1.4 }], // Wave 11+
+                 // Early Waves (Focus on basic missiles, introduce planes)
+                 [{ type: 'missile', count: 18, speedFactor: 1.0 }], // Wave 1 (Increased)
+                 [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 2 (Increased)
+                 [{ type: 'missile', count: 26, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }], // Wave 3 (Increased)
+                 // Mid Waves (Introduce smart bombs, more planes)
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }], // Wave 4 (Increased)
+                 [{ type: 'plane', count: 24, variantChance: 0.2 }, { type: 'smart_bomb', count: 10, speedFactor: 1.1 }], // Wave 5 (Increased planes)
+                 // Late Waves (Introduce MIRVs, mix enemy types, increase speed/count)
+                 [{ type: 'missile', count: 24, speedFactor: 1.35 }, { type: 'mirv', count: 4, speedFactor: 1.0 }], // Wave 6 (Increased missiles)
+                 [{ type: 'missile', count: 20, speedFactor: 1.4 }, { type: 'smart_bomb', count: 6, speedFactor: 1.15 }, { type: 'plane', count: 3, variantChance: 0.35, speedFactor: 1.1 }], // Wave 7 (Increased missiles)
+                 [{ type: 'mirv', count: 8, speedFactor: 1.15 }, { type: 'smart_bomb', count: 5, speedFactor: 1.2 }], // Wave 8 (Increased MIRVs)
+                 [{ type: 'missile', count: 24, speedFactor: 1.6 }, { type: 'smart_bomb', count: 8, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.5, speedFactor: 1.2 }], // Wave 9 (Increased missiles)
+                 // Very Late Waves (High counts, high speeds, lots of variety)
+                 [{ type: 'missile', count: 28, speedFactor: 1.7 }, { type: 'smart_bomb', count: 10, speedFactor: 1.5 }, { type: 'mirv', count: 7, speedFactor: 1.4 }, { type: 'plane', count: 5, variantChance: 0.6, speedFactor: 1.3 }], // Wave 10 (Increased missiles)
+                 [{ type: 'missile', count: 36, speedFactor: 1.8 }, { type: 'smart_bomb', count: 12, speedFactor: 1.6 }, { type: 'mirv', count: 8, speedFactor: 1.5 }, { type: 'plane', count: 6, variantChance: 0.7, speedFactor: 1.4 }], // Wave 11+ (Increased missiles)
              ];
         }
         function initWave(waveIndex) {
@@ -667,8 +672,9 @@
                 currentWaveConfig = JSON.parse(JSON.stringify(waveDefinitions[effectiveWaveIndex]));
                 console.log(`initWave: Loaded config for wave ${waveIndex} (using definition ${effectiveWaveIndex}):`, JSON.stringify(currentWaveConfig));
                 if (!Array.isArray(currentWaveConfig)) { throw new Error(`currentWaveConfig for wave ${waveIndex} (effective index ${effectiveWaveIndex}) is not an array.`); }
+                // ADJUSTED: More aggressive scaling for high waves
                 if (waveIndex >= waveDefinitions.length) {
-                    const scalingFactor = 1 + (waveIndex - (waveDefinitions.length - 1)) * 0.1;
+                    const scalingFactor = 1 + (waveIndex - (waveDefinitions.length - 1)) * 0.18; // Increased from 0.1
                     currentWaveConfig.forEach(part => {
                         part.count = Math.ceil(part.count * scalingFactor);
                         part.speedFactor = (part.speedFactor || 1.0) * scalingFactor;
@@ -684,44 +690,61 @@
                 updateUI(); updateSpecialWeaponsUI(); console.log(`initWave: Exiting for wave ${waveIndex}`);
             } catch (error) { console.error(`Error during initWave(${waveIndex}):`, error); showMessage("WAVE INIT ERROR", `Failed to initialize wave ${waveIndex + 1}: ${error.message}`, "Check console for details."); isGameOver = true; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } }
         }
+        // *** MODIFIED spawnEnemiesForWave for Staggered Spawning ***
         function spawnEnemiesForWave() {
-            if (transitioningWave || isGameOver || isPaused) return;
+            if (transitioningWave || isGameOver || isPaused || waveEnemiesSpawned >= waveEnemiesRequired) return;
+
+            // 1. Identify potential spawns still needed for this wave
+            const potentialSpawns = [];
             currentWaveConfig.forEach(part => {
-                const totalSpawnedRatio = waveEnemiesRequired > 0 ? (waveEnemiesSpawned / waveEnemiesRequired) : 1; // Avoid division by zero
                 const requiredForThisPart = part.count || 0;
                 const currentSpawnedForThisPart = (part.type === 'plane' ? planes : incomingMissiles).filter(e => e.wavePartType === part.type).length;
-                const spawnRateMultiplier = 1 + currentWave * 0.24;
-                const baseSpawnChance = 0.025 * spawnRateMultiplier;
-                let spawnChance = baseSpawnChance;
-                if (part.type === 'missile' || part.type === 'smart_bomb' || part.type === 'mirv') {
-                    spawnChance *= (part.speedFactor || 1.0);
-                    if (requiredForThisPart > 0 && currentSpawnedForThisPart / requiredForThisPart < totalSpawnedRatio) {
-                        spawnChance *= 1.5;
+
+                if (currentSpawnedForThisPart < requiredForThisPart) {
+                    // Calculate spawn chance for this potential spawn
+                    const spawnRateMultiplier = 1 + currentWave * 0.24; // Aggressive multiplier
+                    let baseSpawnChance = 0.025; // Aggressive base chance
+                    if (part.type === 'plane') {
+                        baseSpawnChance = PLANE_SPAWN_CHANCE; // Use specific plane chance
                     }
-                    if (waveEnemiesSpawned < waveEnemiesRequired && currentSpawnedForThisPart < requiredForThisPart && Math.random() < spawnChance) {
+                    let spawnChance = baseSpawnChance * spawnRateMultiplier * (part.speedFactor || 1.0);
+
+                    // Add to potential list
+                    potentialSpawns.push({
+                        partConfig: part,
+                        spawnChance: spawnChance
+                    });
+                }
+            });
+
+            // 2. If there are potential spawns, randomly select one and attempt to spawn it
+            if (potentialSpawns.length > 0) {
+                // --- Simple random selection (can be weighted later if needed) ---
+                 const randomIndex = Math.floor(Math.random() * potentialSpawns.length);
+                 const selectedSpawn = potentialSpawns[randomIndex];
+                 const part = selectedSpawn.partConfig;
+
+                // 3. Roll the dice for the selected type
+                if (Math.random() < selectedSpawn.spawnChance) {
+                    // 4. Spawn the selected enemy type
+                    if (part.type === 'missile' || part.type === 'smart_bomb' || part.type === 'mirv') {
                         let missileType = part.type;
                         let config = {
                             speed: (MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08)) * (part.speedFactor || 1.0),
                             isSmartBomb: missileType === 'smart_bomb',
                             isMIRV: missileType === 'mirv',
-                            wavePartType: part.type
+                            wavePartType: part.type // Track type
                         };
                         incomingMissiles.push(createIncomingMissile(config));
                         waveEnemiesSpawned++;
-                    }
-                } else if (part.type === 'plane') {
-                    spawnChance = PLANE_SPAWN_CHANCE * (1 + currentWave * 0.05) * (part.speedFactor || 1.0);
-                     if (requiredForThisPart > 0 && currentSpawnedForThisPart / requiredForThisPart < totalSpawnedRatio) {
-                        spawnChance *= 1.5;
-                    }
-                    if (waveEnemiesSpawned < waveEnemiesRequired && currentSpawnedForThisPart < requiredForThisPart && Math.random() < spawnChance) {
+                    } else if (part.type === 'plane') {
                         const newPlane = createPlane();
-                        newPlane.wavePartType = part.type;
+                        newPlane.wavePartType = part.type; // Track type
                         planes.push(newPlane);
                         waveEnemiesSpawned++;
                     }
                 }
-            });
+            }
         }
         function checkWaveEnd() {
             if (transitioningWave || isGameOver || isPaused) return;
@@ -735,6 +758,7 @@
         }
 
         // --- Game Flow ---
+        // startGame, nextWave, proceedToNextWave, calculateBonus, checkGameOverConditions, gameOver remain the same
         function startGame() {
             try {
                 console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding...");
@@ -749,7 +773,6 @@
                 if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } console.log("startGame: Calling gameLoop()..."); gameLoop(); console.log("startGame: Exiting");
             } catch (error) { console.error("Error during startGame:", error); showMessage("STARTUP ERROR", `Failed to start game: ${error.message}`, "Check console for details."); isGameOver = true; }
         }
-        // Modified nextWave to include bonus missile logic
         function nextWave() {
             let bonusEarned = calculateBonus();
             score += Math.round(bonusEarned * difficultyScoreMultiplier);
@@ -842,7 +865,7 @@
         // --- Update Functions ---
         // updateGameObjects remains the same
         function updateGameObjects() {
-            spawnEnemiesForWave();
+            spawnEnemiesForWave(); // Call the modified spawn function
             if (activeSonicWave && activeSonicWave.alive) {
                  activeSonicWave.y -= SONIC_WAVE_SPEED;
                  const waveTop = activeSonicWave.y - SONIC_WAVE_HEIGHT;
