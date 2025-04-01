@@ -318,9 +318,11 @@
         const CITY_HEIGHT_RATIO = 30 / INTERNAL_HEIGHT;
         const SATELLITE_WIDTH_RATIO = 35 / INTERNAL_WIDTH;
         const SATELLITE_HEIGHT_RATIO = 25 / INTERNAL_HEIGHT;
-        const SATELLITE_Y_POS_RATIO = (INTERNAL_HEIGHT * 0.4) / INTERNAL_HEIGHT;
+        // *** MODIFIED: Lowered satellite Y position (increased ratio) ***
+        const SATELLITE_Y_POS_RATIO = (INTERNAL_HEIGHT * 0.55) / INTERNAL_HEIGHT; // Was 0.4
         const MISSILE_SPEED_PLAYER_BASE = 5;
         const MISSILE_SPEED_ENEMY_BASE = 0.5;
+        const MAX_ENEMY_MISSILE_SPEED = 3.5; // *** ADDED: Cap for enemy missile speed ***
         const EXPLOSION_RADIUS_START = 13;
         const EXPLOSION_RADIUS_MAX_BASE = 65;
         const EXPLOSION_DURATION = 60;
@@ -365,13 +367,13 @@
         const PLANE_SPEED_INCREASE_PER_WAVE = 0.05;
         const PLANE_VARIANT_CHANCE = 0.2;
         const MAX_ACTIVE_SATELLITES = 3;
-        const COST_SATELLITE = 4000; const MAX_STOCK_SATELLITE = 30;
-        const COST_BASE = 1000; const MAX_STOCK_BASE = 30;
-        const COST_CITY = 2000; const MAX_STOCK_CITY = 30;
+        const COST_SATELLITE = 4000; const MAX_STOCK_SATELLITE = 50;
+        const COST_BASE = 1000; const MAX_STOCK_BASE = 50;
+        const COST_CITY = 2000; const MAX_STOCK_CITY = 50;
         const COST_SHIELD = 250; const MAX_STOCK_SHIELD = 100;
         const COST_SAT_SHIELD = 250; const MAX_STOCK_SAT_SHIELD = 100;
-        const COST_SONIC_WAVE = 1000; const MAX_STOCK_SONIC_WAVE = 30;
-        const COST_BOMB = 500; const MAX_STOCK_BOMB = 30;
+        const COST_SONIC_WAVE = 1000; const MAX_STOCK_SONIC_WAVE = 50;
+        const COST_BOMB = 500; const MAX_STOCK_BOMB = 50;
         const PLANE_SPEED_BASE = 1.5;
         const PLANE_WIDTH = 50;
         const PLANE_HEIGHT = 20;
@@ -554,7 +556,11 @@
             const startX = config.startX !== undefined ? config.startX : Math.random() * canvas.width;
             const startY = config.startY !== undefined ? config.startY : 0;
             const target = config.target || getRandomTarget();
-            const speed = config.speed || MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08); // Using adjusted scaling
+            // *** MODIFIED: Calculate base speed and cap it ***
+            let baseSpeed = MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08);
+            baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED); // Apply the cap
+            const speed = config.speed || baseSpeed * (config.speedFactor || 1.0); // Apply factor if provided
+            // *** END MODIFICATION ***
             const angle = Math.atan2(target.y - startY, target.x - startX);
             const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
             const waveSmartBombChance = SMART_BOMB_CHANCE * (1 + currentWave * 0.05);
@@ -654,16 +660,16 @@
                  [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 2 (Increased)
                  [{ type: 'missile', count: 26, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }], // Wave 3 (Increased)
                  // Mid Waves (Introduce smart bombs, more planes)
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }], // Wave 4 (Increased)
-                 [{ type: 'plane', count: 24, variantChance: 0.2 }, { type: 'smart_bomb', count: 10, speedFactor: 1.1 }], // Wave 5 (Increased planes)
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }], // Wave 4 (Increased)
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'smart_bomb', count: 10, speedFactor: 1.1 }], // Wave 5 (Increased planes)
                  // Late Waves (Introduce MIRVs, mix enemy types, increase speed/count)
-                 [{ type: 'missile', count: 24, speedFactor: 1.35 }, { type: 'mirv', count: 4, speedFactor: 1.0 }], // Wave 6 (Increased missiles)
-                 [{ type: 'missile', count: 20, speedFactor: 1.4 }, { type: 'smart_bomb', count: 6, speedFactor: 1.15 }, { type: 'plane', count: 3, variantChance: 0.35, speedFactor: 1.1 }], // Wave 7 (Increased missiles)
-                 [{ type: 'mirv', count: 8, speedFactor: 1.15 }, { type: 'smart_bomb', count: 5, speedFactor: 1.2 }], // Wave 8 (Increased MIRVs)
-                 [{ type: 'missile', count: 24, speedFactor: 1.6 }, { type: 'smart_bomb', count: 8, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.5, speedFactor: 1.2 }], // Wave 9 (Increased missiles)
+                 [{ type: 'missile', count: 24, speedFactor: 1.35 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'mirv', count: 8, speedFactor: 1.0 }], // Wave 6 (Increased missiles)
+                 [{ type: 'missile', count: 20, speedFactor: 1.4 }, { type: 'smart_bomb', count: 8, speedFactor: 1.15 }, { type: 'plane', count: 12, variantChance: 0.35, speedFactor: 1.1 }], // Wave 7 (Increased missiles)
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'mirv', count: 18, speedFactor: 1.15 }, { type: 'smart_bomb', count: 10, speedFactor: 1.2 }], // Wave 8 (Increased MIRVs)
+                 [{ type: 'missile', count: 24, speedFactor: 1.6 }, { type: 'smart_bomb', count: 8, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 8, variantChance: 0.5, speedFactor: 1.2 }], // Wave 9 (Increased missiles)
                  // Very Late Waves (High counts, high speeds, lots of variety)
-                 [{ type: 'missile', count: 28, speedFactor: 1.7 }, { type: 'smart_bomb', count: 10, speedFactor: 1.5 }, { type: 'mirv', count: 7, speedFactor: 1.4 }, { type: 'plane', count: 5, variantChance: 0.6, speedFactor: 1.3 }], // Wave 10 (Increased missiles)
-                 [{ type: 'missile', count: 36, speedFactor: 1.8 }, { type: 'smart_bomb', count: 12, speedFactor: 1.6 }, { type: 'mirv', count: 8, speedFactor: 1.5 }, { type: 'plane', count: 6, variantChance: 0.7, speedFactor: 1.4 }], // Wave 11+ (Increased missiles)
+                 [{ type: 'missile', count: 28, speedFactor: 1.7 }, { type: 'smart_bomb', count: 10, speedFactor: 1.5 }, { type: 'mirv', count: 7, speedFactor: 1.4 }, { type: 'plane', count: 12, variantChance: 0.6, speedFactor: 1.3 }], // Wave 10 (Increased missiles)
+                 [{ type: 'missile', count: 36, speedFactor: 1.8 }, { type: 'smart_bomb', count: 12, speedFactor: 1.6 }, { type: 'mirv', count: 8, speedFactor: 1.5 }, { type: 'plane', count: 16, variantChance: 0.7, speedFactor: 1.4 }], // Wave 11+ (Increased missiles)
              ];
         }
         function initWave(waveIndex) {
@@ -676,12 +682,16 @@
                 currentWaveConfig = JSON.parse(JSON.stringify(waveDefinitions[effectiveWaveIndex]));
                 console.log(`initWave: Loaded config for wave ${waveIndex} (using definition ${effectiveWaveIndex}):`, JSON.stringify(currentWaveConfig));
                 if (!Array.isArray(currentWaveConfig)) { throw new Error(`currentWaveConfig for wave ${waveIndex} (effective index ${effectiveWaveIndex}) is not an array.`); }
-                // ADJUSTED: More aggressive scaling for high waves
+                // *** MODIFIED: Less aggressive scaling factor for high waves ***
                 if (waveIndex >= waveDefinitions.length) {
-                    const scalingFactor = 1 + (waveIndex - (waveDefinitions.length - 1)) * 0.18; // Increased from 0.1
+                    const scalingFactor = 1 + (waveIndex - (waveDefinitions.length - 1)) * 0.06; // Was 0.18
                     currentWaveConfig.forEach(part => {
                         part.count = Math.ceil(part.count * scalingFactor);
-                        part.speedFactor = (part.speedFactor || 1.0) * scalingFactor;
+                        // *** MODIFIED: Apply speed factor scaling ONLY if it exists, otherwise keep base speed ***
+                        if (part.speedFactor) {
+                            part.speedFactor = part.speedFactor * scalingFactor;
+                        }
+                        // *** END MODIFICATION ***
                     });
                     console.log(`initWave: Scaled config for high wave ${waveIndex}:`, JSON.stringify(currentWaveConfig));
                 }
@@ -733,12 +743,16 @@
                     // 4. Spawn the selected enemy type
                     if (part.type === 'missile' || part.type === 'smart_bomb' || part.type === 'mirv') {
                         let missileType = part.type;
+                        // *** MODIFIED: Use the capped speed calculation here too ***
+                        let baseSpeed = MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08);
+                        baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED); // Apply the cap
                         let config = {
-                            speed: (MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08)) * (part.speedFactor || 1.0),
+                            speed: baseSpeed * (part.speedFactor || 1.0), // Apply factor if provided
                             isSmartBomb: missileType === 'smart_bomb',
                             isMIRV: missileType === 'mirv',
                             wavePartType: part.type // Track type
                         };
+                        // *** END MODIFICATION ***
                         incomingMissiles.push(createIncomingMissile(config));
                         waveEnemiesSpawned++;
                     } else if (part.type === 'plane') {
