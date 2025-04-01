@@ -791,6 +791,24 @@
         const SONIC_WAVE_HEIGHT = 10; // Keep as pixels for now
         const SONIC_WAVE_COLOR = 'rgba(200, 0, 255, 0.5)';
 
+        // --- Plane Constants ---
+        const PLANE_SPEED_BASE = 1.5; // Base speed, might increase slightly with level
+        const PLANE_WIDTH = 50; // Used for collision box, visual might differ slightly
+        const PLANE_HEIGHT = 20; // Used for collision box, visual might differ slightly
+        const PLANE_BONUS_SCORE = 1000; // *** ADJUSTED BONUS SCORE ***
+        const PLANE_BOMB_POINTS = 15; // Points for shooting down a bomb
+        const PLANE_BOMB_SPEED = 1.0;
+        const BASE_BOMBS_PER_PLANE = 10;
+        const BOMBS_INCREASE_PER_LEVEL = 2;
+        const PLANE_SPAWN_CHANCE = 0.005; // Base chance per frame to spawn a plane if needed
+        const PLANE_MIN_Y = INTERNAL_HEIGHT * 0.1; // Minimum Y position for plane spawn
+        const PLANE_MAX_Y = INTERNAL_HEIGHT * 0.3; // Maximum Y position for plane spawn
+        const PLANE_BOMB_DROP_INTERVAL_MIN = 80; // Min frames between bomb drops
+        const PLANE_BOMB_DROP_INTERVAL_MAX = 150; // Max frames between bomb drops
+        const PLANE_BOMB_COLOR = '#FFA500'; // Orange
+        const PLANE_BOMB_TRAIL_COLOR = 'rgba(255, 165, 0, 0.4)';
+        const PLANE_SPEED_MULTIPLIER = 0.7; // *** ADDED: Multiplier to slow down plane (30% reduction) ***
+
         // Game State
         let score = 0;
         let level = 1;
@@ -822,6 +840,12 @@
         let isBombArmed = false;
         let activeSonicWave = null;
 
+        // --- Plane Game State ---
+        let planes = [];
+        let planeBombs = [];
+        let planesToSpawnThisLevel = 0;
+        let planesSpawnedThisLevel = 0;
+
         // --- Utility Functions ---
         // No changes needed here - uses internal coordinates
         function distance(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return Math.sqrt(dx * dx + dy * dy); }
@@ -832,9 +856,11 @@
             let possibleTargets = [...aliveCities, ...aliveBases, ...aliveSatellites];
             const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
             if (possibleTargets.length === 0) {
-                return { x: canvas.width / 2, y: groundY };
+                // If no targets, aim for the ground near the center
+                return { x: canvas.width / 2 + (Math.random() - 0.5) * canvas.width * 0.4, y: groundY };
             }
             const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+            // Aim for the center of the target's top edge
             return { x: target.x + (target.width / 2), y: target.y };
         }
 
@@ -975,6 +1001,7 @@
                 x: startX, y: 0, targetX: target.x, targetY: target.y,
                 dx: Math.cos(angle) * enemyMissileSpeed, dy: Math.sin(angle) * enemyMissileSpeed,
                 color: '#ff0000', trailColor: 'rgba(255, 100, 100, 0.5)', alive: true, trail: [{x: startX, y: 0}],
+                isPlaneBomb: false, // Differentiate from plane bombs
                 update() {
                     if (!this.alive) return; this.x += this.dx; this.y += this.dy;
                     this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 15) { this.trail.shift(); }
@@ -982,7 +1009,7 @@
                         this.alive = false;
                         const impactY = Math.min(this.targetY, groundY);
                         createExplosion(this.x, impactY, EXPLOSION_RADIUS_MAX / 2, this.color);
-                        checkObjectImpact(this.x, impactY);
+                        checkObjectImpact(this.x, impactY, this.isPlaneBomb); // Pass type
                     }
                 },
                 draw() { /* Draw logic remains the same */
@@ -1040,9 +1067,203 @@
             });
         }
 
+        // --- Plane Object Factory ---
+        function createPlane() {
+            const startY = PLANE_MIN_Y + Math.random() * (PLANE_MAX_Y - PLANE_MIN_Y);
+            const bombsToDrop = BASE_BOMBS_PER_PLANE + (level - 1) * BOMBS_INCREASE_PER_LEVEL;
+            // *** ADJUSTED: Apply speed multiplier for 30% reduction ***
+            const planeSpeed = (PLANE_SPEED_BASE + (level - 1) * 0.05) * PLANE_SPEED_MULTIPLIER;
+
+            return {
+                x: canvas.width + PLANE_WIDTH, // Start off-screen right
+                y: startY,
+                width: PLANE_WIDTH, // Collision width
+                height: PLANE_HEIGHT, // Collision height
+                speed: planeSpeed,
+                alive: true,
+                bombsLeft: bombsToDrop,
+                bombDropTimer: PLANE_BOMB_DROP_INTERVAL_MIN + Math.random() * (PLANE_BOMB_DROP_INTERVAL_MAX - PLANE_BOMB_DROP_INTERVAL_MIN),
+                // Colors for drawing
+                bodyColor: '#B0C4DE', // Light Steel Blue
+                wingColor: '#778899', // Light Slate Gray
+                tailColor: '#708090', // Slate Gray
+                cockpitColor: '#1E90FF', // Dodger Blue
+                engineColor: '#555555', // Dark Gray
+
+                update() {
+                    if (!this.alive) return;
+                    this.x -= this.speed;
+
+                    // Drop bombs
+                    this.bombDropTimer--;
+                    if (this.bombDropTimer <= 0 && this.bombsLeft > 0) {
+                        this.dropBomb();
+                        this.bombsLeft--;
+                        // Reset timer for next drop
+                        this.bombDropTimer = PLANE_BOMB_DROP_INTERVAL_MIN + Math.random() * (PLANE_BOMB_DROP_INTERVAL_MAX - PLANE_BOMB_DROP_INTERVAL_MIN);
+                    }
+
+                    // Check if off-screen left
+                    if (this.x < -this.width * 1.5) { // Give a bit more room before despawning
+                        this.alive = false;
+                    }
+                },
+
+                dropBomb() {
+                    // Create a bomb originating from the plane's center bottom
+                    const bombStartX = this.x + this.width / 2;
+                    const bombStartY = this.y + this.height * 0.7; // Drop from slightly below center
+                    planeBombs.push(createBomb(bombStartX, bombStartY));
+                },
+
+                // *** ADJUSTED: More detailed plane drawing ***
+                draw() {
+                    if (!this.alive) return;
+
+                    const w = this.width; // Use collision width as base for drawing proportions
+                    const h = this.height; // Use collision height as base
+                    const x = this.x;
+                    const y = this.y;
+
+                    ctx.save(); // Save context state
+                    ctx.translate(x, y); // Translate to plane's top-left corner for easier drawing
+
+                    // Main Fuselage
+                    ctx.fillStyle = this.bodyColor;
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.1, h * 0.3); // Start near back top
+                    ctx.lineTo(w * 0.85, h * 0.15); // Curve up towards nose
+                    ctx.quadraticCurveTo(w, h * 0.5, w * 0.85, h * 0.85); // Nose curve
+                    ctx.lineTo(w * 0.1, h * 0.7); // Bottom line towards back
+                    ctx.quadraticCurveTo(0, h * 0.5, w * 0.1, h * 0.3); // Tail curve
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#666';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    // Cockpit
+                    ctx.fillStyle = this.cockpitColor;
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.7, h * 0.25);
+                    ctx.lineTo(w * 0.9, h * 0.4);
+                    ctx.lineTo(w * 0.9, h * 0.6);
+                    ctx.lineTo(w * 0.7, h * 0.75);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Wings (Swept back)
+                    ctx.fillStyle = this.wingColor;
+                    ctx.beginPath();
+                    // Top Wing
+                    ctx.moveTo(w * 0.3, h * 0.3); // Inner top root
+                    ctx.lineTo(w * 0.6, h * -0.1); // Outer top tip (slightly above fuselage)
+                    ctx.lineTo(w * 0.7, h * 0.1); // Trailing edge outer
+                    ctx.lineTo(w * 0.45, h * 0.4); // Trailing edge inner
+                    ctx.closePath();
+                    ctx.fill();
+                    // Bottom Wing
+                    ctx.moveTo(w * 0.3, h * 0.7); // Inner bottom root
+                    ctx.lineTo(w * 0.6, h * 1.1); // Outer bottom tip (slightly below fuselage)
+                    ctx.lineTo(w * 0.7, h * 0.9); // Trailing edge outer
+                    ctx.lineTo(w * 0.45, h * 0.6); // Trailing edge inner
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#555';
+                    ctx.stroke(); // Outline wings
+
+
+                    // Tail Fin (Vertical Stabilizer)
+                    ctx.fillStyle = this.tailColor;
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.05, h * 0.3); // Bottom front root
+                    ctx.lineTo(w * 0.2, h * -0.1); // Top tip
+                    ctx.lineTo(w * 0.25, h * 0.1); // Top back edge
+                    ctx.lineTo(w * 0.1, h * 0.4); // Bottom back root
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke(); // Outline tail fin
+
+                    // Horizontal Stabilizers (optional detail)
+                    ctx.fillStyle = this.wingColor; // Same color as wings
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.05, h * 0.3); ctx.lineTo(w * 0.2, h * 0.1); ctx.lineTo(w * 0.25, h * 0.2); ctx.closePath(); ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.05, h * 0.7); ctx.lineTo(w * 0.2, h * 0.9); ctx.lineTo(w * 0.25, h * 0.8); ctx.closePath(); ctx.fill();
+
+
+                    // Engine Nacelle (simple representation under wing)
+                    ctx.fillStyle = this.engineColor;
+                    ctx.fillRect(w * 0.4, h * 0.6, w * 0.25, h * 0.3);
+                    ctx.fillRect(w * 0.4, h * 0.1, w * 0.25, h * 0.3);
+
+
+                    ctx.restore(); // Restore context state
+                }
+            };
+        }
+
+        // --- Plane Bomb Object Factory ---
+        function createBomb(startX, startY) {
+            const target = getRandomTarget();
+            const angle = Math.atan2(target.y - startY, target.x - startX);
+            const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
+            const speed = PLANE_BOMB_SPEED + (level - 1) * 0.08; // Slightly faster bombs on higher levels
+
+            return {
+                x: startX, y: startY, targetX: target.x, targetY: target.y,
+                dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed,
+                color: PLANE_BOMB_COLOR, trailColor: PLANE_BOMB_TRAIL_COLOR,
+                alive: true, trail: [{x: startX, y: startY}],
+                isPlaneBomb: true, // Differentiate from enemy missiles
+
+                update() {
+                    if (!this.alive) return;
+                    this.x += this.dx;
+                    this.y += this.dy;
+
+                    // Add to trail
+                    this.trail.push({x: this.x, y: this.y});
+                    if (this.trail.length > 12) { // Shorter trail for bombs?
+                        this.trail.shift();
+                    }
+
+                    // Check for impact
+                    if (this.y >= this.targetY || this.y >= groundY) {
+                        this.alive = false;
+                        const impactY = Math.min(this.targetY, groundY);
+                        // Smaller explosion for bombs?
+                        createExplosion(this.x, impactY, EXPLOSION_RADIUS_START * 0.8, this.color, EXPLOSION_RADIUS_MAX * 0.6);
+                        checkObjectImpact(this.x, impactY, this.isPlaneBomb); // Pass type
+                    }
+                },
+
+                draw() {
+                    if (!this.alive) return;
+                    // Draw trail
+                    ctx.strokeStyle = this.trailColor;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.stroke();
+
+                    // Draw bomb (simple circle)
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2); // Small circle
+                    ctx.fill();
+                }
+            };
+        }
+
+
         // --- Collision Detection ---
-        // Uses internal coordinates - no changes needed
+        // Uses internal coordinates - no changes needed for explosion vs missile
         function checkExplosionCollisions(explosion) {
+            // Check vs Incoming Missiles
             incomingMissiles.forEach(missile => {
                 if (missile.alive) {
                     const dist = distance(explosion.x, explosion.y, missile.x, missile.y);
@@ -1052,55 +1273,76 @@
                     }
                 }
             });
+
+            // --- Check vs Planes ---
+            planes.forEach(plane => {
+                if (plane.alive) {
+                    // Use the plane's collision box defined by x, y, width, height
+                    if (explosion.x + explosion.radius > plane.x &&
+                        explosion.x - explosion.radius < plane.x + plane.width &&
+                        explosion.y + explosion.radius > plane.y &&
+                        explosion.y - explosion.radius < plane.y + plane.height)
+                    {
+                       // Optional: More precise check using distance to center if needed, but box is often sufficient
+                       // const planeCenterX = plane.x + plane.width / 2;
+                       // const planeCenterY = plane.y + plane.height / 2;
+                       // const dist = distance(explosion.x, explosion.y, planeCenterX, planeCenterY);
+                       // if (dist < explosion.radius + Math.max(plane.width, plane.height) / 2) { // Simple radius check
+
+                           plane.alive = false;
+                           score += PLANE_BONUS_SCORE; // Use updated bonus score constant
+                           // Bigger explosion for plane destruction
+                           createExplosion(plane.x + plane.width / 2, plane.y + plane.height / 2, EXPLOSION_RADIUS_START * 1.5, plane.bodyColor, EXPLOSION_RADIUS_MAX * 1.2, EXPLOSION_DURATION * 1.2);
+                       // }
+                    }
+                }
+            });
+
+            // --- Check vs Plane Bombs ---
+            planeBombs.forEach(bomb => {
+                if (bomb.alive) {
+                    const dist = distance(explosion.x, explosion.y, bomb.x, bomb.y);
+                    if (dist < explosion.radius) {
+                        bomb.alive = false;
+                        score += PLANE_BOMB_POINTS; // Add points for shooting down bomb
+                        createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color); // Smaller explosion for bomb
+                    }
+                }
+            });
         }
-        function checkObjectImpact(impactX, impactY) {
+
+        // Modified to accept projectile type (bomb or missile)
+        function checkObjectImpact(impactX, impactY, isBomb = false) {
             const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
             const cityHeight = canvas.height * CITY_HEIGHT_RATIO;
             const baseHeight = canvas.height * BASE_HEIGHT_RATIO;
 
-            // Check Base Shields
+            // Check Base Shields first
             for (let i = 0; i < baseShields.length; i++) {
                 const shield = baseShields[i];
                 if (shield && shield.alive) {
                     const base = bases[i];
                     const shieldCenterX = base.x + base.width / 2;
-                    // MODIFIED: Increase original radius calculation by 80% (multiply by 1.80) - per user diff
                     const shieldRadius = 1.80 * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5);
-
-                    // --- Shield Shape & Position Variables ---
-                    // MODIFIED: Changed -5 to -15 to move shield higher
-                    const shieldBottomEdgeY = base.y - 15; // Y coordinate of the shield's left/right ends
-                    const shieldApexY = shieldBottomEdgeY - shieldRadius * 0.3; // Y coordinate of the shield's highest point (apex)
+                    const shieldBottomEdgeY = base.y - 15;
+                    const shieldApexY = shieldBottomEdgeY - shieldRadius * 0.3;
                     const startX = shieldCenterX - shieldRadius;
                     const endX = shieldCenterX + shieldRadius;
-                    const shieldWidth = endX - startX; // Should be 2 * shieldRadius
-                    // --- End Shield Shape & Position Variables ---
+                    const shieldWidth = endX - startX;
 
-
-                    // --- COLLISION CHECK ---
-                    // 1. Quick check: Is the impact within the horizontal span of the shield?
                     if (impactX >= startX && impactX <= endX) {
-                        // 2. Calculate the expected Y position on the shield curve at the impactX
                         let y_on_curve;
                         if (shieldWidth > 0) {
-                            const t = (impactX - startX) / shieldWidth; // Parameter t (0 to 1) along the curve width
-                            // Quadratic Bezier curve formula: y(t) = (1-t)^2*P0y + 2*(1-t)*t*P1y + t^2*P2y
-                            // P0y = shieldBottomEdgeY (start Y)
-                            // P1y = shieldApexY (control point Y)
-                            // P2y = shieldBottomEdgeY (end Y)
+                            const t = (impactX - startX) / shieldWidth;
                             const one_minus_t = 1 - t;
                             y_on_curve = (one_minus_t * one_minus_t * shieldBottomEdgeY) +
                                          (2 * one_minus_t * t * shieldApexY) +
                                          (t * t * shieldBottomEdgeY);
                         } else {
-                            // Avoid division by zero if shieldWidth is somehow zero
                             y_on_curve = shieldBottomEdgeY;
                         }
 
-                        // 3. CORRECTED CHECK: Check if the impact Y is AT or BELOW the calculated curve position.
-                        //    (Since Y increases downwards, missile hits when impactY >= y_on_curve)
                         if (impactY >= y_on_curve) {
-                            // Collision detected!
                             shield.strength -= SHIELD_DAMAGE_PER_HIT;
                             shield.flashTimer = SHIELD_FLASH_DURATION;
                             if (shield.strength <= 0) {
@@ -1109,10 +1351,9 @@
                             } else {
                                 createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 0.5, SHIELD_FLASH_COLOR);
                             }
-                            return; // Impact handled by shield, stop checking other objects
+                            return; // Impact handled by shield
                         }
                     }
-                    // --- END COLLISION CHECK ---
                 }
             }
             // Check Satellite Shields
@@ -1126,7 +1367,7 @@
                         sat.shield.strength -= SHIELD_DAMAGE_PER_HIT; sat.shield.flashTimer = SHIELD_FLASH_DURATION;
                         if (sat.shield.strength <= 0) { sat.shield.alive = false; createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 1.2, '#eeeeee'); }
                         else { createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 0.5, SHIELD_FLASH_COLOR); }
-                        return;
+                        return; // Impact handled by shield
                     }
                 }
             }
@@ -1158,11 +1399,19 @@
         // Most game flow logic remains the same, but object creation uses ratios
         function initLevel() {
             incomingMissiles = []; playerMissiles = []; explosions = []; activeSonicWave = null;
+            planes = []; planeBombs = []; // --- NEW: Clear planes and bombs
+
             bases.forEach(b => { if (b.alive) b.ammo = selectedDifficultyAmmo; });
             satelliteBases.forEach(s => { if (s.alive) s.ammo = selectedDifficultyAmmo; });
+
             missilesToSpawn = MISSILES_PER_LEVEL_BASE + (level - 1) * 4;
             enemyMissileSpeed = MISSILE_SPEED_ENEMY_BASE + (level - 1) * 0.15;
             enemyMissileSpeed = Math.min(enemyMissileSpeed, 3.0);
+
+            // --- NEW: Set up planes for the level ---
+            planesToSpawnThisLevel = level; // Number of planes increases with level
+            planesSpawnedThisLevel = 0;
+
             updateUI(); updateSpecialWeaponsUI();
         }
         function startGame() {
@@ -1171,6 +1420,7 @@
             storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; storeStockShield = MAX_SHIELD_STOCK; storeStockSatShield = MAX_SAT_SHIELD_STOCK; storeStockSonicWave = MAX_SONIC_WAVE_STOCK; storeStockBomb = MAX_BOMB_STOCK;
             inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null;
             satelliteBases = []; baseShields = [null, null, null];
+            planes = []; planeBombs = []; // --- NEW: Ensure planes/bombs are clear on new game
 
             // --- UI Setup ---
             startMenuContainer.style.display = 'none';
@@ -1248,7 +1498,14 @@
         }
         function checkLevelEnd() { /* Logic remains the same */
             if (transitioningLevel || isGameOver || isPaused) return;
-            if (missilesToSpawn <= 0 && incomingMissiles.every(m => !m.alive) && explosions.every(e => !e.alive) && !activeSonicWave) {
+            // --- MODIFIED: Check planes and bombs as well ---
+            if (missilesToSpawn <= 0 &&
+                incomingMissiles.every(m => !m.alive) &&
+                planes.every(p => !p.alive) && // All planes gone (destroyed or off-screen)
+                planeBombs.every(b => !b.alive) && // All plane bombs gone
+                explosions.every(e => !e.alive) &&
+                !activeSonicWave)
+            {
                 transitioningLevel = true; nextLevel();
             }
         }
@@ -1261,6 +1518,8 @@
         function gameOver() { /* Logic remains the same */
             if (isGameOver) return; isGameOver = true; gameHasStarted = false; transitioningLevel = false; isPaused = false; bonusMissileCount = 0;
             baseShields = [null, null, null]; satelliteBases = []; isBombArmed = false; activeSonicWave = null; canvas.style.cursor = 'crosshair';
+            planes = []; planeBombs = []; // --- NEW: Clear planes/bombs on game over
+
             const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length;
             let reason = "";
             if (basesRemaining === 0 && citiesRemaining === 0) { reason = "All bases and cities destroyed!"; }
@@ -1535,24 +1794,42 @@
             incomingMissiles.forEach(missile => missile.draw());
             playerMissiles.forEach(missile => missile.draw());
             explosions.forEach(explosion => explosion.draw());
+
+            // --- Draw Planes and Plane Bombs ---
+            planes.forEach(plane => plane.draw());
+            planeBombs.forEach(bomb => bomb.draw());
         }
 
         // --- Update Functions ---
         // Adjusted to use ratios where appropriate
         function updateGameObjects() {
-            // Spawn missiles (logic remains the same)
+            // Spawn incoming missiles (logic remains the same)
             if (!isGameOver && !transitioningLevel && missilesToSpawn > 0 && Math.random() < 0.015 * (1 + level * 0.1)) {
                 incomingMissiles.push(createIncomingMissile()); missilesToSpawn--;
+            }
+
+            // --- Spawn Planes ---
+            if (!isGameOver && !transitioningLevel && planesSpawnedThisLevel < planesToSpawnThisLevel && Math.random() < PLANE_SPAWN_CHANCE * (1 + level * 0.05)) {
+                planes.push(createPlane());
+                planesSpawnedThisLevel++;
             }
 
             // Update Sonic Wave
             if (activeSonicWave && activeSonicWave.alive) {
                  activeSonicWave.y -= SONIC_WAVE_SPEED;
                  const waveTop = activeSonicWave.y - SONIC_WAVE_HEIGHT; const waveBottom = activeSonicWave.y;
+                 // Check vs Missiles
                  incomingMissiles.forEach(missile => {
                      if (missile.alive && missile.y >= waveTop && missile.y <= waveBottom) {
                          missile.alive = false; score += POINTS_PER_MISSILE;
                          createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color);
+                     }
+                 });
+                 // Check vs Bombs
+                 planeBombs.forEach(bomb => {
+                     if (bomb.alive && bomb.y >= waveTop && bomb.y <= waveBottom) {
+                         bomb.alive = false; score += PLANE_BOMB_POINTS;
+                         createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color);
                      }
                  });
                  if (waveTop <= 0) { activeSonicWave.alive = false; activeSonicWave = null; updateSpecialWeaponsUI(); }
@@ -1563,10 +1840,16 @@
             playerMissiles.forEach(missile => missile.update());
             explosions.forEach(explosion => explosion.update());
 
+            // --- Update Planes and Plane Bombs ---
+            planes.forEach(plane => plane.update());
+            planeBombs.forEach(bomb => bomb.update());
+
             // Filter dead objects
             incomingMissiles = incomingMissiles.filter(missile => missile.alive);
             playerMissiles = playerMissiles.filter(missile => missile.alive);
             explosions = explosions.filter(explosion => explosion.alive);
+            planes = planes.filter(plane => plane.alive); // --- Filter dead planes
+            planeBombs = planeBombs.filter(bomb => bomb.alive); // --- Filter dead bombs
         }
         function updateUI() { /* Logic remains the same */
             scoreDisplay.textContent = `SCORE: $${score}`; levelDisplay.textContent = `LEVEL: ${level}`;
@@ -1579,7 +1862,11 @@
         function gameLoop() {
             if (isPaused) { gameLoopId = null; return; }
             checkGameOverConditions();
-            if (isGameOver && explosions.length === 0 && !activeSonicWave && !transitioningLevel) { gameLoopId = null; return; }
+            // --- MODIFIED: Check plane bombs as well for game over condition ---
+            if (isGameOver && explosions.length === 0 && planeBombs.length === 0 && !activeSonicWave && !transitioningLevel) {
+                gameLoopId = null;
+                return;
+            }
 
             // --- Clear and Draw ---
             // Clear the entire canvas before drawing
@@ -1591,16 +1878,24 @@
             if (!isGameOver && !transitioningLevel) {
                 updateGameObjects(); updateUI(); updateSpecialWeaponsUI(); checkLevelEnd();
             } else if (isGameOver) {
-                explosions.forEach(explosion => explosion.update()); explosions = explosions.filter(explosion => explosion.alive);
+                // Only update remaining explosions and bombs during game over fade out
+                explosions.forEach(explosion => explosion.update());
+                planeBombs.forEach(bomb => bomb.update()); // Let existing bombs finish
                  if (activeSonicWave && activeSonicWave.alive) {
                      activeSonicWave.y -= SONIC_WAVE_SPEED;
                      if (activeSonicWave.y - SONIC_WAVE_HEIGHT <= 0) { activeSonicWave.alive = false; activeSonicWave = null; }
                  }
+                 explosions = explosions.filter(explosion => explosion.alive);
+                 planeBombs = planeBombs.filter(bomb => bomb.alive);
             }
 
             // Request next frame
-            if (!isGameOver || explosions.length > 0 || activeSonicWave) { gameLoopId = requestAnimationFrame(gameLoop); }
-            else { gameLoopId = null; }
+            // --- MODIFIED: Keep looping if bombs or explosions exist even during game over ---
+            if (!isGameOver || explosions.length > 0 || planeBombs.length > 0 || activeSonicWave) {
+                gameLoopId = requestAnimationFrame(gameLoop);
+            } else {
+                gameLoopId = null;
+            }
         }
 
         // --- Event Listeners ---
@@ -1657,6 +1952,7 @@
             storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; storeStockShield = MAX_SHIELD_STOCK; storeStockSatShield = MAX_SAT_SHIELD_STOCK; storeStockSonicWave = MAX_SONIC_WAVE_STOCK; storeStockBomb = MAX_BOMB_STOCK;
             inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null;
             satelliteBases = []; baseShields = [null, null, null]; cities = []; bases = []; incomingMissiles = []; playerMissiles = []; explosions = [];
+            planes = []; planeBombs = []; // --- NEW: Clear planes/bombs on restart
 
             // Reset UI
             startMenuContainer.style.display = 'flex';
