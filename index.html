@@ -271,6 +271,7 @@
             margin: 5px 0 10px 0;
             font-size: clamp(12px, 3vw, 16px);
             color: #ffff00;
+            line-height: 1.4; /* Adjust line height slightly for <br> */
         }
         #messageBox p.bonus-alert {
             color: #ffaa00;
@@ -811,6 +812,7 @@
 
         // Game State
         let score = 0;
+        let gameTotalScore = 0; // *** NEW: Track total score earned ***
         let level = 1;
         let cities = [];
         let bases = [];
@@ -825,6 +827,7 @@
         let isPaused = false;
         let gameHasStarted = false;
         let difficultySelected = false;
+        let selectedDifficultyName = ''; // *** NEW: Track selected difficulty name ***
         let bonusMissileCount = 0;
         let storeStockSatellite = MAX_STOCK;
         let storeStockBase = MAX_STOCK;
@@ -1268,7 +1271,9 @@
                 if (missile.alive) {
                     const dist = distance(explosion.x, explosion.y, missile.x, missile.y);
                     if (dist < explosion.radius) {
-                        missile.alive = false; score += POINTS_PER_MISSILE;
+                        missile.alive = false;
+                        score += POINTS_PER_MISSILE;
+                        gameTotalScore += POINTS_PER_MISSILE; // *** ADDED: Update total score ***
                         createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color);
                     }
                 }
@@ -1291,6 +1296,7 @@
 
                            plane.alive = false;
                            score += PLANE_BONUS_SCORE; // Use updated bonus score constant
+                           gameTotalScore += PLANE_BONUS_SCORE; // *** ADDED: Update total score ***
                            // Bigger explosion for plane destruction
                            createExplosion(plane.x + plane.width / 2, plane.y + plane.height / 2, EXPLOSION_RADIUS_START * 1.5, plane.bodyColor, EXPLOSION_RADIUS_MAX * 1.2, EXPLOSION_DURATION * 1.2);
                        // }
@@ -1305,6 +1311,7 @@
                     if (dist < explosion.radius) {
                         bomb.alive = false;
                         score += PLANE_BOMB_POINTS; // Add points for shooting down bomb
+                        gameTotalScore += PLANE_BOMB_POINTS; // *** ADDED: Update total score ***
                         createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color); // Smaller explosion for bomb
                     }
                 }
@@ -1416,7 +1423,9 @@
         }
         function startGame() {
             if (!difficultySelected) { console.warn("Difficulty not selected!"); return; }
-            score = 0; level = 1; isGameOver = false; isPaused = false; transitioningLevel = false; gameHasStarted = true; bonusMissileCount = 0;
+            score = 0;
+            gameTotalScore = 0; // *** NEW: Initialize total score ***
+            level = 1; isGameOver = false; isPaused = false; transitioningLevel = false; gameHasStarted = true; bonusMissileCount = 0;
             storeStockSatellite = MAX_STOCK; storeStockBase = MAX_STOCK; storeStockCity = MAX_STOCK; storeStockShield = MAX_SHIELD_STOCK; storeStockSatShield = MAX_SAT_SHIELD_STOCK; storeStockSonicWave = MAX_SONIC_WAVE_STOCK; storeStockBomb = MAX_BOMB_STOCK;
             inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null;
             satelliteBases = []; baseShields = [null, null, null];
@@ -1463,6 +1472,7 @@
             level++;
             let bonusEarned = calculateBonus();
             score += bonusEarned;
+            gameTotalScore += bonusEarned; // *** ADDED: Update total score ***
             updateUI(); // Update score display immediately
 
             const citiesSurvived = cities.filter(c => c.alive).length;
@@ -1515,7 +1525,7 @@
             const citiesRemaining = cities.filter(c => c.alive).length;
             if (basesRemaining === 0 || citiesRemaining === 0) { gameOver(); }
         }
-        function gameOver() { /* Logic remains the same */
+        function gameOver() {
             if (isGameOver) return; isGameOver = true; gameHasStarted = false; transitioningLevel = false; isPaused = false; bonusMissileCount = 0;
             baseShields = [null, null, null]; satelliteBases = []; isBombArmed = false; activeSonicWave = null; canvas.style.cursor = 'crosshair';
             planes = []; planeBombs = []; // --- NEW: Clear planes/bombs on game over
@@ -1525,7 +1535,14 @@
             if (basesRemaining === 0 && citiesRemaining === 0) { reason = "All bases and cities destroyed!"; }
             else if (basesRemaining === 0) { reason = "All bases destroyed!"; }
             else if (citiesRemaining === 0) { reason = "All cities destroyed!"; }
-            showMessage("GAME OVER", `Final Score: $${score}`, `${reason} Level: ${level}`);
+
+            // *** MODIFIED: Update message format ***
+            const difficultyText = selectedDifficultyName ? `Difficulty: ${selectedDifficultyName}` : 'Difficulty: Not Selected';
+            const scoreText = `Final Game Score: $${score}<br>Total Game Score: $${gameTotalScore}`;
+            const subText = `${reason} Level: ${level}<br>${difficultyText}`;
+
+            showMessage("GAME OVER", scoreText, subText, ""); // Pass empty string for bonusAlert
+
             restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block';
             pauseButton.textContent = 'Pause'; pauseButton.disabled = true; pauseOverlay.style.display = 'none';
             bonusIndicator.style.display = 'none'; storeModal.style.display = 'none'; specialWeaponsUIDiv.style.display = 'none';
@@ -1572,11 +1589,14 @@
         }
 
         // --- Message Display ---
-        // No changes needed
-        function showMessage(title, text, subtext = "", bonusAlert = "") {
-            messageTitle.textContent = title; messageText.textContent = text;
-            messageSubText.style.display = subtext ? 'block' : 'none'; messageSubText.textContent = subtext;
-            messageBonusText.style.display = bonusAlert ? 'block' : 'none'; messageBonusText.textContent = bonusAlert;
+        // Modified to handle innerHTML for line breaks
+        function showMessage(title, textHTML, subtextHTML = "", bonusAlert = "") {
+            messageTitle.textContent = title;
+            messageText.innerHTML = textHTML; // Use innerHTML to render <br>
+            messageSubText.style.display = subtextHTML ? 'block' : 'none';
+            messageSubText.innerHTML = subtextHTML; // Use innerHTML to render <br>
+            messageBonusText.style.display = bonusAlert ? 'block' : 'none';
+            messageBonusText.textContent = bonusAlert; // Bonus alert likely doesn't need HTML
             goToStoreButton.style.display = 'none'; skipStoreButton.style.display = 'none';
             messageBox.style.display = 'block';
         }
@@ -1587,7 +1607,7 @@
         // --- Store Logic ---
         // Most store logic remains the same, but object creation uses ratios
         function updateStoreUI() { /* Logic remains the same */
-            storeScoreDisplay.textContent = `Current Score: $${score}`;
+            storeScoreDisplay.textContent = `Current Score: $${score}`; // Store uses current spendable score
             stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`; stockBaseDisplay.textContent = `Stock: ${storeStockBase}`; stockCityDisplay.textContent = `Stock: ${storeStockCity}`; stockShieldDisplay.textContent = `Stock: ${storeStockShield}`; stockSatShieldDisplay.textContent = `Stock: ${storeStockSatShield}`; stockSonicWaveDisplay.textContent = `Stock: ${storeStockSonicWave}`; stockBombDisplay.textContent = `Stock: ${storeStockBomb}`;
             const canAffordSatellite = score >= COST_SATELLITE; const satelliteInStock = storeStockSatellite > 0; const activeSatellites = satelliteBases.filter(s => s.alive).length; const canPlaceSatellite = activeSatellites < MAX_ACTIVE_SATELLITES;
             buySatelliteButton.disabled = !(canAffordSatellite && satelliteInStock && canPlaceSatellite);
@@ -1612,13 +1632,13 @@
             const deadCityIndex = cities.findIndex(c => !c.alive);
             if (deadCityIndex !== -1) { cities[deadCityIndex].alive = true; return true; } return false;
         }
-        function buyReplacementBase() { /* Logic remains the same */
+        function buyReplacementBase() { /* Logic remains the same - only affects 'score' */
             if (score >= COST_BASE && storeStockBase > 0) { if (findAndRebuildBase()) { score -= COST_BASE; storeStockBase--; updateStoreUI(); updateUI(); } }
         }
-        function buyReplacementCity() { /* Logic remains the same */
+        function buyReplacementCity() { /* Logic remains the same - only affects 'score' */
             if (score >= COST_CITY && storeStockCity > 0) { if (findAndRebuildCity()) { score -= COST_CITY; storeStockCity--; updateStoreUI(); updateUI(); } }
         }
-        function buySatellite() {
+        function buySatellite() { /* Only affects 'score' */
             const activeSatellitesCount = satelliteBases.filter(s => s.alive).length;
             if (score >= COST_SATELLITE && storeStockSatellite > 0 && activeSatellitesCount < MAX_ACTIVE_SATELLITES) {
                 let placed = false;
@@ -1628,7 +1648,7 @@
                     const satelliteX = targetX - (canvas.width * SATELLITE_WIDTH_RATIO / 2); // Center satellite X
                     const positionOccupied = satelliteBases.some(s => s.alive && Math.abs(s.x - satelliteX) < 1);
                     if (!positionOccupied) {
-                        score -= COST_SATELLITE; storeStockSatellite--;
+                        score -= COST_SATELLITE; storeStockSatellite--; // Decrease spendable score
                         // Create satellite using ratios
                         const newSatellite = createSatelliteBase(basePositionsRatios[i], SATELLITE_Y_POS_RATIO);
                         satelliteBases.push(newSatellite);
@@ -1638,7 +1658,7 @@
                 updateStoreUI(); updateUI();
             }
         }
-        function buyShield() { /* Logic remains the same */
+        function buyShield() { /* Only affects 'score' */
             if (score >= COST_SHIELD && storeStockShield > 0) {
                 let shieldPlaced = false;
                 for (let i = 0; i < bases.length; i++) {
@@ -1650,7 +1670,7 @@
                 updateStoreUI(); updateUI();
             }
         }
-        function buySatShield() { /* Logic remains the same */
+        function buySatShield() { /* Only affects 'score' */
             if (score >= COST_SAT_SHIELD && storeStockSatShield > 0) {
                 let shieldPlaced = false;
                 for (let i = 0; i < satelliteBases.length; i++) {
@@ -1663,10 +1683,10 @@
                 updateStoreUI(); updateUI();
             }
         }
-        function buySonicWave() { /* Logic remains the same */
+        function buySonicWave() { /* Only affects 'score' */
             if (score >= COST_SONIC_WAVE && storeStockSonicWave > 0) { score -= COST_SONIC_WAVE; storeStockSonicWave--; inventorySonicWave++; updateStoreUI(); updateSpecialWeaponsUI(); }
         }
-        function buyBomb() { /* Logic remains the same */
+        function buyBomb() { /* Only affects 'score' */
              if (score >= COST_BOMB && storeStockBomb > 0) { score -= COST_BOMB; storeStockBomb--; inventoryBomb++; updateStoreUI(); updateSpecialWeaponsUI(); }
         }
 
@@ -1821,14 +1841,18 @@
                  // Check vs Missiles
                  incomingMissiles.forEach(missile => {
                      if (missile.alive && missile.y >= waveTop && missile.y <= waveBottom) {
-                         missile.alive = false; score += POINTS_PER_MISSILE;
+                         missile.alive = false;
+                         score += POINTS_PER_MISSILE;
+                         gameTotalScore += POINTS_PER_MISSILE; // *** ADDED: Update total score ***
                          createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color);
                      }
                  });
                  // Check vs Bombs
                  planeBombs.forEach(bomb => {
                      if (bomb.alive && bomb.y >= waveTop && bomb.y <= waveBottom) {
-                         bomb.alive = false; score += PLANE_BOMB_POINTS;
+                         bomb.alive = false;
+                         score += PLANE_BOMB_POINTS;
+                         gameTotalScore += PLANE_BOMB_POINTS; // *** ADDED: Update total score ***
                          createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color);
                      }
                  });
@@ -1852,7 +1876,8 @@
             planeBombs = planeBombs.filter(bomb => bomb.alive); // --- Filter dead bombs
         }
         function updateUI() { /* Logic remains the same */
-            scoreDisplay.textContent = `SCORE: $${score}`; levelDisplay.textContent = `LEVEL: ${level}`;
+            scoreDisplay.textContent = `SCORE: $${score}`; // Display current spendable score
+            levelDisplay.textContent = `LEVEL: ${level}`;
             const livingCities = cities.filter(c => c.alive).length; citiesLeftDisplay.textContent = `CITIES: ${livingCities}`;
             bonusIndicator.style.display = bonusMissileCount > 0 ? 'inline-block' : 'none';
             if (bonusMissileCount > 0) { bonusIndicator.textContent = `BONUS FIRE +${bonusMissileCount}!`; }
@@ -1953,6 +1978,7 @@
             inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null;
             satelliteBases = []; baseShields = [null, null, null]; cities = []; bases = []; incomingMissiles = []; playerMissiles = []; explosions = [];
             planes = []; planeBombs = []; // --- NEW: Clear planes/bombs on restart
+            selectedDifficultyName = ''; // *** NEW: Reset difficulty name ***
 
             // Reset UI
             startMenuContainer.style.display = 'flex';
@@ -1983,13 +2009,20 @@
         buyBombButton.addEventListener('click', buyBomb);
         goToStoreButton.addEventListener('click', () => { hideMessage(); updateStoreUI(); storeModal.style.display = 'block'; });
         skipStoreButton.addEventListener('click', proceedToNextLevel);
+
+        // *** MODIFIED: Difficulty Button Listener ***
         document.querySelectorAll('.difficulty-button').forEach(button => {
             button.addEventListener('click', (event) => {
-                selectedDifficultyAmmo = parseInt(event.target.getAttribute('data-ammo'), 10); difficultySelected = true;
-                document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected')); event.target.classList.add('selected');
-                actualStartButton.style.display = 'inline-block'; actualStartButton.disabled = false;
+                selectedDifficultyAmmo = parseInt(event.target.getAttribute('data-ammo'), 10);
+                difficultySelected = true;
+                selectedDifficultyName = event.target.textContent; // *** ADDED: Store difficulty name ***
+                document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected'));
+                event.target.classList.add('selected');
+                actualStartButton.style.display = 'inline-block';
+                actualStartButton.disabled = false;
             });
         });
+
         actualStartButton.addEventListener('click', () => { if (difficultySelected) { startGame(); } });
         sonicWaveControl.addEventListener('click', () => { if (!sonicWaveControl.classList.contains('disabled')) { triggerSonicWave(); } });
         bombControl.addEventListener('click', () => { if (!bombControl.classList.contains('disabled')) { armBomb(); } });
