@@ -33,7 +33,7 @@
         #gameCanvas { display: none; background-color: #111; border: 2px solid #00ff00; box-shadow: 0 0 15px #00ff00; cursor: crosshair; width: 100%; height: 100%; image-rendering: pixelated; position: absolute; top: 0; left: 0; }
 
         /* --- UI Container --- */
-        #uiContainer { display: none; flex-wrap: wrap; justify-content: space-around; align-items: center; width: 100%; max-width: 800px; padding: 8px 0; font-size: clamp(9px, 2.5vw, 12px); gap: 8px; border-bottom: 1px solid #005500; margin-bottom: 5px; }
+        #uiContainer { display: none; flex-wrap: wrap; justify-content: space-around; align-items: center; width: 100%; max-width: 800px; padding: 8px 0; font-size: clamp(9px, 2.5vw, 11px); gap: 8px; border-bottom: 1px solid #005500; margin-bottom: 5px; }
         #score, #highScore, #wave, #citiesLeft, #multiplier { flex-grow: 1; text-align: center; min-width: 80px; }
         #highScore { color: #aaa; }
         #multiplier { color: #ffff00; font-weight: bold; text-shadow: 1px 1px #000; }
@@ -414,7 +414,7 @@
         // (Constants remain the same as previous version)
         const INTERNAL_WIDTH = 800;
         const INTERNAL_HEIGHT = 600;
-        const GROUND_HEIGHT_RATIO = 50 / INTERNAL_HEIGHT;
+        const GROUND_HEIGHT_RATIO = 10 / INTERNAL_HEIGHT;
         const BASE_WIDTH_RATIO = 40 / INTERNAL_WIDTH;
         const BASE_HEIGHT_RATIO = 25 / INTERNAL_HEIGHT;
         const CITY_WIDTH_RATIO = 50 / INTERNAL_WIDTH;
