@@ -129,6 +129,7 @@
             button { padding: 6px 12px; }
             #messageBox { padding: 15px; max-width: 95%; }
             #storeModal { padding: 10px; }
+            /* Adjust store grid for medium screens */
             #storeItemsContainer { gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));}
             footer { margin-top: 15px; gap: 8px; }
             footer a { margin: 0 4px; }
@@ -163,7 +164,11 @@
             #storeModal { padding: 8px; width: 95%; max-height: 75vh; }
             #storeModal h2 { font-size: 18px; }
             #storeScore { font-size: 12px; }
-            #storeItemsContainer { grid-template-columns: 1fr; }
+            /* --- MODIFIED: Use auto-fit grid for store on small screens, aiming for 3 columns --- */
+            #storeItemsContainer {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Aim for 3 columns if space allows */
+                gap: 6px; /* Slightly reduced gap */
+            }
             .storeItem { padding: 6px 8px; gap: 6px; }
             .storeItemInfo span { font-size: 10px; margin-bottom: 1px; line-height: 1.15; }
             .itemStock, .itemLevel { font-size: 9px; }
