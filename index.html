@@ -731,16 +731,155 @@
                 x: satX, y: satY, width: satWidth, height: satHeight, bodyColor: '#b0b0b0', panelColor: '#3333cc', panelHighlight: '#6666ff', outlineColor: '#777777', antennaColor: '#dddddd', lightColor: '#ff0000', alive: true, ammo: selectedDifficultyAmmo, isSatellite: true, shield: null,
                 draw() {
                     if (!this.alive) return;
-                    const bodyW = this.width * 0.5; const bodyH = this.height; const bodyX = this.x + (this.width - bodyW) / 2;
-                    const panelW = this.width * 0.25; const panelH = this.height * 0.8; const panelY = this.y + (bodyH - panelH) / 2;
-                    ctx.fillStyle = this.panelColor; ctx.fillRect(this.x, panelY, panelW, panelH); ctx.fillRect(this.x + this.width - panelW, panelY, panelW, panelH);
-                    ctx.strokeStyle = this.panelHighlight; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(this.x + panelW / 2, panelY); ctx.lineTo(this.x + panelW / 2, panelY + panelH); ctx.moveTo(this.x + this.width - panelW / 2, panelY); ctx.lineTo(this.x + this.width - panelW / 2, panelY + panelH); ctx.moveTo(this.x, panelY + panelH / 3); ctx.lineTo(this.x + panelW, panelY + panelH / 3); ctx.moveTo(this.x, panelY + panelH * 2/3); ctx.lineTo(this.x + panelW, panelY + panelH * 2/3); ctx.moveTo(this.x + this.width - panelW, panelY + panelH / 3); ctx.lineTo(this.x + this.width, panelY + panelH / 3); ctx.moveTo(this.x + this.width - panelW, panelY + panelH * 2/3); ctx.lineTo(this.x + this.width, panelY + panelH * 2/3); ctx.stroke();
-                    ctx.fillStyle = this.bodyColor; ctx.beginPath(); ctx.moveTo(bodyX, this.y + bodyH * 0.2); ctx.lineTo(bodyX + bodyW * 0.1, this.y); ctx.lineTo(bodyX + bodyW * 0.9, this.y); ctx.lineTo(bodyX + bodyW, this.y + bodyH * 0.2); ctx.lineTo(bodyX + bodyW, this.y + bodyH * 0.8); ctx.lineTo(bodyX + bodyW * 0.9, this.y + bodyH); ctx.lineTo(bodyX + bodyW * 0.1, this.y + bodyH); ctx.lineTo(bodyX, this.y + bodyH * 0.8); ctx.closePath(); ctx.fill();
-                    ctx.strokeStyle = this.outlineColor; ctx.lineWidth = 1; ctx.stroke();
-                    const dishRadius = bodyW * 0.3; const dishY = this.y - dishRadius * 0.6; ctx.strokeStyle = this.antennaColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bodyX + bodyW / 2, dishY, dishRadius, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); ctx.beginPath(); ctx.moveTo(bodyX + bodyW / 2, this.y); ctx.lineTo(bodyX + bodyW / 2, dishY); ctx.stroke();
-                    const nozzleWidth = bodyW * 0.2; const nozzleHeight = bodyH * 0.25; ctx.fillStyle = this.outlineColor; ctx.fillRect(bodyX + (bodyW / 2) - (nozzleWidth / 2), this.y + bodyH, nozzleWidth, nozzleHeight);
-                    ctx.fillStyle = this.lightColor; if (Math.floor(Date.now() / 500) % 2 === 0) { ctx.beginPath(); ctx.arc(bodyX + bodyW / 2, this.y + bodyH / 2, 2, 0, Math.PI * 2); ctx.fill(); }
-                    ctx.fillStyle = '#ffff00'; const fontSize = Math.max(7, Math.min(10, Math.floor(this.width * 0.25))); ctx.font = `${fontSize}px "Press Start 2P"`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(this.ammo, this.x + this.width / 2, this.y + bodyH + nozzleHeight + 3);
+                    
+                    // Main satellite body (central platform)
+                    const bodyW = this.width * 0.6;
+                    const bodyH = this.height * 0.7; 
+                    const bodyX = this.x + (this.width - bodyW) / 2;
+                    const bodyY = this.y + (this.height - bodyH) / 2;
+                    
+                    // Central command module (matching the land base's command building)
+                    ctx.fillStyle = '#5a5a5a';
+                    ctx.beginPath();
+                    ctx.moveTo(bodyX, bodyY + bodyH * 0.2);
+                    ctx.lineTo(bodyX + bodyW * 0.1, bodyY);
+                    ctx.lineTo(bodyX + bodyW * 0.9, bodyY);
+                    ctx.lineTo(bodyX + bodyW, bodyY + bodyH * 0.2);
+                    ctx.lineTo(bodyX + bodyW, bodyY + bodyH * 0.8);
+                    ctx.lineTo(bodyX + bodyW * 0.9, bodyY + bodyH);
+                    ctx.lineTo(bodyX + bodyW * 0.1, bodyY + bodyH);
+                    ctx.lineTo(bodyX, bodyY + bodyH * 0.8);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Command module outline
+                    ctx.strokeStyle = '#444444';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // Solar panels - left and right (similar layout to the land base silos)
+                    const panelW = this.width * 0.25;
+                    const panelH = this.height * 0.8;
+                    const panelY = this.y + (this.height - panelH) / 2;
+                    
+                    // Left panel
+                    ctx.fillStyle = '#336699'; // Blue panels (like windows in command center)
+                    ctx.fillRect(this.x, panelY, panelW, panelH);
+                    
+                    // Right panel
+                    ctx.fillRect(this.x + this.width - panelW, panelY, panelW, panelH);
+                    
+                    // Panel details - grid lines
+                    ctx.strokeStyle = '#88ccff';
+                    ctx.lineWidth = 1;
+                    
+                    // Left panel grid
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, panelY + panelH * (i + 1) / 4);
+                        ctx.lineTo(this.x + panelW, panelY + panelH * (i + 1) / 4);
+                        ctx.stroke();
+                    }
+                    for (let i = 0; i < 1; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + panelW * (i + 1) / 2, panelY);
+                        ctx.lineTo(this.x + panelW * (i + 1) / 2, panelY + panelH);
+                        ctx.stroke();
+                    }
+                    
+                    // Right panel grid
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + this.width - panelW, panelY + panelH * (i + 1) / 4);
+                        ctx.lineTo(this.x + this.width, panelY + panelH * (i + 1) / 4);
+                        ctx.stroke();
+                    }
+                    for (let i = 0; i < 1; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + this.width - panelW * (i + 1) / 2, panelY);
+                        ctx.lineTo(this.x + this.width - panelW * (i + 1) / 2, panelY + panelH);
+                        ctx.stroke();
+                    }
+                    
+                    // Windows on command module (matching land base)
+                    ctx.fillStyle = '#88ccff';
+                    const windowSize = bodyW * 0.1;
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 2; j++) {
+                            ctx.fillRect(
+                                bodyX + bodyW * 0.2 + i * bodyW * 0.3,
+                                bodyY + bodyH * 0.25 + j * bodyH * 0.3,
+                                windowSize, windowSize
+                            );
+                        }
+                    }
+                    
+                    // Missile launchers (top and bottom, similar to land base's dual launchers)
+                    const launcherW = bodyW * 0.15;
+                    const launcherH = this.height * 0.15;
+                    
+                    // Top launcher
+                    ctx.fillStyle = '#777777';
+                    ctx.fillRect(bodyX + (bodyW - launcherW) / 2, bodyY - launcherH * 0.6, launcherW, launcherH * 0.6);
+                    
+                    // Top missile
+                    const missileW = launcherW * 0.6;
+                    ctx.fillStyle = '#cccccc';
+                    ctx.fillRect(bodyX + (bodyW - missileW) / 2, bodyY - launcherH * 1.5, missileW, launcherH * 0.9);
+                    
+                    // Missile tip
+                    ctx.fillStyle = '#ff3333';
+                    ctx.beginPath();
+                    ctx.moveTo(bodyX + (bodyW - missileW) / 2, bodyY - launcherH * 1.5);
+                    ctx.lineTo(bodyX + bodyW / 2, bodyY - launcherH * 1.8);
+                    ctx.lineTo(bodyX + (bodyW + missileW) / 2, bodyY - launcherH * 1.5);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Bottom launcher
+                    ctx.fillStyle = '#777777';
+                    ctx.fillRect(bodyX + (bodyW - launcherW) / 2, bodyY + bodyH, launcherW, launcherH * 0.6);
+                    
+                    // Bottom missile
+                    ctx.fillStyle = '#cccccc';
+                    ctx.fillRect(bodyX + (bodyW - missileW) / 2, bodyY + bodyH + launcherH * 0.6, missileW, launcherH * 0.9);
+                    
+                    // Bottom missile tip
+                    ctx.fillStyle = '#ff3333';
+                    ctx.beginPath();
+                    ctx.moveTo(bodyX + (bodyW - missileW) / 2, bodyY + bodyH + launcherH * 1.5);
+                    ctx.lineTo(bodyX + bodyW / 2, bodyY + bodyH + launcherH * 1.8);
+                    ctx.lineTo(bodyX + (bodyW + missileW) / 2, bodyY + bodyH + launcherH * 1.5);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Communication antenna (matching land base)
+                    ctx.strokeStyle = '#aaaaaa';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(bodyX + bodyW * 0.8, bodyY);
+                    ctx.lineTo(bodyX + bodyW * 0.8, bodyY - bodyH * 0.3);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.arc(bodyX + bodyW * 0.8, bodyY - bodyH * 0.3, bodyW * 0.05, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Status light
+                    ctx.fillStyle = this.lightColor;
+                    if (Math.floor(Date.now() / 500) % 2 === 0) {
+                        ctx.beginPath();
+                        ctx.arc(bodyX + bodyW * 0.2, bodyY + bodyH * 0.5, bodyW * 0.03, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // Ammo display
+                    ctx.fillStyle = '#ffff00';
+                    const fontSize = Math.max(7, Math.min(10, Math.floor(this.width * 0.25)));
+                    ctx.font = `${fontSize}px "Press Start 2P"`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(this.ammo, this.x + this.width / 2, this.y + this.height + 3);
                 }
             };
         }
