@@ -1076,43 +1076,117 @@
             try {
                 console.log(`initWave: Entered for wave ${waveIndex}`);
                 currentWave = waveIndex;
+                waveTimer = 0; // Reset wave timer
+                
                 const effectiveWaveIndex = Math.min(waveIndex, waveDefinitions.length - 1);
-                if (!waveDefinitions || waveDefinitions.length === 0) { throw new Error("waveDefinitions is empty or not defined."); }
-                if (effectiveWaveIndex < 0 || effectiveWaveIndex >= waveDefinitions.length) { throw new Error(`Calculated effectiveWaveIndex (${effectiveWaveIndex}) is out of bounds for waveDefinitions (length ${waveDefinitions.length}).`); }
+                if (!waveDefinitions || waveDefinitions.length === 0) { 
+                    throw new Error("waveDefinitions is empty or not defined."); 
+                }
+                
+                if (effectiveWaveIndex < 0 || effectiveWaveIndex >= waveDefinitions.length) { 
+                    throw new Error(`Calculated effectiveWaveIndex (${effectiveWaveIndex}) is out of bounds for waveDefinitions (length ${waveDefinitions.length}).`); 
+                }
+                
                 currentWaveConfig = JSON.parse(JSON.stringify(waveDefinitions[effectiveWaveIndex]));
                 console.log(`initWave: Loaded config for wave ${waveIndex} (using definition ${effectiveWaveIndex}):`, JSON.stringify(currentWaveConfig));
-                if (!Array.isArray(currentWaveConfig)) { throw new Error(`currentWaveConfig for wave ${waveIndex} (effective index ${effectiveWaveIndex}) is not an array.`); }
+                
+                if (!Array.isArray(currentWaveConfig)) { 
+                    throw new Error(`currentWaveConfig for wave ${waveIndex} (effective index ${effectiveWaveIndex}) is not an array.`); 
+                }
+                
                 if (waveIndex >= waveDefinitions.length) {
-                    const scalingFactor = 1 + (waveIndex - (waveDefinitions.length - 1)) * 0.06;
+                    // Cap the scaling factor for very high waves
+                    const baseScalingIncrease = 0.06;
+                    const maxScalingFactor = 4.0;
+                    
+                    // Calculate scaling with a cap
+                    const scalingFactor = Math.min(
+                        maxScalingFactor, 
+                        1 + (waveIndex - (waveDefinitions.length - 1)) * baseScalingIncrease
+                    );
+                    
+                    console.log(`Wave ${waveIndex} using scaling factor: ${scalingFactor}`);
+                    
                     currentWaveConfig.forEach(part => {
                         part.count = Math.ceil(part.count * scalingFactor);
-                        if (part.speedFactor) { part.speedFactor = part.speedFactor * scalingFactor; }
+                        if (part.speedFactor) { 
+                            part.speedFactor = Math.min(3.0, part.speedFactor * scalingFactor); 
+                        }
                     });
+                    
                     console.log(`initWave: Scaled config for high wave ${waveIndex}:`, JSON.stringify(currentWaveConfig));
                 }
-                incomingMissiles = []; playerMissiles = []; explosions = []; activeSonicWave = null; planes = []; planeBombs = []; waveEnemiesSpawned = 0;
+                
+                // Clear game objects
+                incomingMissiles = []; 
+                playerMissiles = []; 
+                explosions = []; 
+                activeSonicWave = null; 
+                planes = []; 
+                planeBombs = []; 
+                waveEnemiesSpawned = 0;
+                
                 console.log(`initWave: Calculating waveEnemiesRequired for wave ${waveIndex}...`);
-                waveEnemiesRequired = currentWaveConfig.reduce((sum, part) => { if (typeof part !== 'object' || part === null) { console.warn(`Invalid part found in wave config ${waveIndex}:`, part); return sum; } return sum + (part.count || 0); }, 0);
-                console.log(`initWave: waveEnemiesRequired = ${waveEnemiesRequired}`); waveTimer = 0;
+                
+                // Calculate with better error handling
+                waveEnemiesRequired = 0;
+                currentWaveConfig.forEach(part => {
+                    if (typeof part === 'object' && part !== null && typeof part.count === 'number') {
+                        waveEnemiesRequired += part.count;
+                    } else {
+                        console.warn(`Skipping invalid part in wave config ${waveIndex}:`, part);
+                    }
+                });
+                
+                // Ensure we have at least some enemies
+                if (waveEnemiesRequired <= 0) {
+                    console.warn(`Warning: waveEnemiesRequired calculated as ${waveEnemiesRequired}, setting to default 20`);
+                    waveEnemiesRequired = 20;
+                }
+                
+                console.log(`initWave: waveEnemiesRequired = ${waveEnemiesRequired}`);
+                
+                // Refresh base ammo
                 bases.forEach(b => { if (b.alive) b.ammo = selectedDifficultyAmmo; });
                 satelliteBases.forEach(s => { if (s.alive) s.ammo = selectedDifficultyAmmo; });
-                updateUI(); updateSpecialWeaponsUI(); console.log(`initWave: Exiting for wave ${waveIndex}`);
-            } catch (error) { console.error(`Error during initWave(${waveIndex}):`, error); showMessage("WAVE INIT ERROR", `Failed to initialize wave ${waveIndex + 1}: ${error.message}`, "Check console for details."); isGameOver = true; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } }
+                
+                updateUI(); 
+                updateSpecialWeaponsUI();
+                
+                console.log(`initWave: Exiting for wave ${waveIndex}`);
+            } catch (error) { 
+                console.error(`Error during initWave(${waveIndex}):`, error); 
+                showMessage("WAVE INIT ERROR", `Failed to initialize wave ${waveIndex + 1}: ${error.message}`, "Check console for details."); 
+                isGameOver = true; 
+                if (gameLoopId) { 
+                    cancelAnimationFrame(gameLoopId); 
+                    gameLoopId = null; 
+                } 
+            }
         }
         function spawnEnemiesForWave() {
             if (transitioningWave || isGameOver || isPaused || waveEnemiesSpawned >= waveEnemiesRequired) return;
+            
             const potentialSpawns = [];
             currentWaveConfig.forEach(part => {
                 const requiredForThisPart = part.count || 0;
                 const currentSpawnedForThisPart = (part.type === 'plane' ? planes : incomingMissiles).filter(e => e.wavePartType === part.type).length;
                 if (currentSpawnedForThisPart < requiredForThisPart) {
-                    const spawnRateMultiplier = 1 + currentWave * 0.24;
+                    // Cap the spawn rate multiplier to prevent excessively high spawn chances
+                    const spawnRateMultiplier = Math.min(5.0, 1 + currentWave * 0.15);
                     let baseSpawnChance = 0.025;
                     if (part.type === 'plane') { baseSpawnChance = PLANE_SPAWN_CHANCE; }
-                    let spawnChance = baseSpawnChance * spawnRateMultiplier * (part.speedFactor || 1.0);
+                    
+                    // Cap the speed factor to prevent excessively fast enemies
+                    const safeFactor = Math.min(3.0, part.speedFactor || 1.0);
+                    
+                    // Cap the final spawn chance to prevent issues
+                    let spawnChance = Math.min(0.75, baseSpawnChance * spawnRateMultiplier * safeFactor);
+                    
                     potentialSpawns.push({ partConfig: part, spawnChance: spawnChance });
                 }
             });
+            
             if (potentialSpawns.length > 0) {
                  const randomIndex = Math.floor(Math.random() * potentialSpawns.length);
                  const selectedSpawn = potentialSpawns[randomIndex];
@@ -1123,7 +1197,7 @@
                         let baseSpeed = MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08);
                         baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED);
                         let config = {
-                            speed: baseSpeed * (part.speedFactor || 1.0),
+                            speed: baseSpeed * Math.min(3.0, part.speedFactor || 1.0),
                             isSmartBomb: missileType === 'smart_bomb',
                             isMIRV: missileType === 'mirv',
                             wavePartType: part.type
@@ -1138,13 +1212,47 @@
                     }
                 }
             }
+            
+            // Force wave completion when we've spawned enough enemies
+            // This is an additional safeguard
+            if (waveEnemiesSpawned >= waveEnemiesRequired) {
+                console.log(`All required enemies (${waveEnemiesRequired}) spawned for wave ${currentWave + 1}`);
+            }
         }
         function checkWaveEnd() {
             if (transitioningWave || isGameOver || isPaused) return;
-            const allEnemiesGone = incomingMissiles.every(m => !m.alive) && planes.every(p => !p.alive) && planeBombs.every(b => !b.alive);
+            
+            // Add debug logging for high wave numbers
+            if (currentWave >= 30) {
+                console.log(`Wave ${currentWave + 1} check - Spawned: ${waveEnemiesSpawned}, Required: ${waveEnemiesRequired}`);
+                console.log(`Enemies remaining - Missiles: ${incomingMissiles.filter(m => m.alive).length}, Planes: ${planes.filter(p => p.alive).length}, Bombs: ${planeBombs.filter(b => b.alive).length}`);
+            }
+            
+            // Check if all active enemies are gone
+            const allEnemiesGone = incomingMissiles.every(m => !m.alive) && 
+                                  planes.every(p => !p.alive) && 
+                                  planeBombs.every(b => !b.alive);
+            
+            // Check if all explosions are done
             const allExplosionsDone = explosions.every(e => !e.alive);
-            const waveComplete = waveEnemiesSpawned >= waveEnemiesRequired && allEnemiesGone && allExplosionsDone && !activeSonicWave;
+            
+            // Check if we've spawned all required enemies
+            // Add safeguard for cases where waveEnemiesRequired might be invalid
+            const allEnemiesSpawned = waveEnemiesRequired > 0 ? 
+                                     waveEnemiesSpawned >= waveEnemiesRequired : 
+                                     waveTimer > 600; // Fallback timer (10 seconds)
+            
+            // Wave is complete when all conditions are met
+            const waveComplete = allEnemiesSpawned && allEnemiesGone && allExplosionsDone && !activeSonicWave;
+            
             if (waveComplete) {
+                console.log(`Wave ${currentWave + 1} completed successfully!`);
+                transitioningWave = true;
+                nextWave();
+            } else if (currentWave >= 30 && waveTimer > 3600) {
+                // Safety valve - if a high wave has been running for 60 seconds (3600 frames at 60fps),
+                // force completion even if normal conditions aren't met
+                console.log(`Wave ${currentWave + 1} force-completed due to timeout!`);
                 transitioningWave = true;
                 nextWave();
             }
@@ -1432,6 +1540,9 @@
         // --- Update Functions ---
         // (Update functions remain the same as previous version)
         function updateGameObjects() {
+            // Increment wave timer
+            waveTimer++;
+            
             spawnEnemiesForWave();
             if (activeSonicWave && activeSonicWave.alive) {
                  activeSonicWave.y -= SONIC_WAVE_SPEED;
