@@ -432,6 +432,7 @@
         const POINTS_PER_CITY = 100;
         const POINTS_PER_AMMO = 5;
         const BONUS_FIRE_SPREAD = 8;
+        const BASE_SHIELD_RADIUS_MULTIPLIER = 2.45;
         const SHIELD_STRENGTH_START = 100;
         const SHIELD_DAMAGE_PER_HIT = 10;
         const SHIELD_COLOR_FULL = 'rgba(0, 150, 255, 0.6)';
@@ -456,14 +457,14 @@
         const MISSILE_SPEED_INCREASE_PER_LEVEL = 0.9;
         const EXPLOSION_RADIUS_INCREASE_PER_LEVEL = 8;
         const SMART_BOMB_CHANCE = 0.05;
-        const SMART_BOMB_SPLIT_ALTITUDE_MIN = INTERNAL_HEIGHT * 0.90;
-        const SMART_BOMB_SPLIT_ALTITUDE_MAX = INTERNAL_HEIGHT * 0.95;
+        const SMART_BOMB_SPLIT_ALTITUDE_MIN = INTERNAL_HEIGHT * 0.35;
+        const SMART_BOMB_SPLIT_ALTITUDE_MAX = INTERNAL_HEIGHT * 0.65;
         const SMART_BOMB_SPLIT_COUNT = 2;
         const SMART_BOMB_SPLIT_SPEED_FACTOR = 0.7;
         const SMART_BOMB_SPLIT_COLOR = '#ff8800';
         const MIRV_CHANCE = 0.10;
         const MIRV_SPLIT_ALTITUDE = INTERNAL_HEIGHT * 0.35;
-        const MIRV_WARHEAD_COUNT = 2;
+        const MIRV_WARHEAD_COUNT = 4;
         const MIRV_WARHEAD_SPEED_FACTOR = 0.9;
         const MIRV_WARHEAD_COLOR = '#ff4444';
         const PLANE_SPEED_INCREASE_PER_WAVE = 0.05;
@@ -673,22 +674,75 @@
             if (isMIRV) { color = MIRV_WARHEAD_COLOR; trailColor = 'rgba(255, 150, 150, 0.5)'; }
             if (isSmartBomb) { color = SMART_BOMB_SPLIT_COLOR; trailColor = 'rgba(255, 200, 100, 0.5)'; }
             if (isSplit) { color = config.color || color; trailColor = config.trailColor || trailColor; }
+            
+            // Add the ignoreEnemyObjectsWhenExploding flag, default to false
+            const ignoreEnemyObjectsWhenExploding = config.ignoreEnemyObjectsWhenExploding || false;
+            
             return {
-                x: startX, y: startY, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, speed: speed, color: color, trailColor: trailColor, alive: true, trail: [{x: startX, y: startY}], isPlaneBomb: false, isSmartBomb: isSmartBomb, isMIRV: isMIRV, isSplit: isSplit, hasSplit: false, wavePartType: config.wavePartType,
+                x: startX, y: startY, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, speed: speed, color: color, trailColor: trailColor, alive: true, trail: [{x: startX, y: startY}], isPlaneBomb: false, isSmartBomb: isSmartBomb, isMIRV: isMIRV, isSplit: isSplit, hasSplit: false, wavePartType: config.wavePartType, ignoreEnemyObjectsWhenExploding: ignoreEnemyObjectsWhenExploding,
+                
                 update() {
                     if (!this.alive) return;
                     this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 15) { this.trail.shift(); }
+                    
                     if (this.isMIRV && !this.hasSplit && this.y >= MIRV_SPLIT_ALTITUDE) {
-                        this.alive = false; this.hasSplit = true; createExplosion(this.x, this.y, EXPLOSION_RADIUS_START * 0.5, this.color); let lastTargetX = this.x; for (let i = 0; i < MIRV_WARHEAD_COUNT; i++) { const warheadTarget = getRandomTarget(lastTargetX, 50); lastTargetX = warheadTarget.x; incomingMissiles.push(createIncomingMissile({ startX: this.x, startY: this.y, target: warheadTarget, speed: this.speed * MIRV_WARHEAD_SPEED_FACTOR, isSplit: true, isMIRV: false, isSmartBomb: false, color: MIRV_WARHEAD_COLOR, trailColor: 'rgba(255, 150, 150, 0.5)', wavePartType: this.wavePartType })); } return;
+                        this.alive = false; this.hasSplit = true; 
+                        // Create an explosion that ignores enemy objects
+                        createExplosion(this.x, this.y, EXPLOSION_RADIUS_START * 0.5, this.color, null, null, true);
+                        
+                        for (let i = 0; i < MIRV_WARHEAD_COUNT; i++) {
+                            // Use getBaseOrCityTarget for MIRV splits instead of getRandomTarget
+                            const warheadTarget = getBaseOrCityTarget();
+                            incomingMissiles.push(createIncomingMissile({
+                                startX: this.x,
+                                startY: this.y,
+                                target: warheadTarget,
+                                speed: this.speed * MIRV_WARHEAD_SPEED_FACTOR,
+                                isSplit: true,
+                                isMIRV: false,
+                                isSmartBomb: false,
+                                color: MIRV_WARHEAD_COLOR,
+                                trailColor: 'rgba(255, 150, 150, 0.5)',
+                                ignoreEnemyObjectsWhenExploding: true,
+                                wavePartType: this.wavePartType
+                            }));
+                        }
+                        return;
                     }
+                    
                     const splitAltitude = SMART_BOMB_SPLIT_ALTITUDE_MIN + Math.random() * (SMART_BOMB_SPLIT_ALTITUDE_MAX - SMART_BOMB_SPLIT_ALTITUDE_MIN);
                     if (this.isSmartBomb && !this.hasSplit && this.y >= splitAltitude) {
-                         this.alive = false; this.hasSplit = true; createExplosion(this.x, this.y, EXPLOSION_RADIUS_START * 0.4, this.color); for (let i = 0; i < SMART_BOMB_SPLIT_COUNT; i++) { const offsetX = (Math.random() - 0.5) * 80; const offsetY = (Math.random() - 0.5) * 40; const splitTarget = { x: this.targetX + offsetX, y: this.targetY + offsetY }; incomingMissiles.push(createIncomingMissile({ startX: this.x, startY: this.y, target: splitTarget, speed: this.speed * SMART_BOMB_SPLIT_SPEED_FACTOR, isSplit: true, isMIRV: false, isSmartBomb: false, color: SMART_BOMB_SPLIT_COLOR, trailColor: 'rgba(255, 200, 100, 0.5)', wavePartType: this.wavePartType })); } return;
+                        this.alive = false; this.hasSplit = true; 
+                        // Create an explosion that ignores enemy objects
+                        createExplosion(this.x, this.y, EXPLOSION_RADIUS_START * 0.4, this.color, null, null, true);
+                        
+                        for (let i = 0; i < SMART_BOMB_SPLIT_COUNT; i++) {
+                            // Use getBaseOrCityTarget for smart bomb splits instead of getRandomTarget
+                            const splitTarget = getBaseOrCityTarget();
+                            incomingMissiles.push(createIncomingMissile({
+                                startX: this.x,
+                                startY: this.y,
+                                target: splitTarget,
+                                speed: this.speed * SMART_BOMB_SPLIT_SPEED_FACTOR,
+                                isSplit: true,
+                                isMIRV: false,
+                                isSmartBomb: false,
+                                color: SMART_BOMB_SPLIT_COLOR,
+                                trailColor: 'rgba(255, 200, 100, 0.5)',
+                                ignoreEnemyObjectsWhenExploding: true,
+                                wavePartType: this.wavePartType
+                            }));
+                        }
+                        return;
                     }
+                    
                     if (this.y >= this.targetY || this.y >= groundY) {
-                        this.alive = false; const impactY = Math.min(this.targetY, groundY); const explosionSizeFactor = this.isSplit ? 0.6 : 1.0; createExplosion(this.x, impactY, (EXPLOSION_RADIUS_MAX_BASE / 2) * explosionSizeFactor, this.color); checkObjectImpact(this.x, impactY, this.isPlaneBomb);
+                        this.alive = false; const impactY = Math.min(this.targetY, groundY); const explosionSizeFactor = this.isSplit ? 0.6 : 1.0; 
+                        createExplosion(this.x, impactY, (EXPLOSION_RADIUS_MAX_BASE / 2) * explosionSizeFactor, this.color, null, null, this.ignoreEnemyObjectsWhenExploding);
+                        checkObjectImpact(this.x, impactY, this.isPlaneBomb);
                     }
                 },
+                
                 draw() {
                     if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke();
                     const size = (this.isMIRV || this.isSmartBomb) && !this.hasSplit ? 5 : 4; ctx.fillStyle = this.color; ctx.fillRect(this.x - size/2, this.y - size/2, size, size); if ((this.isMIRV || this.isSmartBomb) && !this.hasSplit && Math.floor(Date.now() / 200) % 2 === 0) { ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(this.x - size/2 - 1, this.y - size/2 - 1, size + 2, size + 2); }
@@ -705,11 +759,27 @@
                 draw() { if (!this.alive) return; ctx.strokeStyle = this.trailColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.trail[0].x, this.trail[0].y); for (let i = 1; i < this.trail.length; i++) { ctx.lineTo(this.trail[i].x, this.trail[i].y); } ctx.stroke(); ctx.fillStyle = this.color; ctx.fillRect(this.x - 1, this.y - 1, 3, 3); }
             };
         }
-        function createExplosion(x, y, startRadius, color, maxRadius = EXPLOSION_RADIUS_MAX_BASE, duration = EXPLOSION_DURATION) {
+        function getBaseOrCityTarget() {
+            const aliveCities = cities.filter(c => c.alive);
+            const aliveBases = [...bases.filter(b => b.alive), ...satelliteBases.filter(s => s.alive)];
+            let possibleTargets = [...aliveCities, ...aliveBases];
+            const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
+            
+            if (possibleTargets.length === 0) {
+                // If no cities or bases are alive, target a random ground position
+                let targetGroundX = canvas.width / 2 + (Math.random() - 0.5) * canvas.width * 0.4;
+                return { x: targetGroundX, y: groundY };
+            }
+            
+            // Select a random city or base
+            const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+            return { x: target.x + (target.width / 2), y: target.y };
+        }
+        function createExplosion(x, y, startRadius, color, maxRadius = EXPLOSION_RADIUS_MAX_BASE, duration = EXPLOSION_DURATION, ignoreEnemyObjectsWhenExploding = false) {
             const effectiveMaxRadius = maxRadius || getCurrentPlayerExplosionRadius();
             if (typeof color !== 'string' || (!color.startsWith('#') && !color.startsWith('rgba'))) { color = '#888888'; }
             explosions.push({
-                x: x, y: y, radius: startRadius, maxRadius: effectiveMaxRadius, duration: duration, currentFrame: 0, color: color, alive: true, collidedMissiles: new Set(), collidedBombs: new Set(), collidedPlanes: new Set(),
+                x: x, y: y, radius: startRadius, maxRadius: effectiveMaxRadius, duration: duration, currentFrame: 0, color: color, alive: true, collidedMissiles: new Set(), collidedBombs: new Set(), collidedPlanes: new Set(), ignoreEnemyObjectsWhenExploding: ignoreEnemyObjectsWhenExploding,
                 update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = this.duration * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (this.duration - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if (this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } },
                 draw() { if (!this.alive) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const intensity = Math.sin((this.currentFrame / this.duration) * Math.PI); let r = 180, g = 180, b = 180; try { if (this.color.startsWith('#') && this.color.length >= 7) { r = parseInt(this.color.slice(1, 3), 16); g = parseInt(this.color.slice(3, 5), 16); b = parseInt(this.color.slice(5, 7), 16); } else if (this.color.startsWith('rgba')) { const parts = this.color.match(/(\d+),\s*(\d+),\s*(\d+)/); if (parts) { r = parseInt(parts[1]); g = parseInt(parts[2]); b = parseInt(parts[3]); } } } catch (e) { console.warn("Could not parse explosion color:", this.color, e); r = 180; g = 180; b = 180; } ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.6})`; ctx.fill(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3 * intensity, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`; ctx.fill(); }
             });
@@ -736,14 +806,21 @@
         // (Collision functions remain the same as previous version)
         function checkExplosionCollisions(explosion) {
             let explosionMadeKill = false;
-            incomingMissiles.forEach((missile, index) => { if (missile.alive && !explosion.collidedMissiles.has(index)) { const dist = distance(explosion.x, explosion.y, missile.x, missile.y); if (dist < explosion.radius) { missile.alive = false; explosion.collidedMissiles.add(index); explosionMadeKill = true; statsEnemyMissilesDestroyed++; let pointsToAdd = POINTS_PER_MISSILE; if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { pointsToAdd += ACCURACY_BONUS_POINTS; statsAccuracyBonusHits++; messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; accuracyBonusMessageTimer = 120; } const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } } });
-            planes.forEach((plane, index) => { if (plane.alive && !explosion.collidedPlanes.has(index)) { if (explosion.x + explosion.radius > plane.x && explosion.x - explosion.radius < plane.x + plane.width && explosion.y + explosion.radius > plane.y && explosion.y - explosion.radius < plane.y + plane.height) { plane.alive = false; explosion.collidedPlanes.add(index); explosionMadeKill = true; statsPlanesDestroyed++; const finalPoints = Math.round(PLANE_BONUS_SCORE * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(plane.x + plane.width / 2, plane.y + plane.height / 2, EXPLOSION_RADIUS_START * 1.5, plane.bodyColor, EXPLOSION_RADIUS_MAX_BASE * 1.2, EXPLOSION_DURATION * 1.2); } } });
-            planeBombs.forEach((bomb, index) => { if (bomb.alive && !explosion.collidedBombs.has(index)) { const dist = distance(explosion.x, explosion.y, bomb.x, bomb.y); if (dist < explosion.radius) { bomb.alive = false; explosion.collidedBombs.add(index); explosionMadeKill = true; statsPlaneBombsDestroyed++; const finalPoints = Math.round(PLANE_BOMB_POINTS * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color); } } });
+            
+            // Only check collisions with enemy missiles/planes/bombs if ignoreEnemyObjectsWhenExploding is false
+            if (!explosion.ignoreEnemyObjectsWhenExploding) {
+                incomingMissiles.forEach((missile, index) => { if (missile.alive && !explosion.collidedMissiles.has(index)) { const dist = distance(explosion.x, explosion.y, missile.x, missile.y); if (dist < explosion.radius) { missile.alive = false; explosion.collidedMissiles.add(index); explosionMadeKill = true; statsEnemyMissilesDestroyed++; let pointsToAdd = POINTS_PER_MISSILE; if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { pointsToAdd += ACCURACY_BONUS_POINTS; statsAccuracyBonusHits++; messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; accuracyBonusMessageTimer = 120; } const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } } });
+                
+                planes.forEach((plane, index) => { if (plane.alive && !explosion.collidedPlanes.has(index)) { if (explosion.x + explosion.radius > plane.x && explosion.x - explosion.radius < plane.x + plane.width && explosion.y + explosion.radius > plane.y && explosion.y - explosion.radius < plane.y + plane.height) { plane.alive = false; explosion.collidedPlanes.add(index); explosionMadeKill = true; statsPlanesDestroyed++; const finalPoints = Math.round(PLANE_BONUS_SCORE * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(plane.x + plane.width / 2, plane.y + plane.height / 2, EXPLOSION_RADIUS_START * 1.5, plane.bodyColor, EXPLOSION_RADIUS_MAX_BASE * 1.2, EXPLOSION_DURATION * 1.2); } } });
+                
+                planeBombs.forEach((bomb, index) => { if (bomb.alive && !explosion.collidedBombs.has(index)) { const dist = distance(explosion.x, explosion.y, bomb.x, bomb.y); if (dist < explosion.radius) { bomb.alive = false; explosion.collidedBombs.add(index); explosionMadeKill = true; statsPlaneBombsDestroyed++; const finalPoints = Math.round(PLANE_BOMB_POINTS * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color); } } });
+            }
+            
             if (explosionMadeKill && explosion.color === '#00ff00') { consecutiveIntercepts++; scoreMultiplier = Math.min(MULTIPLIER_MAX, 1.0 + Math.floor(consecutiveIntercepts / MULTIPLIER_INCREASE_INTERVAL)); updateUI(); }
         }
         function checkObjectImpact(impactX, impactY, isBomb = false) {
             const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO); const cityHeight = canvas.height * CITY_HEIGHT_RATIO; const baseHeight = canvas.height * BASE_HEIGHT_RATIO; let hitOccurred = false;
-            for (let i = 0; i < baseShields.length; i++) { const shield = baseShields[i]; if (shield && shield.alive) { const base = bases[i]; const shieldCenterX = base.x + base.width / 2; const shieldRadius = 1.80 * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5); const shieldBottomEdgeY = base.y - 15; const shieldApexY = shieldBottomEdgeY - shieldRadius * 0.3; const startX = shieldCenterX - shieldRadius; const endX = shieldCenterX + shieldRadius; const shieldWidth = endX - startX; if (impactX >= startX && impactX <= endX) { let y_on_curve; if (shieldWidth > 0) { const t = (impactX - startX) / shieldWidth; const one_minus_t = 1 - t; y_on_curve = (one_minus_t * one_minus_t * shieldBottomEdgeY) + (2 * one_minus_t * t * shieldApexY) + (t * t * shieldBottomEdgeY); } else { y_on_curve = shieldBottomEdgeY; } if (impactY >= y_on_curve) { shield.strength -= SHIELD_DAMAGE_PER_HIT; shield.flashTimer = SHIELD_FLASH_DURATION; if (shield.strength <= 0) { shield.alive = false; createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 1.5, '#ffffff'); } else { createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 0.5, SHIELD_FLASH_COLOR); } return; } } } }
+            for (let i = 0; i < baseShields.length; i++) { const shield = baseShields[i]; if (shield && shield.alive) { const base = bases[i]; const shieldCenterX = base.x + base.width / 2; const shieldRadius = BASE_SHIELD_RADIUS_MULTIPLIER * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5); const shieldBottomEdgeY = base.y - 15; const shieldApexY = shieldBottomEdgeY - shieldRadius * 0.3; const startX = shieldCenterX - shieldRadius; const endX = shieldCenterX + shieldRadius; const shieldWidth = endX - startX; if (impactX >= startX && impactX <= endX) { let y_on_curve; if (shieldWidth > 0) { const t = (impactX - startX) / shieldWidth; const one_minus_t = 1 - t; y_on_curve = (one_minus_t * one_minus_t * shieldBottomEdgeY) + (2 * one_minus_t * t * shieldApexY) + (t * t * shieldBottomEdgeY); } else { y_on_curve = shieldBottomEdgeY; } if (impactY >= y_on_curve) { shield.strength -= SHIELD_DAMAGE_PER_HIT; shield.flashTimer = SHIELD_FLASH_DURATION; if (shield.strength <= 0) { shield.alive = false; createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 1.5, '#ffffff'); } else { createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 0.5, SHIELD_FLASH_COLOR); } return; } } } }
             for (let i = 0; i < satelliteBases.length; i++) { const sat = satelliteBases[i]; if (sat.alive && sat.shield && sat.shield.alive) { const shieldCenterX = sat.x + sat.width / 2; const shieldCenterY = sat.y + sat.height / 2; const shieldRadiusX = sat.width * 0.6 + 4; const shieldRadiusY = sat.height * 0.8 + 4; const dx = impactX - shieldCenterX; const dy = impactY - shieldCenterY; if (((dx * dx) / (shieldRadiusX * shieldRadiusX)) + ((dy * dy) / (shieldRadiusY * shieldRadiusY)) <= 1) { sat.shield.strength -= SHIELD_DAMAGE_PER_HIT; sat.shield.flashTimer = SHIELD_FLASH_DURATION; if (sat.shield.strength <= 0) { sat.shield.alive = false; createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 1.2, '#eeeeee'); } else { createExplosion(impactX, impactY, EXPLOSION_RADIUS_START * 0.5, SHIELD_FLASH_COLOR); } return; } } }
             satelliteBases.forEach(sat => { if (sat.alive && impactX >= sat.x && impactX <= sat.x + sat.width && impactY >= sat.y && impactY <= sat.y + sat.height) { sat.alive = false; hitOccurred = true; createExplosion(impactX, impactY, EXPLOSION_RADIUS_START, sat.outlineColor); } });
             if (impactY >= groundY - cityHeight && impactY < groundY) { cities.forEach(city => { if (city.alive && impactX >= city.x && impactX <= city.x + city.width) { city.alive = false; hitOccurred = true; statsCitiesLost++; } }); }
@@ -755,8 +832,8 @@
         // (Wave functions remain the same as previous version)
         function defineWaves() {
              return [
-                 [{ type: 'missile', count: 18, speedFactor: 1.0 }], // Wave 1
-                 [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 2
+                 [{ type: 'missile', count: 18, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 1
+                 [{ type: 'missile', count: 22, speedFactor: 1.15 }, { type: 'plane', count: 1 }], // Wave 2
                  [{ type: 'missile', count: 26, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }], // Wave 3
                  [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }], // Wave 4
                  [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 6, variantChance: 0.2 }, { type: 'smart_bomb', count: 8, speedFactor: 1.1 }], // Wave 5
@@ -1123,7 +1200,7 @@
         // --- Drawing Functions ---
         // (Drawing functions remain the same as previous version)
         function drawBackground() { ctx.fillStyle = '#00001a'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'white'; const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO); const numStars = Math.floor(canvas.width * canvas.height / 5000); for (let i = 0; i < numStars; i++) { let x = Math.random() * canvas.width; let y = Math.random() * groundY; let radius = Math.random() * 1.5; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#3b2e1a'; ctx.fillRect(0, groundY, canvas.width, canvas.height * GROUND_HEIGHT_RATIO); }
-        function drawGameObjects() { cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); satelliteBases.forEach(sat => { sat.draw(); if (sat.shield && sat.shield.alive) { const shieldCenterX = sat.x + sat.width / 2; const shieldCenterY = sat.y + sat.height / 2; const shieldRadiusX = sat.width * 0.6 + 4; const shieldRadiusY = sat.height * 0.8 + 4; let shieldColor = SHIELD_COLOR_25; if (sat.shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (sat.shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (sat.shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (sat.shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; sat.shield.flashTimer--; } ctx.beginPath(); ctx.ellipse(shieldCenterX, shieldCenterY, shieldRadiusX, shieldRadiusY, 0, 0, Math.PI * 2); ctx.strokeStyle = shieldColor; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1; } }); for (let i = 0; i < baseShields.length; i++) { const shield = baseShields[i]; if (shield && shield.alive) { const base = bases[i]; const shieldCenterX = base.x + base.width / 2; const shieldRadius = 1.80 * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5); let shieldColor = SHIELD_COLOR_25; if (shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; shield.flashTimer--; } const startX = shieldCenterX - shieldRadius; const endX = shieldCenterX + shieldRadius; const shieldTopY = base.y - 15; const controlY = shieldTopY - shieldRadius * 0.3; ctx.beginPath(); ctx.moveTo(startX, shieldTopY); ctx.quadraticCurveTo(shieldCenterX, controlY, endX, shieldTopY); ctx.strokeStyle = shieldColor; ctx.lineWidth = 3; ctx.stroke(); ctx.lineWidth = 1; } } if (activeSonicWave && activeSonicWave.alive) { ctx.fillStyle = SONIC_WAVE_COLOR; ctx.fillRect(0, activeSonicWave.y - SONIC_WAVE_HEIGHT, canvas.width, SONIC_WAVE_HEIGHT); ctx.strokeStyle = 'rgba(255, 100, 255, 0.8)'; ctx.lineWidth = 1; const numLines = 5; for(let i=0; i < numLines; i++) { const lineY = activeSonicWave.y - (SONIC_WAVE_HEIGHT / numLines * (i + 0.5)); ctx.beginPath(); ctx.moveTo(0, lineY); ctx.lineTo(canvas.width, lineY); ctx.stroke(); } } incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw()); planes.forEach(plane => plane.draw()); planeBombs.forEach(bomb => bomb.draw()); }
+        function drawGameObjects() { cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); satelliteBases.forEach(sat => { sat.draw(); if (sat.shield && sat.shield.alive) { const shieldCenterX = sat.x + sat.width / 2; const shieldCenterY = sat.y + sat.height / 2; const shieldRadiusX = sat.width * 0.6 + 4; const shieldRadiusY = sat.height * 0.8 + 4; let shieldColor = SHIELD_COLOR_25; if (sat.shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (sat.shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (sat.shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (sat.shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; sat.shield.flashTimer--; } ctx.beginPath(); ctx.ellipse(shieldCenterX, shieldCenterY, shieldRadiusX, shieldRadiusY, 0, 0, Math.PI * 2); ctx.strokeStyle = shieldColor; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1; } }); for (let i = 0; i < baseShields.length; i++) { const shield = baseShields[i]; if (shield && shield.alive) { const base = bases[i]; const shieldCenterX = base.x + base.width / 2; const shieldRadius = BASE_SHIELD_RADIUS_MULTIPLIER * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5); let shieldColor = SHIELD_COLOR_25; if (shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; shield.flashTimer--; } const startX = shieldCenterX - shieldRadius; const endX = shieldCenterX + shieldRadius; const shieldTopY = base.y - 15; const controlY = shieldTopY - shieldRadius * 0.3; ctx.beginPath(); ctx.moveTo(startX, shieldTopY); ctx.quadraticCurveTo(shieldCenterX, controlY, endX, shieldTopY); ctx.strokeStyle = shieldColor; ctx.lineWidth = 3; ctx.stroke(); ctx.lineWidth = 1; } } if (activeSonicWave && activeSonicWave.alive) { ctx.fillStyle = SONIC_WAVE_COLOR; ctx.fillRect(0, activeSonicWave.y - SONIC_WAVE_HEIGHT, canvas.width, SONIC_WAVE_HEIGHT); ctx.strokeStyle = 'rgba(255, 100, 255, 0.8)'; ctx.lineWidth = 1; const numLines = 5; for(let i=0; i < numLines; i++) { const lineY = activeSonicWave.y - (SONIC_WAVE_HEIGHT / numLines * (i + 0.5)); ctx.beginPath(); ctx.moveTo(0, lineY); ctx.lineTo(canvas.width, lineY); ctx.stroke(); } } incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw()); planes.forEach(plane => plane.draw()); planeBombs.forEach(bomb => bomb.draw()); }
 
         // --- Update Functions ---
         // (Update functions remain the same as previous version)
