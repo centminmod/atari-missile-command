@@ -22,21 +22,28 @@
         /* --- General Body and Font --- */
         html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
         body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px; box-sizing: border-box; min-height: 100vh; background-color: #000; font-family: 'Press Start 2P', cursive; color: #00ff00; }
+
         /* --- Game Title --- */
         h1#mainTitle { color: #ff0000; font-size: clamp(20px, 5vw, 32px); margin-bottom: 15px; text-shadow: 2px 2px #ffff00; text-align: center; }
+
         /* --- Game Canvas Container --- */
         #canvasContainer { position: relative; width: 100%; max-width: 800px; aspect-ratio: 800 / 600; margin: 0 auto; }
+
         /* --- Game Canvas --- */
         #gameCanvas { display: none; background-color: #111; border: 2px solid #00ff00; box-shadow: 0 0 15px #00ff00; cursor: crosshair; width: 100%; height: 100%; image-rendering: pixelated; position: absolute; top: 0; left: 0; }
+
         /* --- UI Container --- */
         #uiContainer { display: none; flex-wrap: wrap; justify-content: space-around; align-items: center; width: 100%; max-width: 800px; padding: 8px 0; font-size: clamp(9px, 2.5vw, 12px); gap: 8px; border-bottom: 1px solid #005500; margin-bottom: 5px; }
         #score, #highScore, #wave, #citiesLeft, #multiplier { flex-grow: 1; text-align: center; min-width: 80px; }
         #highScore { color: #aaa; }
         #multiplier { color: #ffff00; font-weight: bold; text-shadow: 1px 1px #000; }
+
         /* --- Bonus Indicator --- */
         #bonusIndicator { color: #ffaa00; font-weight: bold; text-shadow: 1px 1px #000; display: none; order: 5; text-align: center; flex-basis: 100%; margin-top: 5px; }
+
         /* --- Controls Container --- */
         #controlsContainer { margin-top: 10px; display: none; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 800px; }
+
         /* --- Special Weapons UI --- */
         #specialWeaponsUI { background-color: #222; border: 1px solid #444; border-radius: 8px; padding: 8px 10px; margin-top: 10px; display: none; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center; width: auto; max-width: 95%; }
         .weaponControl { display: flex; flex-direction: column; align-items: center; cursor: pointer; border: 2px solid transparent; padding: 5px; border-radius: 5px; transition: border-color 0.3s, background-color 0.3s; }
@@ -45,11 +52,13 @@
         .weaponControl.disabled { opacity: 0.4; cursor: not-allowed; }
         .weaponIcon { font-size: clamp(18px, 4vw, 24px); width: 30px; height: 30px; line-height: 30px; text-align: center; border: 1px solid #888; border-radius: 4px; margin-bottom: 4px; }
         .weaponCount { font-size: clamp(10px, 2vw, 12px); color: #ffff00; }
+
         /* --- Start Menu --- */
         #startMenuContainer { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; padding: 10px; box-sizing: border-box; }
         #difficultySelection { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-top: 0; padding: 15px; border: 2px solid #ffff00; border-radius: 10px; background-color: rgba(30, 30, 0, 0.5); width: 100%; box-sizing: border-box; }
         #difficultySelection h3 { margin: 0 0 10px 0; color: #ffff00; font-size: clamp(16px, 4vw, 18px); text-align: center; }
         #startHighScore { color: #aaa; font-size: clamp(12px, 3vw, 14px); margin-top: 15px; text-align: center; }
+
         /* --- Buttons --- */
         button { font-family: 'Press Start 2P', cursive; background-color: #333; color: #00ff00; border: 2px solid #00ff00; padding: 8px 15px; font-size: clamp(12px, 3vw, 16px); cursor: pointer; box-shadow: 0 0 8px #00ff00 inset; transition: background-color 0.3s, box-shadow 0.3s, color 0.3s, border-color 0.3s; border-radius: 5px; white-space: nowrap; flex-grow: 0; flex-shrink: 1; }
         .difficulty-button { border-color: #ffff00; color: #ffff00; box-shadow: 0 0 8px #ffff00 inset; min-width: auto; text-align: center; }
@@ -60,17 +69,34 @@
         button:not(.difficulty-button):hover:not(:disabled) { box-shadow: 0 0 12px #00ff00 inset, 0 0 8px #00ff00; }
         button:active:not(:disabled) { background-color: #222; }
         button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
         /* --- Message Box --- */
         #messageBox { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.9); border: 3px solid #ff0000; padding: 20px; text-align: center; color: #ff0000; display: none; z-index: 30; box-shadow: 0 0 20px #ff0000; border-radius: 10px; width: 90%; max-width: 550px; box-sizing: border-box; max-height: 85vh; overflow-y: auto; }
         #messageBox h2 { margin: 0 0 10px 0; font-size: clamp(20px, 5vw, 32px); }
         #messageBox p { margin: 5px 0 10px 0; font-size: clamp(12px, 3vw, 16px); color: #ffff00; line-height: 1.4; }
         #messageBox p.bonus-alert { color: #ffaa00; font-weight: bold; display: block; min-height: 1em; margin-top: 8px; }
-        #statsContainer { margin-top: 15px; padding-top: 10px; border-top: 1px solid #550000; font-size: clamp(10px, 2.5vw, 13px); color: #ccc; text-align: left; columns: 2; column-gap: 20px; }
-        #statsContainer span { display: block; margin-bottom: 4px; white-space: nowrap; }
+        #statsContainer {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #550000;
+            font-size: clamp(10px, 2.5vw, 13px);
+            color: #ccc;
+            text-align: left;
+            display: grid; /* Use Grid for layout */
+            grid-template-columns: 1fr 1fr; /* Two equal columns */
+            gap: 5px 15px; /* Row gap, Column gap */
+        }
+        #statsContainer span {
+            display: block;
+            margin-bottom: 4px;
+            white-space: nowrap;
+        }
         .messageBoxButtons { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
         #goToStoreButton, #skipStoreButton { display: none; }
+
         /* --- Pause Overlay --- */
         #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); color: #ffff00; display: none; align-items: center; justify-content: center; font-size: clamp(30px, 10vw, 48px); text-shadow: 3px 3px #ff0000; z-index: 15; pointer-events: none; }
+
         /* --- Store Modal --- */
         #storeModal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; max-height: 80vh; background-color: rgba(0, 20, 0, 0.9); border: 3px solid #00ff00; border-radius: 15px; box-shadow: 0 0 25px #00ff00; padding: 15px; z-index: 20; display: none; color: #00ff00; font-size: clamp(11px, 2.5vw, 13.5px); box-sizing: border-box; overflow-y: auto; }
         #storeModal h2 { font-size: clamp(20px, 5vw, 28px); margin: 0 0 15px 0; text-align: center; color: #ffff00; }
@@ -81,19 +107,19 @@
         .storeItemInfo span { display: block; margin-bottom: 3px; }
         .itemCost { color: #ffff00; }
         .itemStock, .itemLevel { color: #aaa; font-size: clamp(10px, 2vw, 12px); }
-        /* *** NEW: Style for button container *** */
-        .storeItemButtons { display: flex; flex-wrap: wrap; /* Allow wrapping on small screens */ gap: 5px; /* Space between buttons */ align-items: center; /* Align buttons vertically */ justify-content: flex-end; /* Align buttons to the right */ margin-top: 5px; /* Add some space above buttons */ }
-        .buyButton { padding: 6px 12px; font-size: clamp(11px, 2.5vw, 14px); min-width: auto; /* Allow button to shrink */ flex-shrink: 1; /* Allow shrinking */ }
-        /* *** NEW: Style for Buy x10 button *** */
-        .buyMultipleButton { border-color: #00aaaa; /* Teal border */ color: #00cccc; /* Teal text */ box-shadow: 0 0 6px #00aaaa inset; padding: 6px 8px; /* Slightly smaller padding */ font-size: clamp(10px, 2.2vw, 12px); /* Slightly smaller font */ }
+        .storeItemButtons { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; justify-content: flex-end; margin-top: 5px; }
+        .buyButton { padding: 6px 12px; font-size: clamp(11px, 2.5vw, 14px); min-width: auto; flex-shrink: 1; }
+        .buyMultipleButton { border-color: #00aaaa; color: #00cccc; box-shadow: 0 0 6px #00aaaa inset; padding: 6px 8px; font-size: clamp(10px, 2.2vw, 12px); }
         .buyMultipleButton:hover:not(:disabled) { box-shadow: 0 0 10px #00aaaa inset, 0 0 6px #00aaaa; }
         #storeContinueButton { display: block; margin: 20px auto 0 auto; }
+
         /* --- Footer --- */
         footer { width: 100%; max-width: 800px; margin-top: 20px; padding: 10px 0; border-top: 1px solid #005500; font-size: clamp(10px, 2.5vw, 12px); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; }
         footer a { color: #00ff00; text-decoration: none; transition: color 0.3s, text-shadow 0.3s; display: inline-block; vertical-align: middle; line-height: 1; margin: 0 5px; }
         footer a:hover, footer a:focus { color: #ffff00; text-shadow: 0 0 5px #ffff00; outline: none; }
         footer a img { vertical-align: middle; margin: 0 3px; height: 20px; width: auto; }
         footer .link-group { }
+
         /* --- Media Queries --- */
         @media (max-width: 768px) {
             #uiContainer { gap: 6px; padding: 5px 0; font-size: clamp(9px, 2.2vw, 11px); }
@@ -102,19 +128,18 @@
             #difficultySelection { gap: 8px; padding: 10px; }
             button { padding: 6px 12px; }
             #messageBox { padding: 15px; max-width: 95%; }
-            #statsContainer { columns: 1; }
             #storeModal { padding: 10px; }
             #storeItemsContainer { gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));}
             footer { margin-top: 15px; gap: 8px; }
             footer a { margin: 0 4px; }
             footer a img { margin: 0 2px; height: 18px; }
-            /* Adjust store item layout for smaller screens */
-            .storeItem { flex-direction: column; /* Stack info and buttons */ align-items: stretch; /* Stretch elements */ padding: 8px 10px; min-height: 0; gap: 8px; }
-            .storeItemInfo { margin-bottom: 5px; flex-grow: 0; /* Don't grow info */ }
+            .storeItem { flex-direction: column; align-items: stretch; padding: 8px 10px; min-height: 0; gap: 8px; }
+            .storeItemInfo { margin-bottom: 5px; flex-grow: 0; }
             .storeItemInfo span { display: block; margin-bottom: 2px; line-height: 1.2; }
-            .storeItemButtons { justify-content: space-between; /* Space out buttons */ }
+            .storeItemButtons { justify-content: space-between; }
             .buyButton { align-self: center; flex-shrink: 0; }
         }
+
         @media (max-width: 480px) {
             body { padding: 5px; }
             h1#mainTitle { font-size: 18px; margin-bottom: 10px; }
@@ -129,7 +154,11 @@
             #messageBox { padding: 10px; width: 95%; top: 45%; max-height: 80vh; }
             #messageBox h2 { font-size: 18px; }
             #messageBox p { font-size: 11px; }
-            #statsContainer { font-size: 9px; }
+            #statsContainer {
+                font-size: 9px;
+                grid-template-columns: 1fr; /* Switch to single column on small screens */
+                gap: 3px 10px;
+             }
             .messageBoxButtons { gap: 8px; }
             #storeModal { padding: 8px; width: 95%; max-height: 75vh; }
             #storeModal h2 { font-size: 18px; }
@@ -138,9 +167,9 @@
             .storeItem { padding: 6px 8px; gap: 6px; }
             .storeItemInfo span { font-size: 10px; margin-bottom: 1px; line-height: 1.15; }
             .itemStock, .itemLevel { font-size: 9px; }
-            .storeItemButtons { gap: 4px; /* Reduce gap further */ }
+            .storeItemButtons { gap: 4px; }
             .buyButton { padding: 4px 8px; font-size: 10px; }
-            .buyMultipleButton { padding: 4px 6px; font-size: 9px; } /* Adjust Buy x10 button size */
+            .buyMultipleButton { padding: 4px 6px; font-size: 9px; }
             #pauseOverlay { font-size: 24px; }
             footer { margin-top: 10px; font-size: 9px; padding: 8px 0; display: block; text-align: center; }
             footer .link-group { display: block; margin-bottom: 5px; text-align: center; }
@@ -360,7 +389,6 @@
         const buySatShieldButton = document.getElementById('buySatShieldButton');
         const buySonicWaveButton = document.getElementById('buySonicWaveButton');
         const buyBombButton = document.getElementById('buyBombButton');
-        // *** NEW: Get references to Buy x10 buttons ***
         const buySonicWave10Button = document.getElementById('buySonicWave10Button');
         const buyBomb10Button = document.getElementById('buyBomb10Button');
         const storeContinueButton = document.getElementById('storeContinueButton');
@@ -377,8 +405,8 @@
         const levelWiderExplosionDisplay = document.getElementById('levelWiderExplosion');
         const buyWiderExplosionButton = document.getElementById('buyWiderExplosionButton');
 
-
         // --- Game Constants & State Variables ---
+        // (Constants remain the same as previous version)
         const INTERNAL_WIDTH = 800;
         const INTERNAL_HEIGHT = 600;
         const GROUND_HEIGHT_RATIO = 50 / INTERNAL_HEIGHT;
@@ -407,8 +435,7 @@
         const SHIELD_COLOR_25 = 'rgba(255, 100, 0, 0.6)';
         const SHIELD_FLASH_COLOR = 'rgba(255, 255, 255, 0.8)';
         const SHIELD_FLASH_DURATION = 5;
-        // *** MODIFIED: Reduced bomb explosion radius multiplier ***
-        const BOMB_EXPLOSION_RADIUS_MULTIPLIER = 5.5; // Was 6
+        const BOMB_EXPLOSION_RADIUS_MULTIPLIER = 5.5;
         const BOMB_EXPLOSION_DURATION_MULTIPLIER = 1.5;
         const SONIC_WAVE_SPEED = 4;
         const SONIC_WAVE_HEIGHT = 10;
@@ -460,7 +487,8 @@
         const PLANE_BOMB_COLOR = '#FFA500';
         const PLANE_BOMB_TRAIL_COLOR = 'rgba(255, 165, 0, 0.4)';
 
-        // Game State
+        // Game State Variables
+        // (State variables remain the same as previous version)
         let score = 0;
         let gameTotalScore = 0;
         let highScore = 0;
@@ -514,6 +542,7 @@
         let waveEnemiesRequired = 0;
 
         // --- Utility Functions ---
+        // (Utility functions remain the same as previous version)
         function distance(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return Math.sqrt(dx * dx + dy * dy); }
         function getRandomTarget(avoidX = -1, avoidRadius = 0) {
             const aliveCities = cities.filter(c => c.alive);
@@ -543,7 +572,7 @@
         function calculateUpgradeCost(baseCost, level) { return Math.floor(baseCost * Math.pow(UPGRADE_COST_MULTIPLIER, level)); }
 
         // --- Game Object Factories ---
-        // createCity, createBase, createSatelliteBase remain the same
+        // (All create... functions remain the same as previous version)
         function createCity(xRatio) {
             const cityWidth = canvas.width * CITY_WIDTH_RATIO;
             const cityHeight = canvas.height * CITY_HEIGHT_RATIO;
@@ -621,14 +650,13 @@
                 }
             };
         }
-        // createIncomingMissile, createPlayerMissile, createExplosion, createPlane, createBomb remain the same
-         function createIncomingMissile(config = {}) {
+        function createIncomingMissile(config = {}) {
             const startX = config.startX !== undefined ? config.startX : Math.random() * canvas.width;
             const startY = config.startY !== undefined ? config.startY : 0;
             const target = config.target || getRandomTarget();
             let baseSpeed = MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08);
-            baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED); // Apply the cap
-            const speed = config.speed || baseSpeed * (config.speedFactor || 1.0); // Apply factor if provided
+            baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED);
+            const speed = config.speed || baseSpeed * (config.speedFactor || 1.0);
             const angle = Math.atan2(target.y - startY, target.x - startX);
             const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
             const waveSmartBombChance = SMART_BOMB_CHANCE * (1 + currentWave * 0.05);
@@ -641,7 +669,7 @@
             if (isSmartBomb) { color = SMART_BOMB_SPLIT_COLOR; trailColor = 'rgba(255, 200, 100, 0.5)'; }
             if (isSplit) { color = config.color || color; trailColor = config.trailColor || trailColor; }
             return {
-                x: startX, y: startY, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, speed: speed, color: color, trailColor: trailColor, alive: true, trail: [{x: startX, y: startY}], isPlaneBomb: false, isSmartBomb: isSmartBomb, isMIRV: isMIRV, isSplit: isSplit, hasSplit: false, wavePartType: config.wavePartType, // Store the type
+                x: startX, y: startY, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, speed: speed, color: color, trailColor: trailColor, alive: true, trail: [{x: startX, y: startY}], isPlaneBomb: false, isSmartBomb: isSmartBomb, isMIRV: isMIRV, isSplit: isSplit, hasSplit: false, wavePartType: config.wavePartType,
                 update() {
                     if (!this.alive) return;
                     this.x += this.dx; this.y += this.dy; this.trail.push({x: this.x, y: this.y}); if (this.trail.length > 15) { this.trail.shift(); }
@@ -684,7 +712,7 @@
         function createPlane() {
             const startY = PLANE_MIN_Y + Math.random() * (PLANE_MAX_Y - PLANE_MIN_Y); const bombsToDrop = BASE_BOMBS_PER_PLANE + Math.floor(currentWave / 3) * BOMBS_INCREASE_PER_WAVE; const isVariant = Math.random() < PLANE_VARIANT_CHANCE; const speedMultiplier = isVariant ? 1.4 : 1.0; const planeSpeed = (PLANE_SPEED_BASE + currentWave * PLANE_SPEED_INCREASE_PER_WAVE) * speedMultiplier; const bodyColor = isVariant ? '#A9A9A9' : '#B0C4DE'; const wingColor = isVariant ? '#696969' : '#778899';
             return {
-                x: canvas.width + PLANE_WIDTH, y: startY, width: PLANE_WIDTH, height: PLANE_HEIGHT, speed: planeSpeed, alive: true, bombsLeft: bombsToDrop, bombDropTimer: PLANE_BOMB_DROP_INTERVAL_MIN + Math.random() * (PLANE_BOMB_DROP_INTERVAL_MAX - PLANE_BOMB_DROP_INTERVAL_MIN), bodyColor: bodyColor, wingColor: wingColor, tailColor: '#708090', cockpitColor: '#1E90FF', engineColor: '#555555', isVariant: isVariant, wavePartType: 'plane', // Store type
+                x: canvas.width + PLANE_WIDTH, y: startY, width: PLANE_WIDTH, height: PLANE_HEIGHT, speed: planeSpeed, alive: true, bombsLeft: bombsToDrop, bombDropTimer: PLANE_BOMB_DROP_INTERVAL_MIN + Math.random() * (PLANE_BOMB_DROP_INTERVAL_MAX - PLANE_BOMB_DROP_INTERVAL_MIN), bodyColor: bodyColor, wingColor: wingColor, tailColor: '#708090', cockpitColor: '#1E90FF', engineColor: '#555555', isVariant: isVariant, wavePartType: 'plane',
                 update() { if (!this.alive) return; this.x -= this.speed; this.bombDropTimer--; if (this.bombDropTimer <= 0 && this.bombsLeft > 0) { this.dropBomb(); this.bombsLeft--; this.bombDropTimer = PLANE_BOMB_DROP_INTERVAL_MIN + Math.random() * (PLANE_BOMB_DROP_INTERVAL_MAX - PLANE_BOMB_DROP_INTERVAL_MIN); } if (this.x < -this.width * 1.5) { this.alive = false; } },
                 dropBomb() { const bombStartX = this.x + this.width / 2; const bombStartY = this.y + this.height * 0.7; planeBombs.push(createBomb(bombStartX, bombStartY)); },
                 draw() { if (!this.alive) return; const w = this.width; const h = this.height; const x = this.x; const y = this.y; ctx.save(); ctx.translate(x, y); ctx.fillStyle = this.bodyColor; ctx.beginPath(); ctx.moveTo(w * 0.1, h * 0.3); ctx.lineTo(w * 0.85, h * 0.15); ctx.quadraticCurveTo(w, h * 0.5, w * 0.85, h * 0.85); ctx.lineTo(w * 0.1, h * 0.7); ctx.quadraticCurveTo(0, h * 0.5, w * 0.1, h * 0.3); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#666'; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = this.cockpitColor; ctx.beginPath(); ctx.moveTo(w * 0.7, h * 0.25); ctx.lineTo(w * 0.9, h * 0.4); ctx.lineTo(w * 0.9, h * 0.6); ctx.lineTo(w * 0.7, h * 0.75); ctx.closePath(); ctx.fill(); ctx.fillStyle = this.wingColor; ctx.beginPath(); ctx.moveTo(w * 0.3, h * 0.3); ctx.lineTo(w * 0.6, h * -0.1); ctx.lineTo(w * 0.7, h * 0.1); ctx.lineTo(w * 0.45, h * 0.4); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(w * 0.3, h * 0.7); ctx.lineTo(w * 0.6, h * 1.1); ctx.lineTo(w * 0.7, h * 0.9); ctx.lineTo(w * 0.45, h * 0.6); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#555'; ctx.stroke(); ctx.fillStyle = this.tailColor; ctx.beginPath(); ctx.moveTo(w * 0.05, h * 0.3); ctx.lineTo(w * 0.2, h * -0.1); ctx.lineTo(w * 0.25, h * 0.1); ctx.lineTo(w * 0.1, h * 0.4); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = this.wingColor; ctx.beginPath(); ctx.moveTo(w * 0.05, h * 0.3); ctx.lineTo(w * 0.2, h * 0.1); ctx.lineTo(w * 0.25, h * 0.2); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(w * 0.05, h * 0.7); ctx.lineTo(w * 0.2, h * 0.9); ctx.lineTo(w * 0.25, h * 0.8); ctx.closePath(); ctx.fill(); ctx.fillStyle = this.engineColor; ctx.fillRect(w * 0.4, h * 0.6, w * 0.25, h * 0.3); ctx.fillRect(w * 0.4, h * 0.1, w * 0.25, h * 0.3); ctx.restore(); }
@@ -700,7 +728,7 @@
         }
 
         // --- Collision Detection ---
-        // checkExplosionCollisions and checkObjectImpact remain the same
+        // (Collision functions remain the same as previous version)
         function checkExplosionCollisions(explosion) {
             let explosionMadeKill = false;
             incomingMissiles.forEach((missile, index) => { if (missile.alive && !explosion.collidedMissiles.has(index)) { const dist = distance(explosion.x, explosion.y, missile.x, missile.y); if (dist < explosion.radius) { missile.alive = false; explosion.collidedMissiles.add(index); explosionMadeKill = true; statsEnemyMissilesDestroyed++; let pointsToAdd = POINTS_PER_MISSILE; if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { pointsToAdd += ACCURACY_BONUS_POINTS; statsAccuracyBonusHits++; messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; accuracyBonusMessageTimer = 120; } const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } } });
@@ -719,20 +747,20 @@
         }
 
         // --- Wave System Logic ---
-        // defineWaves, initWave, spawnEnemiesForWave, checkWaveEnd remain the same
+        // (Wave functions remain the same as previous version)
         function defineWaves() {
              return [
-                 [{ type: 'missile', count: 18, speedFactor: 1.0 }],
-                 [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }],
-                 [{ type: 'missile', count: 26, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }],
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }],
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'smart_bomb', count: 10, speedFactor: 1.1 }],
-                 [{ type: 'missile', count: 24, speedFactor: 1.35 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'mirv', count: 8, speedFactor: 1.0 }],
-                 [{ type: 'missile', count: 20, speedFactor: 1.4 }, { type: 'smart_bomb', count: 8, speedFactor: 1.15 }, { type: 'plane', count: 12, variantChance: 0.35, speedFactor: 1.1 }],
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'mirv', count: 18, speedFactor: 1.15 }, { type: 'smart_bomb', count: 10, speedFactor: 1.2 }],
-                 [{ type: 'missile', count: 24, speedFactor: 1.6 }, { type: 'smart_bomb', count: 8, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 8, variantChance: 0.5, speedFactor: 1.2 }],
-                 [{ type: 'missile', count: 28, speedFactor: 1.7 }, { type: 'smart_bomb', count: 10, speedFactor: 1.5 }, { type: 'mirv', count: 7, speedFactor: 1.4 }, { type: 'plane', count: 12, variantChance: 0.6, speedFactor: 1.3 }],
-                 [{ type: 'missile', count: 36, speedFactor: 1.8 }, { type: 'smart_bomb', count: 12, speedFactor: 1.6 }, { type: 'mirv', count: 8, speedFactor: 1.5 }, { type: 'plane', count: 16, variantChance: 0.7, speedFactor: 1.4 }],
+                 [{ type: 'missile', count: 18, speedFactor: 1.0 }], // Wave 1
+                 [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 2
+                 [{ type: 'missile', count: 26, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }], // Wave 3
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }], // Wave 4
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'smart_bomb', count: 10, speedFactor: 1.1 }], // Wave 5
+                 [{ type: 'missile', count: 24, speedFactor: 1.35 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'mirv', count: 8, speedFactor: 1.0 }], // Wave 6
+                 [{ type: 'missile', count: 20, speedFactor: 1.4 }, { type: 'smart_bomb', count: 8, speedFactor: 1.15 }, { type: 'plane', count: 12, variantChance: 0.35, speedFactor: 1.1 }], // Wave 7
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'mirv', count: 18, speedFactor: 1.15 }, { type: 'smart_bomb', count: 10, speedFactor: 1.2 }], // Wave 8
+                 [{ type: 'missile', count: 24, speedFactor: 1.6 }, { type: 'smart_bomb', count: 8, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 8, variantChance: 0.5, speedFactor: 1.2 }], // Wave 9
+                 [{ type: 'missile', count: 28, speedFactor: 1.7 }, { type: 'smart_bomb', count: 10, speedFactor: 1.5 }, { type: 'mirv', count: 7, speedFactor: 1.4 }, { type: 'plane', count: 12, variantChance: 0.6, speedFactor: 1.3 }], // Wave 10
+                 [{ type: 'missile', count: 36, speedFactor: 1.8 }, { type: 'smart_bomb', count: 12, speedFactor: 1.6 }, { type: 'mirv', count: 8, speedFactor: 1.5 }, { type: 'plane', count: 16, variantChance: 0.7, speedFactor: 1.4 }], // Wave 11
              ];
         }
         function initWave(waveIndex) {
@@ -814,7 +842,7 @@
         }
 
         // --- Game Flow ---
-        // startGame, nextWave, proceedToNextWave, calculateBonus, checkGameOverConditions, gameOver remain the same
+        // (Game flow functions remain the same as previous version, including gameOver fix)
         function startGame() {
             try {
                 console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding...");
@@ -851,22 +879,132 @@
         function proceedToNextWave() { storeModal.style.display = 'none'; hideMessage(); initWave(currentWave + 1); transitioningWave = false; pauseButton.disabled = false; if (!isPaused && !gameLoopId) { gameLoop(); } }
         function calculateBonus() { let bonus = 0; cities.forEach(city => { if (city.alive) bonus += POINTS_PER_CITY; }); bases.forEach(base => { if (base.alive) bonus += base.ammo * POINTS_PER_AMMO; }); satelliteBases.forEach(sat => { if (sat.alive) bonus += sat.ammo * POINTS_PER_AMMO; }); return bonus; }
         function checkGameOverConditions() { if (isGameOver || !gameHasStarted) return; const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; const satellitesRemaining = satelliteBases.filter(s => s.alive).length; if (citiesRemaining === 0 || (basesRemaining === 0 && satellitesRemaining === 0)) { gameOver(); } }
-        function gameOver() { if (isGameOver) return; isGameOver = true; gameHasStarted = false; transitioningWave = false; isPaused = false; bonusMissileCount = 0; baseShields = [null, null, null]; isBombArmed = false; activeSonicWave = null; canvas.style.cursor = 'crosshair'; planes = []; planeBombs = []; let newHighScore = false; if (score > highScore) { highScore = score; localStorage.setItem('missileCommandHighScore', highScore.toString()); newHighScore = true; } const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; const satellitesRemaining = satelliteBases.filter(s => s.alive).length; let reason = ""; if (citiesRemaining === 0) { reason = "All cities destroyed!"; } else if (basesRemaining === 0 && satellitesRemaining === 0) { reason = "All launch sites destroyed!"; } else { reason = "Targets eliminated!"; } const accuracy = statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "N/A"; statsContainer.innerHTML = `<span>Wave Reached: ${currentWave + 1}</span><span>Difficulty: ${selectedDifficultyName || 'N/A'}</span><span>Missiles Fired: ${statsMissilesFired}</span><span>Accuracy: ${accuracy}%</span><span>Enemy Missiles Down: ${statsEnemyMissilesDestroyed}</span><span>Plane Bombs Down: ${statsPlaneBombsDestroyed}</span><span>Accuracy Bonuses: ${statsAccuracyBonusHits}</span><span>Planes Down: ${statsPlanesDestroyed}</span><span>Cities Lost: ${statsCitiesLost}</span><span>Bases Lost: ${statsBasesLost}</span><span>Final Score: $${score}</span>${newHighScore ? `<span>NEW HIGH SCORE!</span>` : `<span>High Score: $${highScore}</span>`}`; const title = newHighScore ? "GAME OVER - NEW HIGH SCORE!" : "GAME OVER"; showMessage(title, `Total Score: $${gameTotalScore}`, reason); messageBonusText.textContent = ""; statsContainer.style.display = 'block'; goToStoreButton.style.display = 'none'; skipStoreButton.style.display = 'none'; restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = true; pauseOverlay.style.display = 'none'; bonusIndicator.style.display = 'none'; storeModal.style.display = 'none'; specialWeaponsUIDiv.style.display = 'none'; }
+        function gameOver() {
+            if (isGameOver) return;
+            isGameOver = true; gameHasStarted = false; transitioningWave = false; isPaused = false; bonusMissileCount = 0; baseShields = [null, null, null]; isBombArmed = false; activeSonicWave = null; canvas.style.cursor = 'crosshair'; planes = []; planeBombs = [];
+            let newHighScore = false;
+            if (score > highScore) { highScore = score; localStorage.setItem('missileCommandHighScore', highScore.toString()); newHighScore = true; }
+            const basesRemaining = bases.filter(b => b.alive).length;
+            const citiesRemaining = cities.filter(c => c.alive).length;
+            const satellitesRemaining = satelliteBases.filter(s => s.alive).length;
+            let reason = "";
+            if (citiesRemaining === 0) { reason = "All cities destroyed!"; }
+            else if (basesRemaining === 0 && satellitesRemaining === 0) { reason = "All launch sites destroyed!"; }
+            else { reason = "Targets eliminated!"; } // Should ideally not happen if checkGameOverConditions is correct
+            const accuracy = statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "N/A";
+
+            // Clear previous stats and build new ones
+            statsContainer.innerHTML = ''; // Clear existing content
+
+            // Create and append stats elements
+            const stats = [
+                `Wave Reached: ${currentWave + 1}`,
+                `Accuracy Bonuses: ${statsAccuracyBonusHits}`,
+                `Difficulty: ${selectedDifficultyName || 'N/A'}`,
+                `Planes Down: ${statsPlanesDestroyed}`,
+                `Missiles Fired: ${statsMissilesFired}`,
+                `Cities Lost: ${statsCitiesLost}`,
+                `Accuracy: ${accuracy}%`,
+                `Bases Lost: ${statsBasesLost}`,
+                `Enemy Missiles Down: ${statsEnemyMissilesDestroyed}`,
+                `Final Score: $${score}`,
+                `Plane Bombs Down: ${statsPlaneBombsDestroyed}`,
+                newHighScore ? `NEW HIGH SCORE!` : `High Score: $${highScore}`
+            ];
+
+            stats.forEach(statText => {
+                const span = document.createElement('span');
+                span.textContent = statText;
+                statsContainer.appendChild(span);
+            });
+
+            const title = newHighScore ? "GAME OVER - NEW HIGH SCORE!" : "GAME OVER";
+            showMessage(title, `Total Score: $${gameTotalScore}`, reason);
+            messageBonusText.textContent = "";
+            statsContainer.style.display = 'grid'; // Ensure it's displayed as grid
+            goToStoreButton.style.display = 'none'; skipStoreButton.style.display = 'none';
+            restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = true;
+            pauseOverlay.style.display = 'none'; bonusIndicator.style.display = 'none'; storeModal.style.display = 'none'; specialWeaponsUIDiv.style.display = 'none';
+        }
 
         // --- Pause/Resume Logic ---
+        // (Pause/Resume functions remain the same as previous version)
         function pauseGame() { if (isGameOver || transitioningWave || !gameHasStarted || storeModal.style.display === 'block' || messageBox.style.display === 'block') return; isPaused = true; pauseOverlay.style.display = 'flex'; pauseButton.textContent = 'Resume'; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } }
         function resumeGame() { if (isGameOver || transitioningWave || !isPaused) return; isPaused = false; pauseOverlay.style.display = 'none'; pauseButton.textContent = 'Pause'; if (!gameLoopId) { gameLoop(); } }
         function togglePause() { if (isPaused) { resumeGame(); } else { pauseGame(); } isBombArmed = false; canvas.style.cursor = 'crosshair'; bombControl.classList.remove('armed'); updateSpecialWeaponsUI(); }
 
         // --- Screenshot Logic ---
-        async function saveScreenshot() { console.log("Screenshot functionality placeholder."); try { const originalText = screenshotButton.textContent; screenshotButton.textContent = 'Saving...'; screenshotButton.disabled = true; await new Promise(resolve => setTimeout(resolve, 500)); screenshotButton.textContent = 'Copied!'; setTimeout(() => { screenshotButton.textContent = "Save Screenshot"; screenshotButton.disabled = false; }, 1500); } catch (err) { console.error("Screenshot failed:", err); screenshotButton.textContent = 'Error!'; setTimeout(() => { screenshotButton.textContent = "Save Screenshot"; screenshotButton.disabled = false; }, 2000); } }
+        // (Screenshot function remains the same as previous version)
+        async function saveScreenshot() {
+            console.log("Attempting to save screenshot...");
+            const originalText = screenshotButton.textContent;
+            screenshotButton.textContent = 'Saving...';
+            screenshotButton.disabled = true;
+            try {
+                // Create a temporary canvas to draw everything onto
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+
+                // Draw the game canvas content
+                tempCtx.drawImage(canvas, 0, 0);
+
+                // If game over message is visible, draw it too (simplified)
+                if (messageBox.style.display === 'block' && isGameOver) {
+                    console.warn("Screenshotting the message box overlay is complex and not fully implemented. Capturing game canvas only.");
+                }
+
+                // Convert canvas to Blob
+                tempCanvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        throw new Error("Canvas toBlob failed.");
+                    }
+                    try {
+                         // Use Clipboard API to copy the image
+                         await navigator.clipboard.write([
+                             new ClipboardItem({ 'image/png': blob })
+                         ]);
+                         console.log("Screenshot copied to clipboard.");
+                         screenshotButton.textContent = 'Copied!';
+                    } catch (clipErr) {
+                         console.error("Clipboard API failed, falling back to download:", clipErr);
+                         // Fallback: Create a download link
+                         const url = URL.createObjectURL(blob);
+                         const a = document.createElement('a');
+                         a.href = url;
+                         a.download = `missile_command_screenshot_${Date.now()}.png`;
+                         document.body.appendChild(a);
+                         a.click();
+                         document.body.removeChild(a);
+                         URL.revokeObjectURL(url);
+                         console.log("Screenshot download initiated.");
+                         screenshotButton.textContent = 'Saved!';
+                    } finally {
+                        setTimeout(() => {
+                            screenshotButton.textContent = "Save Screenshot";
+                            screenshotButton.disabled = false;
+                        }, 1500);
+                    }
+                }, 'image/png');
+
+            } catch (err) {
+                console.error("Screenshot failed:", err);
+                screenshotButton.textContent = 'Error!';
+                setTimeout(() => {
+                    screenshotButton.textContent = "Save Screenshot";
+                    screenshotButton.disabled = false;
+                }, 2000);
+            }
+        }
 
         // --- Message Display ---
+        // (Message functions remain the same as previous version)
         function showMessage(title, textHTML, subtextHTML = "", bonusAlert = "") { messageTitle.textContent = title; messageText.innerHTML = textHTML; messageSubText.style.display = subtextHTML ? 'block' : 'none'; messageSubText.innerHTML = subtextHTML; messageBonusText.textContent = bonusAlert; messageBonusText.style.display = bonusAlert ? 'block' : 'none'; goToStoreButton.style.display = 'none'; skipStoreButton.style.display = 'none'; statsContainer.style.display = 'none'; messageBox.style.display = 'block'; }
         function hideMessage() { messageBox.style.display = 'none'; }
 
         // --- Store Logic ---
-        // *** MODIFIED: Update store UI to handle Buy x10 buttons ***
+        // (Store functions remain the same as previous version)
         function updateStoreUI() {
             storeScoreDisplay.textContent = `Current Score: $${score}`;
             stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`;
@@ -877,71 +1015,58 @@
             stockSonicWaveDisplay.textContent = `Stock: ${storeStockSonicWave}`;
             stockBombDisplay.textContent = `Stock: ${storeStockBomb}`;
 
-            // Satellite
             const canAffordSatellite = score >= COST_SATELLITE;
             const satelliteInStock = storeStockSatellite > 0;
             const activeSatellites = satelliteBases.filter(s => s.alive).length;
             const canPlaceSatellite = activeSatellites < MAX_ACTIVE_SATELLITES;
             buySatelliteButton.disabled = !(canAffordSatellite && satelliteInStock && canPlaceSatellite);
 
-            // Base
             const canAffordBase = score >= COST_BASE;
             const baseInStock = storeStockBase > 0;
             const canRebuildBase = bases.some(b => !b.alive);
             buyBaseButton.disabled = !(canAffordBase && baseInStock && canRebuildBase);
 
-            // City
             const canAffordCity = score >= COST_CITY;
             const cityInStock = storeStockCity > 0;
             const canRebuildCity = cities.some(c => !c.alive);
             buyCityButton.disabled = !(canAffordCity && cityInStock && canRebuildCity);
 
-            // Base Shield
             const canAffordShield = score >= COST_SHIELD;
             const shieldInStock = storeStockShield > 0;
             const canPlaceShield = baseShields.some((shield, index) => bases[index].alive && (!shield || !shield.alive));
             buyShieldButton.disabled = !(canAffordShield && shieldInStock && canPlaceShield);
 
-            // Satellite Shield
             const canAffordSatShield = score >= COST_SAT_SHIELD;
             const satShieldInStock = storeStockSatShield > 0;
             const canPlaceSatShield = satelliteBases.some(s => s.alive && (!s.shield || !s.shield.alive));
             buySatShieldButton.disabled = !(canAffordSatShield && satShieldInStock && canPlaceSatShield);
 
-            // Sonic Wave (Buy 1)
             const canAffordSonic = score >= COST_SONIC_WAVE;
             const sonicInStock = storeStockSonicWave > 0;
             buySonicWaveButton.disabled = !(canAffordSonic && sonicInStock);
-            // Sonic Wave (Buy 10)
             const canAffordSonic10 = score >= COST_SONIC_WAVE * 10;
             const sonicInStock10 = storeStockSonicWave >= 10;
             buySonicWave10Button.disabled = !(canAffordSonic10 && sonicInStock10);
 
-            // Bomb (Buy 1)
             const canAffordBomb = score >= COST_BOMB;
             const bombInStock = storeStockBomb > 0;
             buyBombButton.disabled = !(canAffordBomb && bombInStock);
-            // Bomb (Buy 10)
             const canAffordBomb10 = score >= COST_BOMB * 10;
             const bombInStock10 = storeStockBomb >= 10;
             buyBomb10Button.disabled = !(canAffordBomb10 && bombInStock10);
 
-
-            // Faster Missile Upgrade
             const costFasterMissile = calculateUpgradeCost(COST_FASTER_MISSILE_BASE, playerMissileSpeedLevel);
             costFasterMissileDisplay.textContent = `Cost: $${costFasterMissile}`;
             levelFasterMissileDisplay.textContent = `Level: ${playerMissileSpeedLevel}/${MAX_UPGRADE_LEVEL}`;
             buyFasterMissileButton.disabled = !(score >= costFasterMissile && playerMissileSpeedLevel < MAX_UPGRADE_LEVEL);
             if (playerMissileSpeedLevel >= MAX_UPGRADE_LEVEL) { costFasterMissileDisplay.textContent = "MAX LEVEL"; buyFasterMissileButton.disabled = true; }
 
-            // Wider Explosion Upgrade
             const costWiderExplosion = calculateUpgradeCost(COST_WIDER_EXPLOSION_BASE, explosionRadiusLevel);
             costWiderExplosionDisplay.textContent = `Cost: $${costWiderExplosion}`;
             levelWiderExplosionDisplay.textContent = `Level: ${explosionRadiusLevel}/${MAX_UPGRADE_LEVEL}`;
             buyWiderExplosionButton.disabled = !(score >= costWiderExplosion && explosionRadiusLevel < MAX_UPGRADE_LEVEL);
             if (explosionRadiusLevel >= MAX_UPGRADE_LEVEL) { costWiderExplosionDisplay.textContent = "MAX LEVEL"; buyWiderExplosionButton.disabled = true; }
         }
-        // findAndRebuildBase, findAndRebuildCity, buy... functions remain the same
         function findAndRebuildBase() { const deadBaseIndex = bases.findIndex(b => !b.alive); if (deadBaseIndex !== -1) { bases[deadBaseIndex].alive = true; bases[deadBaseIndex].ammo = selectedDifficultyAmmo; return true; } return false; }
         function findAndRebuildCity() { const deadCityIndex = cities.findIndex(c => !c.alive); if (deadCityIndex !== -1) { cities[deadCityIndex].alive = true; return true; } return false; }
         function buyReplacementBase() { if (score >= COST_BASE && storeStockBase > 0) { if (findAndRebuildBase()) { score -= COST_BASE; storeStockBase--; updateStoreUI(); updateUI(); } } }
@@ -953,8 +1078,6 @@
         function buyBomb() { if (score >= COST_BOMB && storeStockBomb > 0) { score -= COST_BOMB; storeStockBomb--; inventoryBomb++; updateStoreUI(); updateSpecialWeaponsUI(); } }
         function buyFasterMissile() { if (playerMissileSpeedLevel < MAX_UPGRADE_LEVEL) { const cost = calculateUpgradeCost(COST_FASTER_MISSILE_BASE, playerMissileSpeedLevel); if (score >= cost) { score -= cost; playerMissileSpeedLevel++; updateStoreUI(); } } }
         function buyWiderExplosion() { if (explosionRadiusLevel < MAX_UPGRADE_LEVEL) { const cost = calculateUpgradeCost(COST_WIDER_EXPLOSION_BASE, explosionRadiusLevel); if (score >= cost) { score -= cost; explosionRadiusLevel++; updateStoreUI(); } } }
-
-        // *** NEW: Functions to buy 10 items ***
         function buySonicWave10() {
             const cost10 = COST_SONIC_WAVE * 10;
             if (score >= cost10 && storeStockSonicWave >= 10) {
@@ -977,16 +1100,14 @@
         }
 
         // --- Special Weapon Logic ---
-        // updateSpecialWeaponsUI, triggerSonicWave, armBomb remain the same
+        // (Special weapon functions remain the same as previous version)
         function updateSpecialWeaponsUI() { sonicWaveCountDisplay.textContent = inventorySonicWave; bombCountDisplay.textContent = inventoryBomb; const canUseSpecials = gameHasStarted && !isGameOver && !isPaused && !transitioningWave; sonicWaveControl.classList.toggle('disabled', inventorySonicWave <= 0 || !canUseSpecials || activeSonicWave); bombControl.classList.toggle('disabled', inventoryBomb <= 0 || !canUseSpecials); bombControl.classList.toggle('armed', isBombArmed); if (canUseSpecials) { canvas.style.cursor = isBombArmed ? 'cell' : 'crosshair'; } else { canvas.style.cursor = 'default'; } }
         function triggerSonicWave() { if (inventorySonicWave > 0 && !activeSonicWave && !sonicWaveControl.classList.contains('disabled')) { inventorySonicWave--; activeSonicWave = { y: canvas.height - (canvas.height * GROUND_HEIGHT_RATIO), alive: true }; updateSpecialWeaponsUI(); } }
         function armBomb() { if (inventoryBomb > 0 && !bombControl.classList.contains('disabled')) { isBombArmed = !isBombArmed; updateSpecialWeaponsUI(); } }
-        // *** MODIFIED: deployBomb uses the constant for radius multiplier ***
         function deployBomb(clickX, clickY) {
             if (isBombArmed) {
                 inventoryBomb--;
                 isBombArmed = false;
-                // Use the constant for the radius multiplier
                 const bombRadius = getCurrentPlayerExplosionRadius() * BOMB_EXPLOSION_RADIUS_MULTIPLIER;
                 const bombDuration = EXPLOSION_DURATION * BOMB_EXPLOSION_DURATION_MULTIPLIER;
                 createExplosion(clickX, clickY, EXPLOSION_RADIUS_START, '#ffffff', bombRadius, bombDuration);
@@ -995,12 +1116,12 @@
         }
 
         // --- Drawing Functions ---
-        // drawBackground, drawGameObjects remain the same
+        // (Drawing functions remain the same as previous version)
         function drawBackground() { ctx.fillStyle = '#00001a'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'white'; const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO); const numStars = Math.floor(canvas.width * canvas.height / 5000); for (let i = 0; i < numStars; i++) { let x = Math.random() * canvas.width; let y = Math.random() * groundY; let radius = Math.random() * 1.5; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#3b2e1a'; ctx.fillRect(0, groundY, canvas.width, canvas.height * GROUND_HEIGHT_RATIO); }
         function drawGameObjects() { cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); satelliteBases.forEach(sat => { sat.draw(); if (sat.shield && sat.shield.alive) { const shieldCenterX = sat.x + sat.width / 2; const shieldCenterY = sat.y + sat.height / 2; const shieldRadiusX = sat.width * 0.6 + 4; const shieldRadiusY = sat.height * 0.8 + 4; let shieldColor = SHIELD_COLOR_25; if (sat.shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (sat.shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (sat.shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (sat.shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; sat.shield.flashTimer--; } ctx.beginPath(); ctx.ellipse(shieldCenterX, shieldCenterY, shieldRadiusX, shieldRadiusY, 0, 0, Math.PI * 2); ctx.strokeStyle = shieldColor; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1; } }); for (let i = 0; i < baseShields.length; i++) { const shield = baseShields[i]; if (shield && shield.alive) { const base = bases[i]; const shieldCenterX = base.x + base.width / 2; const shieldRadius = 1.80 * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5); let shieldColor = SHIELD_COLOR_25; if (shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; shield.flashTimer--; } const startX = shieldCenterX - shieldRadius; const endX = shieldCenterX + shieldRadius; const shieldTopY = base.y - 15; const controlY = shieldTopY - shieldRadius * 0.3; ctx.beginPath(); ctx.moveTo(startX, shieldTopY); ctx.quadraticCurveTo(shieldCenterX, controlY, endX, shieldTopY); ctx.strokeStyle = shieldColor; ctx.lineWidth = 3; ctx.stroke(); ctx.lineWidth = 1; } } if (activeSonicWave && activeSonicWave.alive) { ctx.fillStyle = SONIC_WAVE_COLOR; ctx.fillRect(0, activeSonicWave.y - SONIC_WAVE_HEIGHT, canvas.width, SONIC_WAVE_HEIGHT); ctx.strokeStyle = 'rgba(255, 100, 255, 0.8)'; ctx.lineWidth = 1; const numLines = 5; for(let i=0; i < numLines; i++) { const lineY = activeSonicWave.y - (SONIC_WAVE_HEIGHT / numLines * (i + 0.5)); ctx.beginPath(); ctx.moveTo(0, lineY); ctx.lineTo(canvas.width, lineY); ctx.stroke(); } } incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw()); planes.forEach(plane => plane.draw()); planeBombs.forEach(bomb => bomb.draw()); }
 
         // --- Update Functions ---
-        // updateGameObjects, updateUI remain the same
+        // (Update functions remain the same as previous version)
         function updateGameObjects() {
             spawnEnemiesForWave();
             if (activeSonicWave && activeSonicWave.alive) {
@@ -1038,7 +1159,7 @@
         }
 
         // --- Game Loop ---
-        // gameLoop remains the same
+        // (Game loop remains the same as previous version)
         function gameLoop() {
             if (isPaused) { gameLoopId = null; return; }
             checkGameOverConditions();
@@ -1056,25 +1177,28 @@
                 updateSpecialWeaponsUI();
                 checkWaveEnd();
             } else if (isGameOver) {
+                // Only update explosions and bombs if game is over but effects are still active
                 explosions.forEach(explosion => explosion.update());
                 planeBombs.forEach(bomb => bomb.update());
-                if (activeSonicWave && activeSonicWave.alive) {
+                 if (activeSonicWave && activeSonicWave.alive) {
                     activeSonicWave.y -= SONIC_WAVE_SPEED;
-                    if (activeSonicWave.y - SONIC_WAVE_HEIGHT <= 0) { activeSonicWave.alive = false; activeSonicWave = null; }
-                }
+                     if (activeSonicWave.y - SONIC_WAVE_HEIGHT <= 0) { activeSonicWave.alive = false; activeSonicWave = null; }
+                 }
                 explosions = explosions.filter(explosion => explosion.alive);
                 planeBombs = planeBombs.filter(bomb => bomb.alive);
             }
+            // Request next frame if game isn't over OR if there are still active effects
             if (!isGameOver || explosions.length > 0 || planeBombs.length > 0 || activeSonicWave) {
                 gameLoopId = requestAnimationFrame(gameLoop);
             } else {
                 console.log("gameLoop: Stopping loop (End condition met)");
-                gameLoopId = null;
+                gameLoopId = null; // Ensure loop stops
             }
         }
 
+
         // --- Event Listeners ---
-        // canvas, restartButton, pauseButton, screenshotButton listeners remain the same
+        // (Event listeners remain the same as previous version)
         canvas.addEventListener('click', (event) => {
             if (isGameOver || isPaused || transitioningWave || !gameHasStarted) return;
             const rect = canvas.getBoundingClientRect();
@@ -1083,33 +1207,40 @@
             const clickX = (event.clientX - rect.left) * scaleX;
             const clickY = (event.clientY - rect.top) * scaleY;
             const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
-            if (clickY < 20 || clickY > groundY) return;
-            if (isBombArmed) { deployBomb(clickX, clickY); return; }
+            if (clickY < 20 || clickY > groundY) return; // Ignore clicks too high or low
+            if (isBombArmed) { deployBomb(clickX, clickY); return; } // Deploy bomb if armed
+
+            // Find nearest base/satellite with ammo
             let nearestSource = null; let minDistance = Infinity;
             const potentialSources = [ ...bases.filter(b => b.alive && b.ammo > 0), ...satelliteBases.filter(s => s.alive && s.ammo > 0) ];
             potentialSources.forEach(source => {
                 const sourceCenterX = source.x + source.width / 2;
-                const sourceTopY = source.isSatellite ? source.y + source.height : source.y;
+                const sourceTopY = source.isSatellite ? source.y + source.height : source.y; // Use top of base, bottom of satellite for launch point
                 const d = distance(clickX, clickY, sourceCenterX, sourceTopY);
                 if (d < minDistance) { minDistance = d; nearestSource = source; }
             });
+
+            // Fire missile(s) from the nearest source
             if (nearestSource) {
                 const startX = nearestSource.x + nearestSource.width / 2;
                 const startY = nearestSource.isSatellite ? nearestSource.y + nearestSource.height : nearestSource.y;
-                const totalMissilesToFire = 1 + bonusMissileCount;
-                const actualMissilesToFire = Math.min(totalMissilesToFire, nearestSource.ammo);
+                const totalMissilesToFire = 1 + bonusMissileCount; // Base + bonus
+                const actualMissilesToFire = Math.min(totalMissilesToFire, nearestSource.ammo); // Don't fire more than available
+
                 if (actualMissilesToFire > 0) {
                     nearestSource.ammo -= actualMissilesToFire;
                     for (let i = 0; i < actualMissilesToFire; i++) {
+                        // Apply spread if firing multiple bonus missiles
                         const currentOffset = (actualMissilesToFire > 1) ? (i - (actualMissilesToFire - 1) / 2) * BONUS_FIRE_SPREAD : 0;
                         playerMissiles.push(createPlayerMissile(startX + currentOffset, startY, clickX, clickY));
                     }
-                    updateUI();
+                    updateUI(); // Update ammo display on base
                 }
             }
         });
         restartButton.addEventListener('click', () => {
             if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; }
+            // Reset all game state variables
             isGameOver = true; gameHasStarted = false; isPaused = false; transitioningWave = false; difficultySelected = false;
             score = 0; gameTotalScore = 0; currentWave = -1; consecutiveIntercepts = 0; scoreMultiplier = 1.0;
             playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; bonusMissileCount = 0;
@@ -1118,6 +1249,8 @@
             satelliteBases = []; baseShields = [null, null, null]; cities = []; bases = []; incomingMissiles = []; playerMissiles = []; explosions = []; planes = []; planeBombs = [];
             selectedDifficultyName = ''; difficultyScoreMultiplier = 1.0;
             statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0;
+
+            // Reset UI elements to initial state
             startMenuContainer.style.display = 'flex';
             canvasContainer.style.display = 'none'; canvas.style.display = 'none';
             uiContainer.style.display = 'none'; controlsContainer.style.display = 'none'; specialWeaponsUIDiv.style.display = 'none';
@@ -1126,6 +1259,8 @@
             restartButton.style.display = 'none'; pauseButton.style.display = 'none'; screenshotButton.style.display = 'none';
             bonusIndicator.style.display = 'none'; statsContainer.style.display = 'none';
             document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected'));
+
+            // Update high score display on start menu
             highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0');
             startHighScoreDisplay.textContent = `High Score: $${highScore}`;
         });
@@ -1141,7 +1276,6 @@
         buyBombButton.addEventListener('click', buyBomb);
         buyFasterMissileButton.addEventListener('click', buyFasterMissile);
         buyWiderExplosionButton.addEventListener('click', buyWiderExplosion);
-        // *** NEW: Add event listeners for Buy x10 buttons ***
         buySonicWave10Button.addEventListener('click', buySonicWave10);
         buyBomb10Button.addEventListener('click', buyBomb10);
         goToStoreButton.addEventListener('click', () => { hideMessage(); updateStoreUI(); storeModal.style.display = 'block'; });
@@ -1178,18 +1312,33 @@
 
         // --- Initial Setup on Page Load ---
         window.onload = () => {
+             // Set canvas dimensions
              canvas.width = INTERNAL_WIDTH; canvas.height = INTERNAL_HEIGHT;
+
+             // Load high score
              highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0');
              startHighScoreDisplay.textContent = `High Score: $${highScore}`;
-             highScoreDisplay.textContent = `HI: $${highScore}`;
+             highScoreDisplay.textContent = `HI: $${highScore}`; // Also update in-game UI
+
+             // Set initial UI visibility
              startMenuContainer.style.display = 'flex';
              canvasContainer.style.display = 'none'; canvas.style.display = 'none';
              uiContainer.style.display = 'none'; controlsContainer.style.display = 'none'; specialWeaponsUIDiv.style.display = 'none';
              messageBox.style.display = 'none'; storeModal.style.display = 'none'; pauseOverlay.style.display = 'none';
              actualStartButton.style.display = 'none'; restartButton.style.display = 'none'; pauseButton.style.display = 'none'; screenshotButton.style.display = 'none';
              bonusIndicator.style.display = 'none'; statsContainer.style.display = 'none';
-             if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').then((registration) => { console.log('[Service Worker] registered:', registration.scope); }).catch((error) => { console.error('[Service Worker] registration failed:', error); }); } else { console.log('[Service Worker] not supported.'); }
-        };
+
+             // Service worker registration (optional)
+             if ('serviceWorker' in navigator) {
+                 navigator.serviceWorker.register('/sw.js').then((registration) => {
+                     console.log('[Service Worker] registered:', registration.scope);
+                 }).catch((error) => {
+                     console.error('[Service Worker] registration failed:', error);
+                 });
+             } else {
+                 console.log('[Service Worker] not supported.');
+             }
+        }; // End of window.onload
 
     </script>
 
