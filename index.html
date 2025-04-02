@@ -416,7 +416,7 @@
         const INTERNAL_HEIGHT = 600;
         const GROUND_HEIGHT_RATIO = 10 / INTERNAL_HEIGHT;
         const BASE_WIDTH_RATIO = 40 / INTERNAL_WIDTH;
-        const BASE_HEIGHT_RATIO = 25 / INTERNAL_HEIGHT;
+        const BASE_HEIGHT_RATIO = 40 / INTERNAL_HEIGHT;
         const CITY_WIDTH_RATIO = 50 / INTERNAL_WIDTH;
         const CITY_HEIGHT_RATIO = 30 / INTERNAL_HEIGHT;
         const SATELLITE_WIDTH_RATIO = 35 / INTERNAL_WIDTH;
@@ -625,12 +625,100 @@
                 x: baseX, y: baseY, width: baseWidth, height: baseHeight, color: '#dddd00', outlineColor: '#aaaa00', launcherColor: '#999999', alive: true, ammo: selectedDifficultyAmmo, isSatellite: false,
                 draw() {
                     if (!this.alive) return;
-                    ctx.fillStyle = this.color; ctx.beginPath(); ctx.moveTo(this.x, this.y + this.height); ctx.lineTo(this.x + this.width * 0.2, this.y); ctx.lineTo(this.x + this.width * 0.8, this.y); ctx.lineTo(this.x + this.width, this.y + this.height); ctx.closePath(); ctx.fill();
-                    ctx.strokeStyle = this.outlineColor; ctx.lineWidth = 2; ctx.stroke();
-                    const launcherWidth = this.width * 0.15; const launcherHeight = this.height * 0.4;
-                    ctx.fillStyle = this.launcherColor; ctx.fillRect(this.x + this.width / 2 - launcherWidth / 2, this.y - launcherHeight, launcherWidth, launcherHeight);
-                    ctx.fillStyle = '#666666'; ctx.fillRect(this.x + this.width / 2 - launcherWidth / 2, this.y - launcherHeight * 0.3, launcherWidth, 2);
-                    ctx.fillStyle = '#000'; const fontSize = Math.max(8, Math.min(12, Math.floor(this.width * 0.3))); ctx.font = `${fontSize}px "Press Start 2P"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(this.ammo, this.x + this.width / 2, this.y + this.height / 2);
+                    
+                    // Ground platform
+                    ctx.fillStyle = '#556b2f'; // Dark olive green
+                    ctx.fillRect(this.x, this.y + this.height * 0.8, this.width, this.height * 0.2);
+                    
+                    // Central command building - made taller
+                    const buildingWidth = this.width * 0.4;
+                    const buildingX = this.x + (this.width - buildingWidth) / 2;
+                    const buildingHeight = this.height * 0.8; // Increased from 0.7
+                    const buildingY = this.y + this.height * 0.8 - buildingHeight;
+                    
+                    // Main building
+                    ctx.fillStyle = '#5a5a5a';
+                    ctx.fillRect(buildingX, buildingY, buildingWidth, buildingHeight);
+                    
+                    // Building top
+                    ctx.fillStyle = '#4a4a4a';
+                    ctx.fillRect(buildingX + buildingWidth * 0.1, buildingY, buildingWidth * 0.8, buildingHeight * 0.1);
+                    
+                    // Building windows - adjusted for taller building
+                    ctx.fillStyle = '#88ccff';
+                    const windowSize = buildingWidth * 0.1;
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) { // Added an extra row of windows
+                            ctx.fillRect(
+                                buildingX + buildingWidth * 0.2 + i * buildingWidth * 0.3,
+                                buildingY + buildingHeight * 0.15 + j * buildingHeight * 0.25,
+                                windowSize, windowSize
+                            );
+                        }
+                    }
+                    
+                    // Missile silos - adjusted positions
+                    const siloWidth = this.width * 0.15;
+                    const siloLeftX = this.x + this.width * 0.1;
+                    const siloRightX = this.x + this.width * 0.75;
+                    const siloY = this.y + this.height * 0.75;
+                    const siloHeight = this.height * 0.4; // Increased from 0.35
+                    
+                    // Silo bases
+                    ctx.fillStyle = '#777777';
+                    ctx.fillRect(siloLeftX, siloY - siloHeight * 0.2, siloWidth, siloHeight * 0.2);
+                    ctx.fillRect(siloRightX, siloY - siloHeight * 0.2, siloWidth, siloHeight * 0.2);
+                    
+                    // Draw missiles in silos - made taller
+                    const missileWidth = siloWidth * 0.6;
+                    const missileLeftX = siloLeftX + (siloWidth - missileWidth) / 2;
+                    const missileRightX = siloRightX + (siloWidth - missileWidth) / 2;
+                    
+                    // Draw left missile
+                    ctx.fillStyle = '#cccccc';
+                    ctx.fillRect(missileLeftX, siloY - siloHeight * 0.8, missileWidth, siloHeight * 0.6);
+                    
+                    // Left missile tip
+                    ctx.fillStyle = '#ff3333';
+                    ctx.beginPath();
+                    ctx.moveTo(missileLeftX, siloY - siloHeight * 0.8);
+                    ctx.lineTo(missileLeftX + missileWidth / 2, siloY - siloHeight);
+                    ctx.lineTo(missileLeftX + missileWidth, siloY - siloHeight * 0.8);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Draw right missile
+                    ctx.fillStyle = '#cccccc';
+                    ctx.fillRect(missileRightX, siloY - siloHeight * 0.7, missileWidth, siloHeight * 0.5);
+                    
+                    // Right missile tip
+                    ctx.fillStyle = '#ff3333';
+                    ctx.beginPath();
+                    ctx.moveTo(missileRightX, siloY - siloHeight * 0.7);
+                    ctx.lineTo(missileRightX + missileWidth / 2, siloY - siloHeight * 0.9);
+                    ctx.lineTo(missileRightX + missileWidth, siloY - siloHeight * 0.7);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Small antenna on command building
+                    ctx.strokeStyle = '#aaaaaa';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(buildingX + buildingWidth / 2, buildingY);
+                    ctx.lineTo(buildingX + buildingWidth / 2, buildingY - buildingHeight * 0.15);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.arc(buildingX + buildingWidth / 2, buildingY - buildingHeight * 0.15, buildingWidth * 0.05, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Ammo display
+                    ctx.fillStyle = '#ffffff';
+                    const fontSize = Math.max(8, Math.min(12, Math.floor(this.width * 0.25)));
+                    ctx.font = `${fontSize}px "Press Start 2P"`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.ammo, this.x + this.width / 2, this.y + this.height * 0.9);
                 }
             };
         }
