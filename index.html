@@ -81,7 +81,12 @@
         .storeItemInfo span { display: block; margin-bottom: 3px; }
         .itemCost { color: #ffff00; }
         .itemStock, .itemLevel { color: #aaa; font-size: clamp(10px, 2vw, 12px); }
-        .buyButton { padding: 6px 12px; font-size: clamp(11px, 2.5vw, 14px); min-width: auto; align-self: flex-end; }
+        /* *** NEW: Style for button container *** */
+        .storeItemButtons { display: flex; flex-wrap: wrap; /* Allow wrapping on small screens */ gap: 5px; /* Space between buttons */ align-items: center; /* Align buttons vertically */ justify-content: flex-end; /* Align buttons to the right */ margin-top: 5px; /* Add some space above buttons */ }
+        .buyButton { padding: 6px 12px; font-size: clamp(11px, 2.5vw, 14px); min-width: auto; /* Allow button to shrink */ flex-shrink: 1; /* Allow shrinking */ }
+        /* *** NEW: Style for Buy x10 button *** */
+        .buyMultipleButton { border-color: #00aaaa; /* Teal border */ color: #00cccc; /* Teal text */ box-shadow: 0 0 6px #00aaaa inset; padding: 6px 8px; /* Slightly smaller padding */ font-size: clamp(10px, 2.2vw, 12px); /* Slightly smaller font */ }
+        .buyMultipleButton:hover:not(:disabled) { box-shadow: 0 0 10px #00aaaa inset, 0 0 6px #00aaaa; }
         #storeContinueButton { display: block; margin: 20px auto 0 auto; }
         /* --- Footer --- */
         footer { width: 100%; max-width: 800px; margin-top: 20px; padding: 10px 0; border-top: 1px solid #005500; font-size: clamp(10px, 2.5vw, 12px); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -90,8 +95,58 @@
         footer a img { vertical-align: middle; margin: 0 3px; height: 20px; width: auto; }
         footer .link-group { }
         /* --- Media Queries --- */
-        @media (max-width: 768px) { #uiContainer { gap: 6px; padding: 5px 0; font-size: clamp(9px, 2.2vw, 11px); } #controlsContainer { gap: 8px; } #specialWeaponsUI { gap: 10px; padding: 6px 8px; } #difficultySelection { gap: 8px; padding: 10px; } button { padding: 6px 12px; } #messageBox { padding: 15px; max-width: 95%; } #statsContainer { columns: 1; } #storeModal { padding: 10px; } #storeItemsContainer { gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));} footer { margin-top: 15px; gap: 8px; } footer a { margin: 0 4px; } footer a img { margin: 0 2px; height: 18px; } .storeItem { flex-direction: row; align-items: center; justify-content: space-between; padding: 8px 10px; min-height: 0; gap: 10px; } .storeItemInfo { margin-bottom: 0; flex-grow: 1; } .storeItemInfo span { display: block; margin-bottom: 2px; line-height: 1.2; } .buyButton { align-self: center; flex-shrink: 0; } }
-        @media (max-width: 480px) { body { padding: 5px; } h1#mainTitle { font-size: 18px; margin-bottom: 10px; } #uiContainer { font-size: 8px; gap: 4px; justify-content: space-between;} #score, #highScore, #wave, #citiesLeft, #multiplier { min-width: 55px; } #controlsContainer { gap: 5px; } #specialWeaponsUI { gap: 8px; padding: 5px; } #difficultySelection { padding: 8px; gap: 6px; } #difficultySelection h3 { font-size: 14px; margin-bottom: 8px; } button { padding: 5px 10px; font-size: 10px; } .difficulty-button { font-size: 11px; } #messageBox { padding: 10px; width: 95%; top: 45%; max-height: 80vh; } #messageBox h2 { font-size: 18px; } #messageBox p { font-size: 11px; } #statsContainer { font-size: 9px; } .messageBoxButtons { gap: 8px; } #storeModal { padding: 8px; width: 95%; max-height: 75vh; } #storeModal h2 { font-size: 18px; } #storeScore { font-size: 12px; } #storeItemsContainer { grid-template-columns: 1fr; } .storeItem { padding: 6px 8px; gap: 8px; } .storeItemInfo span { font-size: 10px; margin-bottom: 1px; line-height: 1.15; } .itemStock, .itemLevel { font-size: 9px; } .buyButton { padding: 4px 8px; font-size: 10px; } #pauseOverlay { font-size: 24px; } footer { margin-top: 10px; font-size: 9px; padding: 8px 0; display: block; text-align: center; } footer .link-group { display: block; margin-bottom: 5px; text-align: center; } footer .link-group a { display: inline-block; margin: 2px 5px; vertical-align: middle; } footer .link-group a img { margin: 0 2px; height: 16px; } }
+        @media (max-width: 768px) {
+            #uiContainer { gap: 6px; padding: 5px 0; font-size: clamp(9px, 2.2vw, 11px); }
+            #controlsContainer { gap: 8px; }
+            #specialWeaponsUI { gap: 10px; padding: 6px 8px; }
+            #difficultySelection { gap: 8px; padding: 10px; }
+            button { padding: 6px 12px; }
+            #messageBox { padding: 15px; max-width: 95%; }
+            #statsContainer { columns: 1; }
+            #storeModal { padding: 10px; }
+            #storeItemsContainer { gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));}
+            footer { margin-top: 15px; gap: 8px; }
+            footer a { margin: 0 4px; }
+            footer a img { margin: 0 2px; height: 18px; }
+            /* Adjust store item layout for smaller screens */
+            .storeItem { flex-direction: column; /* Stack info and buttons */ align-items: stretch; /* Stretch elements */ padding: 8px 10px; min-height: 0; gap: 8px; }
+            .storeItemInfo { margin-bottom: 5px; flex-grow: 0; /* Don't grow info */ }
+            .storeItemInfo span { display: block; margin-bottom: 2px; line-height: 1.2; }
+            .storeItemButtons { justify-content: space-between; /* Space out buttons */ }
+            .buyButton { align-self: center; flex-shrink: 0; }
+        }
+        @media (max-width: 480px) {
+            body { padding: 5px; }
+            h1#mainTitle { font-size: 18px; margin-bottom: 10px; }
+            #uiContainer { font-size: 8px; gap: 4px; justify-content: space-between;}
+            #score, #highScore, #wave, #citiesLeft, #multiplier { min-width: 55px; }
+            #controlsContainer { gap: 5px; }
+            #specialWeaponsUI { gap: 8px; padding: 5px; }
+            #difficultySelection { padding: 8px; gap: 6px; }
+            #difficultySelection h3 { font-size: 14px; margin-bottom: 8px; }
+            button { padding: 5px 10px; font-size: 10px; }
+            .difficulty-button { font-size: 11px; }
+            #messageBox { padding: 10px; width: 95%; top: 45%; max-height: 80vh; }
+            #messageBox h2 { font-size: 18px; }
+            #messageBox p { font-size: 11px; }
+            #statsContainer { font-size: 9px; }
+            .messageBoxButtons { gap: 8px; }
+            #storeModal { padding: 8px; width: 95%; max-height: 75vh; }
+            #storeModal h2 { font-size: 18px; }
+            #storeScore { font-size: 12px; }
+            #storeItemsContainer { grid-template-columns: 1fr; }
+            .storeItem { padding: 6px 8px; gap: 6px; }
+            .storeItemInfo span { font-size: 10px; margin-bottom: 1px; line-height: 1.15; }
+            .itemStock, .itemLevel { font-size: 9px; }
+            .storeItemButtons { gap: 4px; /* Reduce gap further */ }
+            .buyButton { padding: 4px 8px; font-size: 10px; }
+            .buyMultipleButton { padding: 4px 6px; font-size: 9px; } /* Adjust Buy x10 button size */
+            #pauseOverlay { font-size: 24px; }
+            footer { margin-top: 10px; font-size: 9px; padding: 8px 0; display: block; text-align: center; }
+            footer .link-group { display: block; margin-bottom: 5px; text-align: center; }
+            footer .link-group a { display: inline-block; margin: 2px 5px; vertical-align: middle; }
+            footer .link-group a img { margin: 0 2px; height: 16px; }
+        }
     </style>
 </head>
 <body>
@@ -105,12 +160,15 @@
             <button class="difficulty-button" data-ammo="75" data-multiplier="1.5">Hard (75 Ammo)</button>
             <button class="difficulty-button" data-ammo="50" data-multiplier="2.0">Insane (50 Ammo)</button>
         </div>
-        <div id="startHighScore">High Score: $0</div> <button id="actualStartButton">Start Game</button>
+        <div id="startHighScore">High Score: $0</div>
+        <button id="actualStartButton">Start Game</button>
     </div>
 
     <div id="uiContainer">
         <div id="score">SCORE: $0</div>
-        <div id="highScore">HI: $0</div> <div id="wave">WAVE: 1</div> <div id="citiesLeft">CITIES: 6</div>
+        <div id="highScore">HI: $0</div>
+        <div id="wave">WAVE: 1</div>
+        <div id="citiesLeft">CITIES: 6</div>
         <div id="multiplier">MULT: 1.0x</div>
         <div id="bonusIndicator">BONUS FIRE +0!</div>
     </div>
@@ -145,11 +203,13 @@
         <div id="statsContainer" style="display: none;"> </div>
         <div class="messageBoxButtons">
             <button id="goToStoreButton">Go to Store</button>
-            <button id="skipStoreButton">Next Wave</button> </div>
+            <button id="skipStoreButton">Next Wave</button>
+        </div>
     </div>
 
     <div id="storeModal">
-        <h2>Inter-Wave Store</h2> <div id="storeScore">Current Score: $0</div>
+        <h2>Inter-Wave Store</h2>
+        <div id="storeScore">Current Score: $0</div>
         <div id="storeItemsContainer">
             <div class="storeItem">
                 <div class="storeItemInfo">
@@ -157,7 +217,10 @@
                     <span class="itemCost">Cost: $1000</span>
                     <span class="itemStock" id="stockSonicWave">Stock: 30</span>
                 </div>
-                <button class="buyButton" id="buySonicWaveButton">BUY</button>
+                <div class="storeItemButtons">
+                    <button class="buyButton buyMultipleButton" id="buySonicWave10Button">BUY x10</button>
+                    <button class="buyButton" id="buySonicWaveButton">BUY</button>
+                </div>
             </div>
             <div class="storeItem">
                 <div class="storeItemInfo">
@@ -165,7 +228,10 @@
                     <span class="itemCost">Cost: $500</span>
                     <span class="itemStock" id="stockBomb">Stock: 30</span>
                 </div>
-                <button class="buyButton" id="buyBombButton">BUY</button>
+                 <div class="storeItemButtons">
+                    <button class="buyButton buyMultipleButton" id="buyBomb10Button">BUY x10</button>
+                    <button class="buyButton" id="buyBombButton">BUY</button>
+                </div>
             </div>
             <div class="storeItem">
                 <div class="storeItemInfo">
@@ -173,7 +239,7 @@
                     <span class="itemCost">Cost: $4000</span>
                     <span class="itemStock" id="stockSatellite">Stock: 30</span>
                 </div>
-                <button class="buyButton" id="buySatelliteButton">BUY</button>
+                 <div class="storeItemButtons"> <button class="buyButton" id="buySatelliteButton">BUY</button> </div>
             </div>
             <div class="storeItem">
                 <div class="storeItemInfo">
@@ -181,7 +247,7 @@
                     <span class="itemCost">Cost: $250</span>
                     <span class="itemStock" id="stockSatShield">Stock: 100</span>
                 </div>
-                <button class="buyButton" id="buySatShieldButton">BUY</button>
+                 <div class="storeItemButtons"> <button class="buyButton" id="buySatShieldButton">BUY</button> </div>
             </div>
             <div class="storeItem">
                 <div class="storeItemInfo">
@@ -189,7 +255,7 @@
                     <span class="itemCost">Cost: $1000</span>
                     <span class="itemStock" id="stockBase">Stock: 30</span>
                 </div>
-                <button class="buyButton" id="buyBaseButton">BUY</button>
+                 <div class="storeItemButtons"> <button class="buyButton" id="buyBaseButton">BUY</button> </div>
             </div>
             <div class="storeItem">
                 <div class="storeItemInfo">
@@ -197,7 +263,7 @@
                     <span class="itemCost">Cost: $2000</span>
                     <span class="itemStock" id="stockCity">Stock: 30</span>
                 </div>
-                <button class="buyButton" id="buyCityButton">BUY</button>
+                 <div class="storeItemButtons"> <button class="buyButton" id="buyCityButton">BUY</button> </div>
             </div>
             <div class="storeItem">
                 <div class="storeItemInfo">
@@ -205,7 +271,7 @@
                     <span class="itemCost">Cost: $250</span>
                     <span class="itemStock" id="stockShield">Stock: 100</span>
                 </div>
-                <button class="buyButton" id="buyShieldButton">BUY</button>
+                 <div class="storeItemButtons"> <button class="buyButton" id="buyShieldButton">BUY</button> </div>
             </div>
             <div class="storeItem">
                 <div class="storeItemInfo">
@@ -213,7 +279,7 @@
                     <span class="itemCost" id="costFasterMissile">Cost: $1500</span>
                     <span class="itemLevel" id="levelFasterMissile">Level: 0/5</span>
                 </div>
-                <button class="buyButton" id="buyFasterMissileButton">BUY</button>
+                 <div class="storeItemButtons"> <button class="buyButton" id="buyFasterMissileButton">BUY</button> </div>
             </div>
             <div class="storeItem">
                 <div class="storeItemInfo">
@@ -221,10 +287,11 @@
                     <span class="itemCost" id="costWiderExplosion">Cost: $1200</span>
                     <span class="itemLevel" id="levelWiderExplosion">Level: 0/5</span>
                 </div>
-                <button class="buyButton" id="buyWiderExplosionButton">BUY</button>
+                 <div class="storeItemButtons"> <button class="buyButton" id="buyWiderExplosionButton">BUY</button> </div>
             </div>
         </div>
-        <button id="storeContinueButton">Continue to Next Wave</button> </div>
+        <button id="storeContinueButton">Continue to Next Wave</button>
+    </div>
 
     <footer>
         <div class="link-group social-links">
@@ -245,7 +312,7 @@
             <a href="https://github.com/centminmod/atari-missile-command/issues" target="_blank" rel="noopener noreferrer">
                 <img src="https://img.shields.io/github/issues/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub issues" loading="lazy">
             </a>
-            <a target="_blank" href="https://jam.pieter.com" style="font-family: 'system-ui', sans-serif; position: fixed; bottom: -1px; right: -1px; padding: 7px; font-size: 14px; font-weight: bold; background: #fff; color: #000; text-decoration: none; z-index: 10; border-top-left-radius: 12px; z-index: 10000; border: 1px solid #fff;">🕹️ Vibe Jam 2025</a>
+             <a target="_blank" href="https://jam.pieter.com" style="font-family: 'system-ui', sans-serif; position: fixed; bottom: -1px; right: -1px; padding: 7px; font-size: 14px; font-weight: bold; background: #fff; color: #000; text-decoration: none; z-index: 10; border-top-left-radius: 12px; z-index: 10000; border: 1px solid #fff;">🕹️ Vibe Jam 2025</a>
         </div>
     </footer>
 
@@ -274,7 +341,7 @@
         const startMenuContainer = document.getElementById('startMenuContainer');
         const startHighScoreDisplay = document.getElementById('startHighScore');
         const actualStartButton = document.getElementById('actualStartButton');
-        const bonusIndicator = document.getElementById('bonusIndicator'); // Re-enabled
+        const bonusIndicator = document.getElementById('bonusIndicator');
         const goToStoreButton = document.getElementById('goToStoreButton');
         const skipStoreButton = document.getElementById('skipStoreButton');
         const storeModal = document.getElementById('storeModal');
@@ -293,6 +360,9 @@
         const buySatShieldButton = document.getElementById('buySatShieldButton');
         const buySonicWaveButton = document.getElementById('buySonicWaveButton');
         const buyBombButton = document.getElementById('buyBombButton');
+        // *** NEW: Get references to Buy x10 buttons ***
+        const buySonicWave10Button = document.getElementById('buySonicWave10Button');
+        const buyBomb10Button = document.getElementById('buyBomb10Button');
         const storeContinueButton = document.getElementById('storeContinueButton');
         const specialWeaponsUIDiv = document.getElementById('specialWeaponsUI');
         const sonicWaveControl = document.getElementById('sonicWaveControl');
@@ -318,18 +388,17 @@
         const CITY_HEIGHT_RATIO = 30 / INTERNAL_HEIGHT;
         const SATELLITE_WIDTH_RATIO = 35 / INTERNAL_WIDTH;
         const SATELLITE_HEIGHT_RATIO = 25 / INTERNAL_HEIGHT;
-        // *** MODIFIED: Lowered satellite Y position (increased ratio) ***
-        const SATELLITE_Y_POS_RATIO = (INTERNAL_HEIGHT * 0.55) / INTERNAL_HEIGHT; // Was 0.4
+        const SATELLITE_Y_POS_RATIO = (INTERNAL_HEIGHT * 0.55) / INTERNAL_HEIGHT;
         const MISSILE_SPEED_PLAYER_BASE = 5;
         const MISSILE_SPEED_ENEMY_BASE = 0.5;
-        const MAX_ENEMY_MISSILE_SPEED = 3.5; // *** ADDED: Cap for enemy missile speed ***
+        const MAX_ENEMY_MISSILE_SPEED = 3.5;
         const EXPLOSION_RADIUS_START = 13;
         const EXPLOSION_RADIUS_MAX_BASE = 65;
         const EXPLOSION_DURATION = 60;
         const POINTS_PER_MISSILE = 35;
         const POINTS_PER_CITY = 100;
         const POINTS_PER_AMMO = 5;
-        const BONUS_FIRE_SPREAD = 8; // Spread distance for bonus missiles
+        const BONUS_FIRE_SPREAD = 8;
         const SHIELD_STRENGTH_START = 100;
         const SHIELD_DAMAGE_PER_HIT = 10;
         const SHIELD_COLOR_FULL = 'rgba(0, 150, 255, 0.6)';
@@ -338,7 +407,8 @@
         const SHIELD_COLOR_25 = 'rgba(255, 100, 0, 0.6)';
         const SHIELD_FLASH_COLOR = 'rgba(255, 255, 255, 0.8)';
         const SHIELD_FLASH_DURATION = 5;
-        const BOMB_EXPLOSION_RADIUS_MULTIPLIER = 6;
+        // *** MODIFIED: Reduced bomb explosion radius multiplier ***
+        const BOMB_EXPLOSION_RADIUS_MULTIPLIER = 5.5; // Was 6
         const BOMB_EXPLOSION_DURATION_MULTIPLIER = 1.5;
         const SONIC_WAVE_SPEED = 4;
         const SONIC_WAVE_HEIGHT = 10;
@@ -367,13 +437,13 @@
         const PLANE_SPEED_INCREASE_PER_WAVE = 0.05;
         const PLANE_VARIANT_CHANCE = 0.2;
         const MAX_ACTIVE_SATELLITES = 3;
-        const COST_SATELLITE = 4000; const MAX_STOCK_SATELLITE = 50;
-        const COST_BASE = 1000; const MAX_STOCK_BASE = 50;
-        const COST_CITY = 2000; const MAX_STOCK_CITY = 50;
+        const COST_SATELLITE = 4000; const MAX_STOCK_SATELLITE = 100;
+        const COST_BASE = 1000; const MAX_STOCK_BASE = 100;
+        const COST_CITY = 2000; const MAX_STOCK_CITY = 100;
         const COST_SHIELD = 250; const MAX_STOCK_SHIELD = 100;
         const COST_SAT_SHIELD = 250; const MAX_STOCK_SAT_SHIELD = 100;
-        const COST_SONIC_WAVE = 1000; const MAX_STOCK_SONIC_WAVE = 50;
-        const COST_BOMB = 500; const MAX_STOCK_BOMB = 50;
+        const COST_SONIC_WAVE = 1000; const MAX_STOCK_SONIC_WAVE = 100;
+        const COST_BOMB = 500; const MAX_STOCK_BOMB = 100;
         const PLANE_SPEED_BASE = 1.5;
         const PLANE_WIDTH = 50;
         const PLANE_HEIGHT = 20;
@@ -382,7 +452,7 @@
         const PLANE_BOMB_SPEED = 1.0;
         const BASE_BOMBS_PER_PLANE = 10;
         const BOMBS_INCREASE_PER_WAVE = 1;
-        const PLANE_SPAWN_CHANCE = 0.025; // ADJUSTED: Further increased
+        const PLANE_SPAWN_CHANCE = 0.025;
         const PLANE_MIN_Y = INTERNAL_HEIGHT * 0.1;
         const PLANE_MAX_Y = INTERNAL_HEIGHT * 0.3;
         const PLANE_BOMB_DROP_INTERVAL_MIN = 80;
@@ -409,7 +479,7 @@
         let selectedDifficultyName = '';
         let selectedDifficultyAmmo = 50;
         let difficultyScoreMultiplier = 1.0;
-        let bonusMissileCount = 0; // Re-added bonus missile count
+        let bonusMissileCount = 0;
         let storeStockSatellite = MAX_STOCK_SATELLITE;
         let storeStockBase = MAX_STOCK_BASE;
         let storeStockCity = MAX_STOCK_CITY;
@@ -473,7 +543,7 @@
         function calculateUpgradeCost(baseCost, level) { return Math.floor(baseCost * Math.pow(UPGRADE_COST_MULTIPLIER, level)); }
 
         // --- Game Object Factories ---
-        // createCity, createBase, createSatelliteBase remain the same as previous version
+        // createCity, createBase, createSatelliteBase remain the same
         function createCity(xRatio) {
             const cityWidth = canvas.width * CITY_WIDTH_RATIO;
             const cityHeight = canvas.height * CITY_HEIGHT_RATIO;
@@ -556,11 +626,9 @@
             const startX = config.startX !== undefined ? config.startX : Math.random() * canvas.width;
             const startY = config.startY !== undefined ? config.startY : 0;
             const target = config.target || getRandomTarget();
-            // *** MODIFIED: Calculate base speed and cap it ***
             let baseSpeed = MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08);
             baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED); // Apply the cap
             const speed = config.speed || baseSpeed * (config.speedFactor || 1.0); // Apply factor if provided
-            // *** END MODIFICATION ***
             const angle = Math.atan2(target.y - startY, target.x - startX);
             const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
             const waveSmartBombChance = SMART_BOMB_CHANCE * (1 + currentWave * 0.05);
@@ -651,25 +719,20 @@
         }
 
         // --- Wave System Logic ---
-        // defineWaves, initWave, checkWaveEnd remain the same
+        // defineWaves, initWave, spawnEnemiesForWave, checkWaveEnd remain the same
         function defineWaves() {
-             // ADJUSTED: Increased enemy counts and introduced types earlier/more aggressively
              return [
-                 // Early Waves (Focus on basic missiles, introduce planes)
-                 [{ type: 'missile', count: 18, speedFactor: 1.0 }], // Wave 1 (Increased)
-                 [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 2 (Increased)
-                 [{ type: 'missile', count: 26, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }], // Wave 3 (Increased)
-                 // Mid Waves (Introduce smart bombs, more planes)
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }], // Wave 4 (Increased)
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'smart_bomb', count: 10, speedFactor: 1.1 }], // Wave 5 (Increased planes)
-                 // Late Waves (Introduce MIRVs, mix enemy types, increase speed/count)
-                 [{ type: 'missile', count: 24, speedFactor: 1.35 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'mirv', count: 8, speedFactor: 1.0 }], // Wave 6 (Increased missiles)
-                 [{ type: 'missile', count: 20, speedFactor: 1.4 }, { type: 'smart_bomb', count: 8, speedFactor: 1.15 }, { type: 'plane', count: 12, variantChance: 0.35, speedFactor: 1.1 }], // Wave 7 (Increased missiles)
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'mirv', count: 18, speedFactor: 1.15 }, { type: 'smart_bomb', count: 10, speedFactor: 1.2 }], // Wave 8 (Increased MIRVs)
-                 [{ type: 'missile', count: 24, speedFactor: 1.6 }, { type: 'smart_bomb', count: 8, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 8, variantChance: 0.5, speedFactor: 1.2 }], // Wave 9 (Increased missiles)
-                 // Very Late Waves (High counts, high speeds, lots of variety)
-                 [{ type: 'missile', count: 28, speedFactor: 1.7 }, { type: 'smart_bomb', count: 10, speedFactor: 1.5 }, { type: 'mirv', count: 7, speedFactor: 1.4 }, { type: 'plane', count: 12, variantChance: 0.6, speedFactor: 1.3 }], // Wave 10 (Increased missiles)
-                 [{ type: 'missile', count: 36, speedFactor: 1.8 }, { type: 'smart_bomb', count: 12, speedFactor: 1.6 }, { type: 'mirv', count: 8, speedFactor: 1.5 }, { type: 'plane', count: 16, variantChance: 0.7, speedFactor: 1.4 }], // Wave 11+ (Increased missiles)
+                 [{ type: 'missile', count: 18, speedFactor: 1.0 }],
+                 [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }],
+                 [{ type: 'missile', count: 26, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }],
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }],
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'smart_bomb', count: 10, speedFactor: 1.1 }],
+                 [{ type: 'missile', count: 24, speedFactor: 1.35 }, { type: 'plane', count: 24, variantChance: 0.2 }, { type: 'mirv', count: 8, speedFactor: 1.0 }],
+                 [{ type: 'missile', count: 20, speedFactor: 1.4 }, { type: 'smart_bomb', count: 8, speedFactor: 1.15 }, { type: 'plane', count: 12, variantChance: 0.35, speedFactor: 1.1 }],
+                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'mirv', count: 18, speedFactor: 1.15 }, { type: 'smart_bomb', count: 10, speedFactor: 1.2 }],
+                 [{ type: 'missile', count: 24, speedFactor: 1.6 }, { type: 'smart_bomb', count: 8, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 8, variantChance: 0.5, speedFactor: 1.2 }],
+                 [{ type: 'missile', count: 28, speedFactor: 1.7 }, { type: 'smart_bomb', count: 10, speedFactor: 1.5 }, { type: 'mirv', count: 7, speedFactor: 1.4 }, { type: 'plane', count: 12, variantChance: 0.6, speedFactor: 1.3 }],
+                 [{ type: 'missile', count: 36, speedFactor: 1.8 }, { type: 'smart_bomb', count: 12, speedFactor: 1.6 }, { type: 'mirv', count: 8, speedFactor: 1.5 }, { type: 'plane', count: 16, variantChance: 0.7, speedFactor: 1.4 }],
              ];
         }
         function initWave(waveIndex) {
@@ -682,16 +745,11 @@
                 currentWaveConfig = JSON.parse(JSON.stringify(waveDefinitions[effectiveWaveIndex]));
                 console.log(`initWave: Loaded config for wave ${waveIndex} (using definition ${effectiveWaveIndex}):`, JSON.stringify(currentWaveConfig));
                 if (!Array.isArray(currentWaveConfig)) { throw new Error(`currentWaveConfig for wave ${waveIndex} (effective index ${effectiveWaveIndex}) is not an array.`); }
-                // *** MODIFIED: Less aggressive scaling factor for high waves ***
                 if (waveIndex >= waveDefinitions.length) {
-                    const scalingFactor = 1 + (waveIndex - (waveDefinitions.length - 1)) * 0.06; // Was 0.18
+                    const scalingFactor = 1 + (waveIndex - (waveDefinitions.length - 1)) * 0.06;
                     currentWaveConfig.forEach(part => {
                         part.count = Math.ceil(part.count * scalingFactor);
-                        // *** MODIFIED: Apply speed factor scaling ONLY if it exists, otherwise keep base speed ***
-                        if (part.speedFactor) {
-                            part.speedFactor = part.speedFactor * scalingFactor;
-                        }
-                        // *** END MODIFICATION ***
+                        if (part.speedFactor) { part.speedFactor = part.speedFactor * scalingFactor; }
                     });
                     console.log(`initWave: Scaled config for high wave ${waveIndex}:`, JSON.stringify(currentWaveConfig));
                 }
@@ -704,60 +762,40 @@
                 updateUI(); updateSpecialWeaponsUI(); console.log(`initWave: Exiting for wave ${waveIndex}`);
             } catch (error) { console.error(`Error during initWave(${waveIndex}):`, error); showMessage("WAVE INIT ERROR", `Failed to initialize wave ${waveIndex + 1}: ${error.message}`, "Check console for details."); isGameOver = true; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } }
         }
-        // *** MODIFIED spawnEnemiesForWave for Staggered Spawning ***
         function spawnEnemiesForWave() {
             if (transitioningWave || isGameOver || isPaused || waveEnemiesSpawned >= waveEnemiesRequired) return;
-
-            // 1. Identify potential spawns still needed for this wave
             const potentialSpawns = [];
             currentWaveConfig.forEach(part => {
                 const requiredForThisPart = part.count || 0;
                 const currentSpawnedForThisPart = (part.type === 'plane' ? planes : incomingMissiles).filter(e => e.wavePartType === part.type).length;
-
                 if (currentSpawnedForThisPart < requiredForThisPart) {
-                    // Calculate spawn chance for this potential spawn
-                    const spawnRateMultiplier = 1 + currentWave * 0.24; // Aggressive multiplier
-                    let baseSpawnChance = 0.025; // Aggressive base chance
-                    if (part.type === 'plane') {
-                        baseSpawnChance = PLANE_SPAWN_CHANCE; // Use specific plane chance
-                    }
+                    const spawnRateMultiplier = 1 + currentWave * 0.24;
+                    let baseSpawnChance = 0.025;
+                    if (part.type === 'plane') { baseSpawnChance = PLANE_SPAWN_CHANCE; }
                     let spawnChance = baseSpawnChance * spawnRateMultiplier * (part.speedFactor || 1.0);
-
-                    // Add to potential list
-                    potentialSpawns.push({
-                        partConfig: part,
-                        spawnChance: spawnChance
-                    });
+                    potentialSpawns.push({ partConfig: part, spawnChance: spawnChance });
                 }
             });
-
-            // 2. If there are potential spawns, randomly select one and attempt to spawn it
             if (potentialSpawns.length > 0) {
-                // --- Simple random selection (can be weighted later if needed) ---
                  const randomIndex = Math.floor(Math.random() * potentialSpawns.length);
                  const selectedSpawn = potentialSpawns[randomIndex];
                  const part = selectedSpawn.partConfig;
-
-                // 3. Roll the dice for the selected type
                 if (Math.random() < selectedSpawn.spawnChance) {
-                    // 4. Spawn the selected enemy type
                     if (part.type === 'missile' || part.type === 'smart_bomb' || part.type === 'mirv') {
                         let missileType = part.type;
-                        // *** MODIFIED: Use the capped speed calculation here too ***
                         let baseSpeed = MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08);
-                        baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED); // Apply the cap
+                        baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED);
                         let config = {
-                            speed: baseSpeed * (part.speedFactor || 1.0), // Apply factor if provided
+                            speed: baseSpeed * (part.speedFactor || 1.0),
                             isSmartBomb: missileType === 'smart_bomb',
                             isMIRV: missileType === 'mirv',
-                            wavePartType: part.type // Track type
+                            wavePartType: part.type
                         };
-                        // *** END MODIFICATION ***
                         incomingMissiles.push(createIncomingMissile(config));
                         waveEnemiesSpawned++;
                     } else if (part.type === 'plane') {
                         const newPlane = createPlane();
-                        newPlane.wavePartType = part.type; // Track type
+                        newPlane.wavePartType = part.type;
                         planes.push(newPlane);
                         waveEnemiesSpawned++;
                     }
@@ -780,8 +818,7 @@
         function startGame() {
             try {
                 console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding...");
-                // Reset state variables including bonusMissileCount
-                score = 0; gameTotalScore = 0; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0; // Reset bonus count
+                score = 0; gameTotalScore = 0; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
                 storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
                 inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null; satelliteBases = []; baseShields = [null, null, null]; planes = []; planeBombs = []; incomingMissiles = []; playerMissiles = []; explosions = []; statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0; playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; consecutiveIntercepts = 0; scoreMultiplier = 1.0; highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0'); console.log("startGame: State variables reset");
                 console.log("startGame: Setting up UI..."); startMenuContainer.style.display = 'none'; canvasContainer.style.display = 'block'; canvas.style.display = 'block'; uiContainer.style.display = 'flex'; controlsContainer.style.display = 'flex'; specialWeaponsUIDiv.style.display = 'flex'; screenshotButton.style.display = 'inline-block'; hideMessage(); statsContainer.style.display = 'none'; pauseOverlay.style.display = 'none'; canvas.style.cursor = 'crosshair'; console.log("startGame: UI setup complete");
@@ -795,43 +832,21 @@
             let bonusEarned = calculateBonus();
             score += Math.round(bonusEarned * difficultyScoreMultiplier);
             gameTotalScore += Math.round(bonusEarned * difficultyScoreMultiplier);
-            updateUI(); // Update score display immediately
-
+            updateUI();
             const citiesSurvived = cities.filter(c => c.alive).length;
             const citiesLost = 6 - citiesSurvived;
             let bonusChangeMsg = "";
-
-            // Bonus Missile Logic
             if (citiesLost > 0) {
                 const lostBonus = Math.min(bonusMissileCount, citiesLost);
-                if (lostBonus > 0) {
-                    bonusChangeMsg = `Lost ${lostBonus} bonus missile${lostBonus > 1 ? 's' : ''}!`;
-                    bonusMissileCount -= lostBonus;
-                }
-            } else {
-                bonusMissileCount++; // Increment if no cities lost
-                bonusChangeMsg = `PERFECT! +1 Bonus Missile!`;
-            }
-            bonusMissileCount = Math.max(0, bonusMissileCount); // Ensure it doesn't go below 0
-
-            // Append total bonus count message if applicable
-            if (bonusMissileCount > 0) {
-                bonusChangeMsg += ` (Total +${bonusMissileCount} active next wave)`;
-            } else if (bonusChangeMsg !== "" && citiesLost > 0) {
-                // If bonus was lost and count is now 0
-                bonusChangeMsg += ` (Bonus Fire deactivated)`;
-            } else if (bonusChangeMsg === "" && citiesLost > 0){
-                 // If no bonus was active and cities were lost
-                 bonusChangeMsg = ""; // No bonus message needed
-            }
-
+                if (lostBonus > 0) { bonusChangeMsg = `Lost ${lostBonus} bonus missile${lostBonus > 1 ? 's' : ''}!`; bonusMissileCount -= lostBonus; }
+            } else { bonusMissileCount++; bonusChangeMsg = `PERFECT! +1 Bonus Missile!`; }
+            bonusMissileCount = Math.max(0, bonusMissileCount);
+            if (bonusMissileCount > 0) { bonusChangeMsg += ` (Total +${bonusMissileCount} active next wave)`; }
+            else if (bonusChangeMsg !== "" && citiesLost > 0) { bonusChangeMsg += ` (Bonus Fire deactivated)`; }
+            else if (bonusChangeMsg === "" && citiesLost > 0){ bonusChangeMsg = ""; }
             isBombArmed = false; canvas.style.cursor = 'crosshair'; bombControl.classList.remove('armed');
-            showMessage(`WAVE ${currentWave + 1} CLEARED`, `Score Bonus: $${Math.round(bonusEarned * difficultyScoreMultiplier)}`, "", bonusChangeMsg); // Use bonusChangeMsg here
-            goToStoreButton.style.display = 'inline-block';
-            skipStoreButton.style.display = 'inline-block';
-            pauseButton.disabled = true;
-            statsContainer.style.display = 'none';
-            updateUI(); // Update UI again to show bonus indicator if needed
+            showMessage(`WAVE ${currentWave + 1} CLEARED`, `Score Bonus: $${Math.round(bonusEarned * difficultyScoreMultiplier)}`, "", bonusChangeMsg);
+            goToStoreButton.style.display = 'inline-block'; skipStoreButton.style.display = 'inline-block'; pauseButton.disabled = true; statsContainer.style.display = 'none'; updateUI();
         }
         function proceedToNextWave() { storeModal.style.display = 'none'; hideMessage(); initWave(currentWave + 1); transitioningWave = false; pauseButton.disabled = false; if (!isPaused && !gameLoopId) { gameLoop(); } }
         function calculateBonus() { let bonus = 0; cities.forEach(city => { if (city.alive) bonus += POINTS_PER_CITY; }); bases.forEach(base => { if (base.alive) bonus += base.ammo * POINTS_PER_AMMO; }); satelliteBases.forEach(sat => { if (sat.alive) bonus += sat.ammo * POINTS_PER_AMMO; }); return bonus; }
@@ -847,13 +862,86 @@
         async function saveScreenshot() { console.log("Screenshot functionality placeholder."); try { const originalText = screenshotButton.textContent; screenshotButton.textContent = 'Saving...'; screenshotButton.disabled = true; await new Promise(resolve => setTimeout(resolve, 500)); screenshotButton.textContent = 'Copied!'; setTimeout(() => { screenshotButton.textContent = "Save Screenshot"; screenshotButton.disabled = false; }, 1500); } catch (err) { console.error("Screenshot failed:", err); screenshotButton.textContent = 'Error!'; setTimeout(() => { screenshotButton.textContent = "Save Screenshot"; screenshotButton.disabled = false; }, 2000); } }
 
         // --- Message Display ---
-        function showMessage(title, textHTML, subtextHTML = "", bonusAlert = "") { messageTitle.textContent = title; messageText.innerHTML = textHTML; messageSubText.style.display = subtextHTML ? 'block' : 'none'; messageSubText.innerHTML = subtextHTML; messageBonusText.textContent = bonusAlert; messageBonusText.style.display = bonusAlert ? 'block' : 'none'; // Show/hide based on content
-             goToStoreButton.style.display = 'none'; skipStoreButton.style.display = 'none'; statsContainer.style.display = 'none'; messageBox.style.display = 'block'; }
+        function showMessage(title, textHTML, subtextHTML = "", bonusAlert = "") { messageTitle.textContent = title; messageText.innerHTML = textHTML; messageSubText.style.display = subtextHTML ? 'block' : 'none'; messageSubText.innerHTML = subtextHTML; messageBonusText.textContent = bonusAlert; messageBonusText.style.display = bonusAlert ? 'block' : 'none'; goToStoreButton.style.display = 'none'; skipStoreButton.style.display = 'none'; statsContainer.style.display = 'none'; messageBox.style.display = 'block'; }
         function hideMessage() { messageBox.style.display = 'none'; }
 
         // --- Store Logic ---
-        // updateStoreUI, findAndRebuildBase, findAndRebuildCity, buy... functions remain the same
-        function updateStoreUI() { storeScoreDisplay.textContent = `Current Score: $${score}`; stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`; stockBaseDisplay.textContent = `Stock: ${storeStockBase}`; stockCityDisplay.textContent = `Stock: ${storeStockCity}`; stockShieldDisplay.textContent = `Stock: ${storeStockShield}`; stockSatShieldDisplay.textContent = `Stock: ${storeStockSatShield}`; stockSonicWaveDisplay.textContent = `Stock: ${storeStockSonicWave}`; stockBombDisplay.textContent = `Stock: ${storeStockBomb}`; const canAffordSatellite = score >= COST_SATELLITE; const satelliteInStock = storeStockSatellite > 0; const activeSatellites = satelliteBases.filter(s => s.alive).length; const canPlaceSatellite = activeSatellites < MAX_ACTIVE_SATELLITES; buySatelliteButton.disabled = !(canAffordSatellite && satelliteInStock && canPlaceSatellite); const canAffordBase = score >= COST_BASE; const baseInStock = storeStockBase > 0; const canRebuildBase = bases.some(b => !b.alive); buyBaseButton.disabled = !(canAffordBase && baseInStock && canRebuildBase); const canAffordCity = score >= COST_CITY; const cityInStock = storeStockCity > 0; const canRebuildCity = cities.some(c => !c.alive); buyCityButton.disabled = !(canAffordCity && cityInStock && canRebuildCity); const canAffordShield = score >= COST_SHIELD; const shieldInStock = storeStockShield > 0; const canPlaceShield = baseShields.some((shield, index) => bases[index].alive && (!shield || !shield.alive)); buyShieldButton.disabled = !(canAffordShield && shieldInStock && canPlaceShield); const canAffordSatShield = score >= COST_SAT_SHIELD; const satShieldInStock = storeStockSatShield > 0; const canPlaceSatShield = satelliteBases.some(s => s.alive && (!s.shield || !s.shield.alive)); buySatShieldButton.disabled = !(canAffordSatShield && satShieldInStock && canPlaceSatShield); const canAffordSonic = score >= COST_SONIC_WAVE; const sonicInStock = storeStockSonicWave > 0; buySonicWaveButton.disabled = !(canAffordSonic && sonicInStock); const canAffordBomb = score >= COST_BOMB; const bombInStock = storeStockBomb > 0; buyBombButton.disabled = !(canAffordBomb && bombInStock); const costFasterMissile = calculateUpgradeCost(COST_FASTER_MISSILE_BASE, playerMissileSpeedLevel); costFasterMissileDisplay.textContent = `Cost: $${costFasterMissile}`; levelFasterMissileDisplay.textContent = `Level: ${playerMissileSpeedLevel}/${MAX_UPGRADE_LEVEL}`; buyFasterMissileButton.disabled = !(score >= costFasterMissile && playerMissileSpeedLevel < MAX_UPGRADE_LEVEL); if (playerMissileSpeedLevel >= MAX_UPGRADE_LEVEL) { costFasterMissileDisplay.textContent = "MAX LEVEL"; buyFasterMissileButton.disabled = true; } const costWiderExplosion = calculateUpgradeCost(COST_WIDER_EXPLOSION_BASE, explosionRadiusLevel); costWiderExplosionDisplay.textContent = `Cost: $${costWiderExplosion}`; levelWiderExplosionDisplay.textContent = `Level: ${explosionRadiusLevel}/${MAX_UPGRADE_LEVEL}`; buyWiderExplosionButton.disabled = !(score >= costWiderExplosion && explosionRadiusLevel < MAX_UPGRADE_LEVEL); if (explosionRadiusLevel >= MAX_UPGRADE_LEVEL) { costWiderExplosionDisplay.textContent = "MAX LEVEL"; buyWiderExplosionButton.disabled = true; } }
+        // *** MODIFIED: Update store UI to handle Buy x10 buttons ***
+        function updateStoreUI() {
+            storeScoreDisplay.textContent = `Current Score: $${score}`;
+            stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`;
+            stockBaseDisplay.textContent = `Stock: ${storeStockBase}`;
+            stockCityDisplay.textContent = `Stock: ${storeStockCity}`;
+            stockShieldDisplay.textContent = `Stock: ${storeStockShield}`;
+            stockSatShieldDisplay.textContent = `Stock: ${storeStockSatShield}`;
+            stockSonicWaveDisplay.textContent = `Stock: ${storeStockSonicWave}`;
+            stockBombDisplay.textContent = `Stock: ${storeStockBomb}`;
+
+            // Satellite
+            const canAffordSatellite = score >= COST_SATELLITE;
+            const satelliteInStock = storeStockSatellite > 0;
+            const activeSatellites = satelliteBases.filter(s => s.alive).length;
+            const canPlaceSatellite = activeSatellites < MAX_ACTIVE_SATELLITES;
+            buySatelliteButton.disabled = !(canAffordSatellite && satelliteInStock && canPlaceSatellite);
+
+            // Base
+            const canAffordBase = score >= COST_BASE;
+            const baseInStock = storeStockBase > 0;
+            const canRebuildBase = bases.some(b => !b.alive);
+            buyBaseButton.disabled = !(canAffordBase && baseInStock && canRebuildBase);
+
+            // City
+            const canAffordCity = score >= COST_CITY;
+            const cityInStock = storeStockCity > 0;
+            const canRebuildCity = cities.some(c => !c.alive);
+            buyCityButton.disabled = !(canAffordCity && cityInStock && canRebuildCity);
+
+            // Base Shield
+            const canAffordShield = score >= COST_SHIELD;
+            const shieldInStock = storeStockShield > 0;
+            const canPlaceShield = baseShields.some((shield, index) => bases[index].alive && (!shield || !shield.alive));
+            buyShieldButton.disabled = !(canAffordShield && shieldInStock && canPlaceShield);
+
+            // Satellite Shield
+            const canAffordSatShield = score >= COST_SAT_SHIELD;
+            const satShieldInStock = storeStockSatShield > 0;
+            const canPlaceSatShield = satelliteBases.some(s => s.alive && (!s.shield || !s.shield.alive));
+            buySatShieldButton.disabled = !(canAffordSatShield && satShieldInStock && canPlaceSatShield);
+
+            // Sonic Wave (Buy 1)
+            const canAffordSonic = score >= COST_SONIC_WAVE;
+            const sonicInStock = storeStockSonicWave > 0;
+            buySonicWaveButton.disabled = !(canAffordSonic && sonicInStock);
+            // Sonic Wave (Buy 10)
+            const canAffordSonic10 = score >= COST_SONIC_WAVE * 10;
+            const sonicInStock10 = storeStockSonicWave >= 10;
+            buySonicWave10Button.disabled = !(canAffordSonic10 && sonicInStock10);
+
+            // Bomb (Buy 1)
+            const canAffordBomb = score >= COST_BOMB;
+            const bombInStock = storeStockBomb > 0;
+            buyBombButton.disabled = !(canAffordBomb && bombInStock);
+            // Bomb (Buy 10)
+            const canAffordBomb10 = score >= COST_BOMB * 10;
+            const bombInStock10 = storeStockBomb >= 10;
+            buyBomb10Button.disabled = !(canAffordBomb10 && bombInStock10);
+
+
+            // Faster Missile Upgrade
+            const costFasterMissile = calculateUpgradeCost(COST_FASTER_MISSILE_BASE, playerMissileSpeedLevel);
+            costFasterMissileDisplay.textContent = `Cost: $${costFasterMissile}`;
+            levelFasterMissileDisplay.textContent = `Level: ${playerMissileSpeedLevel}/${MAX_UPGRADE_LEVEL}`;
+            buyFasterMissileButton.disabled = !(score >= costFasterMissile && playerMissileSpeedLevel < MAX_UPGRADE_LEVEL);
+            if (playerMissileSpeedLevel >= MAX_UPGRADE_LEVEL) { costFasterMissileDisplay.textContent = "MAX LEVEL"; buyFasterMissileButton.disabled = true; }
+
+            // Wider Explosion Upgrade
+            const costWiderExplosion = calculateUpgradeCost(COST_WIDER_EXPLOSION_BASE, explosionRadiusLevel);
+            costWiderExplosionDisplay.textContent = `Cost: $${costWiderExplosion}`;
+            levelWiderExplosionDisplay.textContent = `Level: ${explosionRadiusLevel}/${MAX_UPGRADE_LEVEL}`;
+            buyWiderExplosionButton.disabled = !(score >= costWiderExplosion && explosionRadiusLevel < MAX_UPGRADE_LEVEL);
+            if (explosionRadiusLevel >= MAX_UPGRADE_LEVEL) { costWiderExplosionDisplay.textContent = "MAX LEVEL"; buyWiderExplosionButton.disabled = true; }
+        }
+        // findAndRebuildBase, findAndRebuildCity, buy... functions remain the same
         function findAndRebuildBase() { const deadBaseIndex = bases.findIndex(b => !b.alive); if (deadBaseIndex !== -1) { bases[deadBaseIndex].alive = true; bases[deadBaseIndex].ammo = selectedDifficultyAmmo; return true; } return false; }
         function findAndRebuildCity() { const deadCityIndex = cities.findIndex(c => !c.alive); if (deadCityIndex !== -1) { cities[deadCityIndex].alive = true; return true; } return false; }
         function buyReplacementBase() { if (score >= COST_BASE && storeStockBase > 0) { if (findAndRebuildBase()) { score -= COST_BASE; storeStockBase--; updateStoreUI(); updateUI(); } } }
@@ -866,24 +954,55 @@
         function buyFasterMissile() { if (playerMissileSpeedLevel < MAX_UPGRADE_LEVEL) { const cost = calculateUpgradeCost(COST_FASTER_MISSILE_BASE, playerMissileSpeedLevel); if (score >= cost) { score -= cost; playerMissileSpeedLevel++; updateStoreUI(); } } }
         function buyWiderExplosion() { if (explosionRadiusLevel < MAX_UPGRADE_LEVEL) { const cost = calculateUpgradeCost(COST_WIDER_EXPLOSION_BASE, explosionRadiusLevel); if (score >= cost) { score -= cost; explosionRadiusLevel++; updateStoreUI(); } } }
 
+        // *** NEW: Functions to buy 10 items ***
+        function buySonicWave10() {
+            const cost10 = COST_SONIC_WAVE * 10;
+            if (score >= cost10 && storeStockSonicWave >= 10) {
+                score -= cost10;
+                storeStockSonicWave -= 10;
+                inventorySonicWave += 10;
+                updateStoreUI();
+                updateSpecialWeaponsUI();
+            }
+        }
+        function buyBomb10() {
+            const cost10 = COST_BOMB * 10;
+            if (score >= cost10 && storeStockBomb >= 10) {
+                score -= cost10;
+                storeStockBomb -= 10;
+                inventoryBomb += 10;
+                updateStoreUI();
+                updateSpecialWeaponsUI();
+            }
+        }
 
         // --- Special Weapon Logic ---
-        // updateSpecialWeaponsUI, triggerSonicWave, armBomb, deployBomb remain the same
+        // updateSpecialWeaponsUI, triggerSonicWave, armBomb remain the same
         function updateSpecialWeaponsUI() { sonicWaveCountDisplay.textContent = inventorySonicWave; bombCountDisplay.textContent = inventoryBomb; const canUseSpecials = gameHasStarted && !isGameOver && !isPaused && !transitioningWave; sonicWaveControl.classList.toggle('disabled', inventorySonicWave <= 0 || !canUseSpecials || activeSonicWave); bombControl.classList.toggle('disabled', inventoryBomb <= 0 || !canUseSpecials); bombControl.classList.toggle('armed', isBombArmed); if (canUseSpecials) { canvas.style.cursor = isBombArmed ? 'cell' : 'crosshair'; } else { canvas.style.cursor = 'default'; } }
         function triggerSonicWave() { if (inventorySonicWave > 0 && !activeSonicWave && !sonicWaveControl.classList.contains('disabled')) { inventorySonicWave--; activeSonicWave = { y: canvas.height - (canvas.height * GROUND_HEIGHT_RATIO), alive: true }; updateSpecialWeaponsUI(); } }
         function armBomb() { if (inventoryBomb > 0 && !bombControl.classList.contains('disabled')) { isBombArmed = !isBombArmed; updateSpecialWeaponsUI(); } }
-        function deployBomb(clickX, clickY) { if (isBombArmed) { inventoryBomb--; isBombArmed = false; const bombRadius = getCurrentPlayerExplosionRadius() * BOMB_EXPLOSION_RADIUS_MULTIPLIER; const bombDuration = EXPLOSION_DURATION * BOMB_EXPLOSION_DURATION_MULTIPLIER; createExplosion(clickX, clickY, EXPLOSION_RADIUS_START, '#ffffff', bombRadius, bombDuration); updateSpecialWeaponsUI(); } }
+        // *** MODIFIED: deployBomb uses the constant for radius multiplier ***
+        function deployBomb(clickX, clickY) {
+            if (isBombArmed) {
+                inventoryBomb--;
+                isBombArmed = false;
+                // Use the constant for the radius multiplier
+                const bombRadius = getCurrentPlayerExplosionRadius() * BOMB_EXPLOSION_RADIUS_MULTIPLIER;
+                const bombDuration = EXPLOSION_DURATION * BOMB_EXPLOSION_DURATION_MULTIPLIER;
+                createExplosion(clickX, clickY, EXPLOSION_RADIUS_START, '#ffffff', bombRadius, bombDuration);
+                updateSpecialWeaponsUI();
+            }
+        }
 
         // --- Drawing Functions ---
         // drawBackground, drawGameObjects remain the same
         function drawBackground() { ctx.fillStyle = '#00001a'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'white'; const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO); const numStars = Math.floor(canvas.width * canvas.height / 5000); for (let i = 0; i < numStars; i++) { let x = Math.random() * canvas.width; let y = Math.random() * groundY; let radius = Math.random() * 1.5; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#3b2e1a'; ctx.fillRect(0, groundY, canvas.width, canvas.height * GROUND_HEIGHT_RATIO); }
         function drawGameObjects() { cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); satelliteBases.forEach(sat => { sat.draw(); if (sat.shield && sat.shield.alive) { const shieldCenterX = sat.x + sat.width / 2; const shieldCenterY = sat.y + sat.height / 2; const shieldRadiusX = sat.width * 0.6 + 4; const shieldRadiusY = sat.height * 0.8 + 4; let shieldColor = SHIELD_COLOR_25; if (sat.shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (sat.shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (sat.shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (sat.shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; sat.shield.flashTimer--; } ctx.beginPath(); ctx.ellipse(shieldCenterX, shieldCenterY, shieldRadiusX, shieldRadiusY, 0, 0, Math.PI * 2); ctx.strokeStyle = shieldColor; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1; } }); for (let i = 0; i < baseShields.length; i++) { const shield = baseShields[i]; if (shield && shield.alive) { const base = bases[i]; const shieldCenterX = base.x + base.width / 2; const shieldRadius = 1.80 * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5); let shieldColor = SHIELD_COLOR_25; if (shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; shield.flashTimer--; } const startX = shieldCenterX - shieldRadius; const endX = shieldCenterX + shieldRadius; const shieldTopY = base.y - 15; const controlY = shieldTopY - shieldRadius * 0.3; ctx.beginPath(); ctx.moveTo(startX, shieldTopY); ctx.quadraticCurveTo(shieldCenterX, controlY, endX, shieldTopY); ctx.strokeStyle = shieldColor; ctx.lineWidth = 3; ctx.stroke(); ctx.lineWidth = 1; } } if (activeSonicWave && activeSonicWave.alive) { ctx.fillStyle = SONIC_WAVE_COLOR; ctx.fillRect(0, activeSonicWave.y - SONIC_WAVE_HEIGHT, canvas.width, SONIC_WAVE_HEIGHT); ctx.strokeStyle = 'rgba(255, 100, 255, 0.8)'; ctx.lineWidth = 1; const numLines = 5; for(let i=0; i < numLines; i++) { const lineY = activeSonicWave.y - (SONIC_WAVE_HEIGHT / numLines * (i + 0.5)); ctx.beginPath(); ctx.moveTo(0, lineY); ctx.lineTo(canvas.width, lineY); ctx.stroke(); } } incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw()); planes.forEach(plane => plane.draw()); planeBombs.forEach(bomb => bomb.draw()); }
 
-
         // --- Update Functions ---
-        // updateGameObjects remains the same
+        // updateGameObjects, updateUI remain the same
         function updateGameObjects() {
-            spawnEnemiesForWave(); // Call the modified spawn function
+            spawnEnemiesForWave();
             if (activeSonicWave && activeSonicWave.alive) {
                  activeSonicWave.y -= SONIC_WAVE_SPEED;
                  const waveTop = activeSonicWave.y - SONIC_WAVE_HEIGHT;
@@ -907,7 +1026,6 @@
                  if (accuracyBonusMessageTimer === 0) { messageBonusText.textContent = ""; }
             }
         }
-        // Modified updateUI to show bonus indicator
         function updateUI() {
             scoreDisplay.textContent = `SCORE: $${score}`;
             highScoreDisplay.textContent = `HI: $${highScore}`;
@@ -915,11 +1033,8 @@
             const livingCities = cities.filter(c => c.alive).length;
             citiesLeftDisplay.textContent = `CITIES: ${livingCities}`;
             multiplierDisplay.textContent = `MULT: ${scoreMultiplier.toFixed(1)}x`;
-            // Show/hide and update bonus indicator
             bonusIndicator.style.display = bonusMissileCount > 0 ? 'inline-block' : 'none';
-            if (bonusMissileCount > 0) {
-                bonusIndicator.textContent = `BONUS FIRE +${bonusMissileCount}!`;
-            }
+            if (bonusMissileCount > 0) { bonusIndicator.textContent = `BONUS FIRE +${bonusMissileCount}!`; }
         }
 
         // --- Game Loop ---
@@ -959,7 +1074,7 @@
         }
 
         // --- Event Listeners ---
-        // Modified canvas click listener for bonus fire
+        // canvas, restartButton, pauseButton, screenshotButton listeners remain the same
         canvas.addEventListener('click', (event) => {
             if (isGameOver || isPaused || transitioningWave || !gameHasStarted) return;
             const rect = canvas.getBoundingClientRect();
@@ -968,49 +1083,36 @@
             const clickX = (event.clientX - rect.left) * scaleX;
             const clickY = (event.clientY - rect.top) * scaleY;
             const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
-
-            if (clickY < 20 || clickY > groundY) return; // Ignore clicks too high or low
-
+            if (clickY < 20 || clickY > groundY) return;
             if (isBombArmed) { deployBomb(clickX, clickY); return; }
-
             let nearestSource = null; let minDistance = Infinity;
-            const potentialSources = [
-                ...bases.filter(b => b.alive && b.ammo > 0),
-                ...satelliteBases.filter(s => s.alive && s.ammo > 0)
-            ];
-
+            const potentialSources = [ ...bases.filter(b => b.alive && b.ammo > 0), ...satelliteBases.filter(s => s.alive && s.ammo > 0) ];
             potentialSources.forEach(source => {
                 const sourceCenterX = source.x + source.width / 2;
                 const sourceTopY = source.isSatellite ? source.y + source.height : source.y;
                 const d = distance(clickX, clickY, sourceCenterX, sourceTopY);
                 if (d < minDistance) { minDistance = d; nearestSource = source; }
             });
-
             if (nearestSource) {
                 const startX = nearestSource.x + nearestSource.width / 2;
                 const startY = nearestSource.isSatellite ? nearestSource.y + nearestSource.height : nearestSource.y;
-                // Determine how many missiles to fire based on bonus count and ammo
                 const totalMissilesToFire = 1 + bonusMissileCount;
                 const actualMissilesToFire = Math.min(totalMissilesToFire, nearestSource.ammo);
-
                 if (actualMissilesToFire > 0) {
                     nearestSource.ammo -= actualMissilesToFire;
-                    // Fire the missiles with spread if more than one
                     for (let i = 0; i < actualMissilesToFire; i++) {
-                        // Calculate offset for bonus missiles (center if only 1)
                         const currentOffset = (actualMissilesToFire > 1) ? (i - (actualMissilesToFire - 1) / 2) * BONUS_FIRE_SPREAD : 0;
                         playerMissiles.push(createPlayerMissile(startX + currentOffset, startY, clickX, clickY));
                     }
-                    updateUI(); // Update ammo display
+                    updateUI();
                 }
             }
         });
-        // Modified restart listener to reset bonus count
         restartButton.addEventListener('click', () => {
             if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; }
             isGameOver = true; gameHasStarted = false; isPaused = false; transitioningWave = false; difficultySelected = false;
             score = 0; gameTotalScore = 0; currentWave = -1; consecutiveIntercepts = 0; scoreMultiplier = 1.0;
-            playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; bonusMissileCount = 0; // Reset bonus count
+            playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; bonusMissileCount = 0;
             storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
             inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null;
             satelliteBases = []; baseShields = [null, null, null]; cities = []; bases = []; incomingMissiles = []; playerMissiles = []; explosions = []; planes = []; planeBombs = [];
@@ -1022,12 +1124,11 @@
             pauseOverlay.style.display = 'none'; hideMessage(); storeModal.style.display = 'none';
             actualStartButton.style.display = 'none'; actualStartButton.disabled = true;
             restartButton.style.display = 'none'; pauseButton.style.display = 'none'; screenshotButton.style.display = 'none';
-            bonusIndicator.style.display = 'none'; statsContainer.style.display = 'none'; // Ensure bonus indicator is hidden
+            bonusIndicator.style.display = 'none'; statsContainer.style.display = 'none';
             document.querySelectorAll('.difficulty-button').forEach(btn => btn.classList.remove('selected'));
             highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0');
             startHighScoreDisplay.textContent = `High Score: $${highScore}`;
         });
-        // Other listeners remain the same
         pauseButton.addEventListener('click', togglePause);
         screenshotButton.addEventListener('click', saveScreenshot);
         storeContinueButton.addEventListener('click', proceedToNextWave);
@@ -1040,6 +1141,9 @@
         buyBombButton.addEventListener('click', buyBomb);
         buyFasterMissileButton.addEventListener('click', buyFasterMissile);
         buyWiderExplosionButton.addEventListener('click', buyWiderExplosion);
+        // *** NEW: Add event listeners for Buy x10 buttons ***
+        buySonicWave10Button.addEventListener('click', buySonicWave10);
+        buyBomb10Button.addEventListener('click', buyBomb10);
         goToStoreButton.addEventListener('click', () => { hideMessage(); updateStoreUI(); storeModal.style.display = 'block'; });
         skipStoreButton.addEventListener('click', proceedToNextWave);
         document.querySelectorAll('.difficulty-button').forEach(button => {
@@ -1083,7 +1187,7 @@
              uiContainer.style.display = 'none'; controlsContainer.style.display = 'none'; specialWeaponsUIDiv.style.display = 'none';
              messageBox.style.display = 'none'; storeModal.style.display = 'none'; pauseOverlay.style.display = 'none';
              actualStartButton.style.display = 'none'; restartButton.style.display = 'none'; pauseButton.style.display = 'none'; screenshotButton.style.display = 'none';
-             bonusIndicator.style.display = 'none'; statsContainer.style.display = 'none'; // Ensure bonus indicator is hidden initially
+             bonusIndicator.style.display = 'none'; statsContainer.style.display = 'none';
              if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').then((registration) => { console.log('[Service Worker] registered:', registration.scope); }).catch((error) => { console.error('[Service Worker] registration failed:', error); }); } else { console.log('[Service Worker] not supported.'); }
         };
 
