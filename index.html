@@ -1461,7 +1461,8 @@
             // Show Score Submission if score > 0
             if (gameTotalScore > 0) {
                 scoreSubmissionDiv.style.display = 'flex'; // Show the submission section
-                playerNameInput.value = localStorage.getItem('lastPlayerName') || ''; // Pre-fill last name
+                // playerNameInput.value = localStorage.getItem('lastPlayerName') || ''; // Pre-fill last name
+                playerNameInput.value = 'ACE';
                 submissionStatus.textContent = ''; // Clear previous status
                 submitScoreButton.disabled = false; // Ensure button is enabled
                 playerNameInput.focus(); // Focus the input field
@@ -1823,7 +1824,7 @@
             submissionStatus.textContent = "Submitting...";
             submissionStatus.style.color = "#00ff00";
             // Store name locally for pre-filling next time
-            localStorage.setItem('lastPlayerName', name);
+            // localStorage.setItem('lastPlayerName', name); // Stop saving the name
 
             try {
                 const response = await fetch('/scores', {
