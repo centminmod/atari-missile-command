@@ -2,4 +2,4 @@
 
 Atari Missile Command
 
-Demo https://missile-command-game.centminmod.com/ hosted on Cloudflare Pages.
+Demo https://missile-command-game.centminmod.com/ hosted on Cloudflare Pages
