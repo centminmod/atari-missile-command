@@ -57,15 +57,15 @@ export async function onRequest(context) {
 
       // Get optional wave number
       const wave = (typeof newScoreEntry.wave === 'number' && newScoreEntry.wave > 0)
-                    ? Math.floor(newScoreEntry.wave)
-                    : undefined;
+                      ? Math.floor(newScoreEntry.wave)
+                      : undefined; // Store as undefined if not valid or not present
 
       // Prepare the entry object - include wave only if it exists
       const scoreDataToAdd = { name, score };
       if (wave !== undefined) {
         scoreDataToAdd.wave = wave;
       }
- 
+
       if (!name) {
          console.warn('Invalid name after sanitization.');
          return new Response('Invalid name provided.', { status: 400 });
@@ -76,7 +76,7 @@ export async function onRequest(context) {
       let scores = storedScores || [];
 
       // Add the new score
-      scores.push(scoreDataToAdd); Add the object possibly containing 'wave'
+      scores.push(scoreDataToAdd); // Add the object possibly containing 'wave' <-- Corrected comment placement
 
       // Sort scores descending
       scores.sort((a, b) => b.score - a.score);
