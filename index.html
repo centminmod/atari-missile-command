@@ -119,6 +119,20 @@
             #leaderboardList .score { flex-basis: 35%; text-align: right; color: #ffff00; }
             /* --- MODIFICATION END --- */
             #leaderboardLoading { color: #aaaaaa; }
+            #leaderboardViewMoreContainer {
+                margin-top: 10px;
+                display: none; /* Initially hidden */
+                text-align: center;
+            }
+            #leaderboardViewMoreLink {
+                color: #00ffff;
+                text-decoration: underline;
+                font-size: clamp(10px, 2.8vw, 12px);
+                cursor: pointer;
+            }
+            #leaderboardViewMoreLink:hover {
+                color: #ffffff;
+            }
 
             /* --- Game Over Score Submission Styles --- */
             #scoreSubmission { margin-top: 15px; padding-top: 10px; border-top: 1px solid #550000; display: none; flex-direction: column; align-items: center; gap: 8px; }
@@ -211,6 +225,9 @@
             <ol id="leaderboardList">
                 <li id="leaderboardLoading">Loading...</li>
             </ol>
+            <div id="leaderboardViewMoreContainer" style="margin-top: 10px; display: none;">
+                 <a href="#" id="leaderboardViewMoreLink" style="color: #00ffff; text-decoration: underline; font-size: clamp(10px, 2.8vw, 12px);">View Top 50</a>
+            </div>
         </div>
         <button id="actualStartButton" style="display: none;">Start Game</button> </div>
 
@@ -437,6 +454,8 @@
         const leaderboardContainer = document.getElementById('leaderboardContainer');
         const leaderboardList = document.getElementById('leaderboardList');
         const leaderboardLoading = document.getElementById('leaderboardLoading');
+        const leaderboardViewMoreContainer = document.getElementById('leaderboardViewMoreContainer');
+        const leaderboardViewMoreLink = document.getElementById('leaderboardViewMoreLink');
         const scoreSubmissionDiv = document.getElementById('scoreSubmission');
         const playerNameInput = document.getElementById('playerNameInput');
         const submitScoreButton = document.getElementById('submitScoreButton');
@@ -1656,25 +1675,28 @@
         }
 
         // --- NEW: Function to Fetch and Display Leaderboard ---
-        async function fetchAndDisplayLeaderboard() {
-            console.log("Fetching leaderboard...");
+        async function fetchAndDisplayLeaderboard(limit = 10) { // Default limit to 10
+            console.log(`Workspaceing leaderboard (limit: ${limit})...`);
             leaderboardLoading.textContent = "Loading...";
-            leaderboardList.innerHTML = ''; // Clear previous entries except loading
-            leaderboardList.appendChild(leaderboardLoading);
+            leaderboardLoading.style.display = 'list-item'; // Show loading message
+            leaderboardList.innerHTML = ''; // Clear previous entries
+            leaderboardList.appendChild(leaderboardLoading); // Add loading back
             leaderboardContainer.style.display = 'block'; // Show container
+            leaderboardViewMoreContainer.style.display = 'none'; // Hide view more link initially
 
             try {
-                // Make sure to use the correct path to your function
-                const response = await fetch('/scores'); // Uses the Functions route
+                // Append limit to the fetch URL
+                const response = await fetch(`/scores?limit=${limit}`); // [MODIFIED] Uses the Functions route with limit
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const scores = await response.json();
-                console.log("Leaderboard data received:", scores);
+                console.log(`Leaderboard data received (limit ${limit}):`, scores);
 
                 leaderboardLoading.style.display = 'none'; // Hide loading message
+                leaderboardList.innerHTML = ''; // Clear loading message definitively
 
                 if (scores && scores.length > 0) {
                     scores.forEach((entry, index) => {
@@ -1685,16 +1707,14 @@
 
                         const nameSpan = document.createElement('span');
                         nameSpan.className = 'name';
-                        // Basic sanitization display-side (Function should sanitize on input)
                         nameSpan.textContent = entry.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
                         const waveSpan = document.createElement('span');
-                        waveSpan.className = 'wave'; // Add a class for styling
-                        // Check if wave exists and display it, otherwise show '-' or similar
+                        waveSpan.className = 'wave';
                         if (typeof entry.wave === 'number') {
                             waveSpan.textContent = `W: ${entry.wave}`;
                         } else {
-                            waveSpan.textContent = `W: -`; // Placeholder for older scores
+                            waveSpan.textContent = `W: -`;
                         }
 
                         const scoreSpan = document.createElement('span');
@@ -1707,15 +1727,26 @@
                         li.appendChild(scoreSpan);
                         leaderboardList.appendChild(li);
                     });
+
+                    // Show "View More" link only if we displayed 10 scores and there might be more
+                    if (limit === 10 && scores.length === 10) {
+                         leaderboardViewMoreContainer.style.display = 'block';
+                    } else {
+                         leaderboardViewMoreContainer.style.display = 'none'; // Hide if showing 50 or less than 10
+                    }
+
                 } else {
-                    leaderboardLoading.textContent = "No scores yet!";
-                    leaderboardLoading.style.display = 'block';
+                    const li = document.createElement('li');
+                    li.textContent = "No scores yet!";
+                    leaderboardList.appendChild(li);
+                    leaderboardViewMoreContainer.style.display = 'none'; // Hide view more if no scores
                 }
 
             } catch (error) {
-                console.error('Error fetching leaderboard:', error);
+                console.error(`Error fetching leaderboard (limit ${limit}):`, error);
                 leaderboardLoading.textContent = "Error loading scores.";
-                leaderboardLoading.style.display = 'block';
+                leaderboardLoading.style.display = 'list-item'; // Show error
+                leaderboardViewMoreContainer.style.display = 'none'; // Hide view more on error
             }
         }
 
@@ -1815,6 +1846,13 @@
             }
         });
 
+        // --- [ADDED] Event Listener for View More Leaderboard ---
+        leaderboardViewMoreLink.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default link behavior
+            console.log("View More clicked, fetching top 50...");
+            fetchAndDisplayLeaderboard(50); // Fetch and display top 50
+        });
+
         // --- MODIFIED: restartButton Event Listener (handles both restart buttons) ---
         document.querySelectorAll('#restartButton').forEach(button => {
             button.addEventListener('click', () => {
@@ -1845,7 +1883,7 @@
                 // Update high score and fetch leaderboard for start menu
                 highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0');
                 startHighScoreDisplay.textContent = `High Score: $${highScore}`;
-                fetchAndDisplayLeaderboard(); // Fetch leaderboard when returning to start menu
+                fetchAndDisplayLeaderboard(10); // Fetch leaderboard when returning to start menu
             });
         });
 
@@ -1928,7 +1966,7 @@
             scoreSubmissionDiv.style.display = 'none'; // Ensure submission form is hidden initially
 
             // Fetch leaderboard on load
-            fetchAndDisplayLeaderboard();
+            fetchAndDisplayLeaderboard(10);
 
             // Service worker registration (optional)
             if ('serviceWorker' in navigator) {
