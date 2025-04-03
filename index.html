@@ -107,16 +107,16 @@
             footer .link-group { }
 
             /* --- Leaderboard Styles --- */
-            #leaderboardContainer { margin-top: 20px; padding: 15px; border: 2px solid #00ffff; border-radius: 10px; background-color: rgba(0, 30, 30, 0.5); width: 100%; max-width: 400px; box-sizing: border-box; color: #00ffff; display: none; text-align: center; }
+            #leaderboardContainer { margin-top: 20px; padding: 15px; border: 2px solid #00ffff; border-radius: 10px; background-color: rgba(0, 30, 30, 0.5); width: 100%; max-width: 479px; box-sizing: border-box; color: #00ffff; display: none; text-align: center; }
             #leaderboardContainer h3 { margin: 0 0 10px 0; font-size: clamp(16px, 4vw, 18px); color: #ffffff; }
-            #leaderboardList { list-style: none; padding: 0; margin: 0; font-size: clamp(12px, 3vw, 14px); text-align: left; max-height: 220px; overflow-y: auto; }
+            #leaderboardList { list-style: none; padding: 0; margin: 0; font-size: clamp(12px, 3vw, 12px); text-align: left; max-height: 300px; overflow-y: auto; }
             #leaderboardList li { display: flex; justify-content: space-between; padding: 3px 5px; border-bottom: 1px dashed rgba(0, 255, 255, 0.3); }
              #leaderboardList li:last-child { border-bottom: none; }
-            #leaderboardList .rank { flex-basis: 10%; text-align: right; padding-right: 10px; color: #aaaaaa; }
+            #leaderboardList .rank { flex-basis: 8%; text-align: right; padding-right: 10px; color: #aaaaaa; }
             /* --- MODIFICATION START --- */
-            #leaderboardList .name { flex-basis: 35%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            #leaderboardList .wave { flex-basis: 15%; text-align: right; padding-right: 10px; color: #cccccc; white-space: nowrap; } /* Added */
-            #leaderboardList .score { flex-basis: 40%; text-align: right; color: #ffff00; }
+            #leaderboardList .name { flex-basis: 45%; white-space: nowrap; }
+            #leaderboardList .wave { flex-basis: 12%; text-align: right; padding-right: 10px; color: #cccccc; white-space: nowrap; } /* Added */
+            #leaderboardList .score { flex-basis: 35%; text-align: right; color: #ffff00; }
             /* --- MODIFICATION END --- */
             #leaderboardLoading { color: #aaaaaa; }
 
@@ -145,6 +145,10 @@
                 .storeItemInfo span { display: block; margin-bottom: 2px; line-height: 1.2; }
                 .storeItemButtons { justify-content: space-between; }
                 .buyButton { align-self: center; flex-shrink: 0; }
+                 #leaderboardList .name { flex-basis: 45%; white-space: nowrap; /* Ensure nowrap is here too */ }
+                 #leaderboardList .rank { flex-basis: 8%; }
+                 #leaderboardList .wave { flex-basis: 12%; }
+                 #leaderboardList .score { flex-basis: 35%; }
             }
 
             @media (max-width: 480px) {
@@ -183,9 +187,9 @@
                  #leaderboardContainer { max-width: 95%; }
                  /* --- MODIFICATION START --- */
                  #leaderboardList .rank { flex-basis: 10%; }
-                 #leaderboardList .name { flex-basis: 35%; }
-                 #leaderboardList .wave { flex-basis: 15%; font-size: 11px; }
-                 #leaderboardList .score { flex-basis: 40%; }
+                 #leaderboardList .name { flex-basis: 40%; white-space: nowrap; /* Ensure nowrap is here too */ }
+                 #leaderboardList .wave { flex-basis: 15%; }
+                 #leaderboardList .score { flex-basis: 35%; }
                  /* --- MODIFICATION END --- */
             }
         </style>
