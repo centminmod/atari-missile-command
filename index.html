@@ -1806,10 +1806,10 @@
             // Use gameTotalScore for the final submission
             const finalScore = gameTotalScore; // Make sure gameTotalScore is correctly updated
 
-            if (!name || name.length !== 18) {
-                submissionStatus.textContent = "Enter 1-18 characters";
+            if (!name || name.length === 0 || name.length > 18) {
+                submissionStatus.textContent = "Enter 1-18 characters."; // Error message
                 submissionStatus.style.color = "#ff0000";
-                return;
+                return; // Stop the submission if invalid
             }
             if (finalScore <= 0) {
                  submissionStatus.textContent = "No score to submit.";
