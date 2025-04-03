@@ -58,7 +58,7 @@ export async function onRequest(context) {
       // Get optional wave number
       const wave = (typeof newScoreEntry.wave === 'number' && newScoreEntry.wave > 0)
                     ? Math.floor(newScoreEntry.wave)
-                    : undefined; Store as undefined if not valid or not present
+                    : undefined;
 
       // Prepare the entry object - include wave only if it exists
       const scoreDataToAdd = { name, score };
