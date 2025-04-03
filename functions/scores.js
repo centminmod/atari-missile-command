@@ -55,6 +55,17 @@ export async function onRequest(context) {
       const name = newScoreEntry.name.trim().substring(0, 18).toUpperCase().replace(/[^A-Z0-9\s_-]/g, '');
       const score = Math.max(0, Math.floor(newScoreEntry.score)); // Ensure score is non-negative integer
 
+      // Get optional wave number
+      const wave = (typeof newScoreEntry.wave === 'number' && newScoreEntry.wave > 0)
+                    ? Math.floor(newScoreEntry.wave)
+                    : undefined; Store as undefined if not valid or not present
+
+      // Prepare the entry object - include wave only if it exists
+      const scoreDataToAdd = { name, score };
+      if (wave !== undefined) {
+        scoreDataToAdd.wave = wave;
+      }
+ 
       if (!name) {
          console.warn('Invalid name after sanitization.');
          return new Response('Invalid name provided.', { status: 400 });
@@ -65,7 +76,7 @@ export async function onRequest(context) {
       let scores = storedScores || [];
 
       // Add the new score
-      scores.push({ name, score });
+      scores.push(scoreDataToAdd); Add the object possibly containing 'wave'
 
       // Sort scores descending
       scores.sort((a, b) => b.score - a.score);
@@ -76,7 +87,7 @@ export async function onRequest(context) {
       // Store updated scores back in KV
       // Use await here to ensure the write completes before responding
       await kvStore.put(SCORES_KEY, JSON.stringify(scores));
-      console.log('Successfully updated scores in KV:', JSON.stringify(scores));
+      console.log('Successfully updated scores in KV with potential wave numbers:', JSON.stringify(scores));
 
       return new Response(JSON.stringify({ success: true, leaderboard: scores }), {
         headers: {

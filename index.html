@@ -19,272 +19,176 @@
     <title>Missile Command</title>
     <link href="/css/fonts.css" rel="stylesheet">
     <style>
-        /* --- General Body and Font --- */
-        html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
-        body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px; box-sizing: border-box; min-height: 100vh; background-color: #000; font-family: 'Press Start 2P', cursive; color: #00ff00; }
+            /* --- General Body and Font --- */
+            html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+            body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px; box-sizing: border-box; min-height: 100vh; background-color: #000; font-family: 'Press Start 2P', cursive; color: #00ff00; }
 
-        /* --- Game Title --- */
-        h1#mainTitle { color: #ff0000; font-size: clamp(20px, 5vw, 32px); margin-bottom: 15px; text-shadow: 2px 2px #ffff00; text-align: center; }
+            /* --- Game Title --- */
+            h1#mainTitle { color: #ff0000; font-size: clamp(20px, 5vw, 32px); margin-bottom: 15px; text-shadow: 2px 2px #ffff00; text-align: center; }
 
-        /* --- Game Canvas Container --- */
-        #canvasContainer { position: relative; width: 100%; max-width: 800px; aspect-ratio: 800 / 600; margin: 0 auto; }
+            /* --- Game Canvas Container --- */
+            #canvasContainer { position: relative; width: 100%; max-width: 800px; aspect-ratio: 800 / 600; margin: 0 auto; }
 
-        /* --- Game Canvas --- */
-        #gameCanvas { display: none; background-color: #111; border: 2px solid #00ff00; box-shadow: 0 0 15px #00ff00; cursor: crosshair; width: 100%; height: 100%; image-rendering: pixelated; position: absolute; top: 0; left: 0; }
+            /* --- Game Canvas --- */
+            #gameCanvas { display: none; background-color: #111; border: 2px solid #00ff00; box-shadow: 0 0 15px #00ff00; cursor: crosshair; width: 100%; height: 100%; image-rendering: pixelated; position: absolute; top: 0; left: 0; }
 
-        /* --- UI Container --- */
-        #uiContainer { display: none; flex-wrap: wrap; justify-content: space-around; align-items: center; width: 100%; max-width: 800px; padding: 8px 0; font-size: clamp(9px, 2.5vw, 11px); gap: 8px; border-bottom: 1px solid #005500; margin-bottom: 5px; }
-        #score, #highScore, #wave, #citiesLeft, #multiplier { flex-grow: 1; text-align: center; min-width: 80px; }
-        #highScore { color: #aaa; }
-        #multiplier { color: #ffff00; font-weight: bold; text-shadow: 1px 1px #000; }
+            /* --- UI Container --- */
+            #uiContainer { display: none; flex-wrap: wrap; justify-content: space-around; align-items: center; width: 100%; max-width: 800px; padding: 8px 0; font-size: clamp(9px, 2.5vw, 11px); gap: 8px; border-bottom: 1px solid #005500; margin-bottom: 5px; }
+            #score, #highScore, #wave, #citiesLeft, #multiplier { flex-grow: 1; text-align: center; min-width: 80px; }
+            #highScore { color: #aaa; }
+            #multiplier { color: #ffff00; font-weight: bold; text-shadow: 1px 1px #000; }
 
-        /* --- Bonus Indicator --- */
-        #bonusIndicator { color: #ffaa00; font-weight: bold; text-shadow: 1px 1px #000; display: none; order: 5; text-align: center; flex-basis: 100%; margin-top: 5px; }
+            /* --- Bonus Indicator --- */
+            #bonusIndicator { color: #ffaa00; font-weight: bold; text-shadow: 1px 1px #000; display: none; order: 5; text-align: center; flex-basis: 100%; margin-top: 5px; }
 
-        /* --- Controls Container --- */
-        #controlsContainer { margin-top: 10px; display: none; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 800px; }
+            /* --- Controls Container --- */
+            #controlsContainer { margin-top: 10px; display: none; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 800px; }
 
-        /* --- Special Weapons UI --- */
-        #specialWeaponsUI { background-color: #222; border: 1px solid #444; border-radius: 8px; padding: 8px 10px; margin-top: 10px; display: none; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center; width: auto; max-width: 95%; }
-        .weaponControl { display: flex; flex-direction: column; align-items: center; cursor: pointer; border: 2px solid transparent; padding: 5px; border-radius: 5px; transition: border-color 0.3s, background-color 0.3s; }
-        .weaponControl.armed { border-color: #ff0000; background-color: rgba(255, 0, 0, 0.2); }
-        .weaponControl:hover:not(.disabled) { background-color: rgba(0, 255, 0, 0.1); }
-        .weaponControl.disabled { opacity: 0.4; cursor: not-allowed; }
-        .weaponIcon { font-size: clamp(18px, 4vw, 24px); width: 30px; height: 30px; line-height: 30px; text-align: center; border: 1px solid #888; border-radius: 4px; margin-bottom: 4px; }
-        .weaponCount { font-size: clamp(10px, 2vw, 12px); color: #ffff00; }
+            /* --- Special Weapons UI --- */
+            #specialWeaponsUI { background-color: #222; border: 1px solid #444; border-radius: 8px; padding: 8px 10px; margin-top: 10px; display: none; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center; width: auto; max-width: 95%; }
+            .weaponControl { display: flex; flex-direction: column; align-items: center; cursor: pointer; border: 2px solid transparent; padding: 5px; border-radius: 5px; transition: border-color 0.3s, background-color 0.3s; }
+            .weaponControl.armed { border-color: #ff0000; background-color: rgba(255, 0, 0, 0.2); }
+            .weaponControl:hover:not(.disabled) { background-color: rgba(0, 255, 0, 0.1); }
+            .weaponControl.disabled { opacity: 0.4; cursor: not-allowed; }
+            .weaponIcon { font-size: clamp(18px, 4vw, 24px); width: 30px; height: 30px; line-height: 30px; text-align: center; border: 1px solid #888; border-radius: 4px; margin-bottom: 4px; }
+            .weaponCount { font-size: clamp(10px, 2vw, 12px); color: #ffff00; }
 
-        /* --- Start Menu --- */
-        #startMenuContainer { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; padding: 10px; box-sizing: border-box; }
-        #difficultySelection { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-top: 0; padding: 15px; border: 2px solid #ffff00; border-radius: 10px; background-color: rgba(30, 30, 0, 0.5); width: 100%; box-sizing: border-box; }
-        #difficultySelection h3 { margin: 0 0 10px 0; color: #ffff00; font-size: clamp(16px, 4vw, 18px); text-align: center; }
-        #startHighScore { color: #aaa; font-size: clamp(12px, 3vw, 14px); margin-top: 15px; text-align: center; }
+            /* --- Start Menu --- */
+            #startMenuContainer { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; padding: 10px; box-sizing: border-box; }
+            #difficultySelection { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-top: 0; padding: 15px; border: 2px solid #ffff00; border-radius: 10px; background-color: rgba(30, 30, 0, 0.5); width: 100%; box-sizing: border-box; }
+            #difficultySelection h3 { margin: 0 0 10px 0; color: #ffff00; font-size: clamp(16px, 4vw, 18px); text-align: center; }
+            #startHighScore { color: #aaa; font-size: clamp(12px, 3vw, 14px); margin-top: 15px; text-align: center; }
 
-        /* --- Buttons --- */
-        button { font-family: 'Press Start 2P', cursive; background-color: #333; color: #00ff00; border: 2px solid #00ff00; padding: 8px 15px; font-size: clamp(12px, 3vw, 16px); cursor: pointer; box-shadow: 0 0 8px #00ff00 inset; transition: background-color 0.3s, box-shadow 0.3s, color 0.3s, border-color 0.3s; border-radius: 5px; white-space: nowrap; flex-grow: 0; flex-shrink: 1; }
-        .difficulty-button { border-color: #ffff00; color: #ffff00; box-shadow: 0 0 8px #ffff00 inset; min-width: auto; text-align: center; }
-        .difficulty-button:hover:not(:disabled), .difficulty-button:focus:not(:disabled) { box-shadow: 0 0 12px #ffff00 inset, 0 0 8px #ffff00; background-color: #444; }
-        .difficulty-button.selected { background-color: #555500; box-shadow: 0 0 12px #ffff00 inset, 0 0 12px #ffff00; color: #fff; }
-        #actualStartButton { margin-top: 20px; display: none; }
-        button:hover:not(:disabled), button:focus:not(:disabled) { background-color: #444; outline: none; }
-        button:not(.difficulty-button):hover:not(:disabled) { box-shadow: 0 0 12px #00ff00 inset, 0 0 8px #00ff00; }
-        button:active:not(:disabled) { background-color: #222; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+            /* --- Buttons --- */
+            button { font-family: 'Press Start 2P', cursive; background-color: #333; color: #00ff00; border: 2px solid #00ff00; padding: 8px 15px; font-size: clamp(12px, 3vw, 16px); cursor: pointer; box-shadow: 0 0 8px #00ff00 inset; transition: background-color 0.3s, box-shadow 0.3s, color 0.3s, border-color 0.3s; border-radius: 5px; white-space: nowrap; flex-grow: 0; flex-shrink: 1; }
+            .difficulty-button { border-color: #ffff00; color: #ffff00; box-shadow: 0 0 8px #ffff00 inset; min-width: auto; text-align: center; }
+            .difficulty-button:hover:not(:disabled), .difficulty-button:focus:not(:disabled) { box-shadow: 0 0 12px #ffff00 inset, 0 0 8px #ffff00; background-color: #444; }
+            .difficulty-button.selected { background-color: #555500; box-shadow: 0 0 12px #ffff00 inset, 0 0 12px #ffff00; color: #fff; }
+            #actualStartButton { margin-top: 20px; display: none; }
+            button:hover:not(:disabled), button:focus:not(:disabled) { background-color: #444; outline: none; }
+            button:not(.difficulty-button):hover:not(:disabled) { box-shadow: 0 0 12px #00ff00 inset, 0 0 8px #00ff00; }
+            button:active:not(:disabled) { background-color: #222; }
+            button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
-        /* --- Message Box --- */
-        #messageBox { position: fixed; top: 32%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.9); border: 3px solid #ff0000; padding: 20px; text-align: center; color: #ff0000; display: none; z-index: 30; box-shadow: 0 0 20px #ff0000; border-radius: 10px; width: 90%; max-width: 670px; box-sizing: border-box; max-height: 70vh; overflow-y: auto; padding-bottom: 25px; } /* Added padding-bottom */
-        #messageBox h2 { margin: 0 0 10px 0; font-size: clamp(20px, 5vw, 32px); }
-        #messageBox p { margin: 5px 0 10px 0; font-size: clamp(12px, 3vw, 16px); color: #ffff00; line-height: 1.4; }
-        #messageBox p.bonus-alert { color: #ffaa00; font-weight: bold; display: block; min-height: 1em; margin-top: 8px; }
-        #statsContainer {
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #550000;
-            font-size: clamp(10px, 2.5vw, 11.5px);
-            color: #ccc;
-            text-align: left;
-            display: grid; /* Use Grid for layout */
-            grid-template-columns: 1fr 1fr; /* Two equal columns */
-            gap: 5px 15px; /* Row gap, Column gap */
-        }
-        #statsContainer span {
-            display: block;
-            margin-bottom: 4px;
-            white-space: nowrap;
-        }
-        .messageBoxButtons { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-        #goToStoreButton, #skipStoreButton { display: none; }
+            /* --- Message Box --- */
+            #messageBox { position: fixed; top: 32%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.9); border: 3px solid #ff0000; padding: 20px; text-align: center; color: #ff0000; display: none; z-index: 30; box-shadow: 0 0 20px #ff0000; border-radius: 10px; width: 90%; max-width: 670px; box-sizing: border-box; max-height: 70vh; overflow-y: auto; padding-bottom: 25px; }
+            #messageBox h2 { margin: 0 0 10px 0; font-size: clamp(20px, 5vw, 32px); }
+            #messageBox p { margin: 5px 0 10px 0; font-size: clamp(12px, 3vw, 16px); color: #ffff00; line-height: 1.4; }
+            #messageBox p.bonus-alert { color: #ffaa00; font-weight: bold; display: block; min-height: 1em; margin-top: 8px; }
+            #statsContainer { margin-top: 15px; padding-top: 10px; border-top: 1px solid #550000; font-size: clamp(10px, 2.5vw, 11.5px); color: #ccc; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 15px; }
+            #statsContainer span { display: block; margin-bottom: 4px; white-space: nowrap; }
+            .messageBoxButtons { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+            #goToStoreButton, #skipStoreButton { display: none; }
 
-        /* --- Pause Overlay --- */
-        #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); color: #ffff00; display: none; align-items: center; justify-content: center; font-size: clamp(30px, 10vw, 48px); text-shadow: 3px 3px #ff0000; z-index: 15; pointer-events: none; }
+            /* --- Pause Overlay --- */
+            #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); color: #ffff00; display: none; align-items: center; justify-content: center; font-size: clamp(30px, 10vw, 48px); text-shadow: 3px 3px #ff0000; z-index: 15; pointer-events: none; }
 
-        /* --- Store Modal --- */
-        #storeModal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; max-height: 80vh; background-color: rgba(0, 20, 0, 0.9); border: 3px solid #00ff00; border-radius: 15px; box-shadow: 0 0 25px #00ff00; padding: 15px; z-index: 20; display: none; color: #00ff00; font-size: clamp(11px, 2.5vw, 11.5px); box-sizing: border-box; overflow-y: auto; }
-        #storeModal h2 { font-size: clamp(20px, 5vw, 22px); margin: 0 0 15px 0; text-align: center; color: #ffff00; }
-        #storeScore { font-size: clamp(14px, 3.5vw, 15px); margin-bottom: 15px; text-align: center; color: #fff; }
-        #storeItemsContainer { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        .storeItem { padding: 10px; background-color: rgba(0, 50, 0, 0.7); border-radius: 5px; border: 1px solid #008800; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px; }
-        .storeItemInfo { margin-bottom: 8px; }
-        .storeItemInfo span { display: block; margin-bottom: 3px; }
-        .itemCost { color: #ffff00; }
-        .itemStock, .itemLevel { color: #aaa; font-size: clamp(10px, 2vw, 12px); }
-        .storeItemButtons { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; justify-content: flex-end; margin-top: 5px; }
-        .buyButton { padding: 6px 12px; font-size: clamp(11px, 2.5vw, 14px); min-width: auto; flex-shrink: 1; }
-        .buyMultipleButton { border-color: #00aaaa; color: #00cccc; box-shadow: 0 0 6px #00aaaa inset; padding: 6px 8px; font-size: clamp(10px, 2.2vw, 12px); }
-        .buyMultipleButton:hover:not(:disabled) { box-shadow: 0 0 10px #00aaaa inset, 0 0 6px #00aaaa; }
-        #storeContinueButton { display: block; margin: 20px auto 0 auto; }
+            /* --- Store Modal --- */
+            #storeModal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; max-height: 80vh; background-color: rgba(0, 20, 0, 0.9); border: 3px solid #00ff00; border-radius: 15px; box-shadow: 0 0 25px #00ff00; padding: 15px; z-index: 20; display: none; color: #00ff00; font-size: clamp(11px, 2.5vw, 11.5px); box-sizing: border-box; overflow-y: auto; }
+            #storeModal h2 { font-size: clamp(20px, 5vw, 22px); margin: 0 0 15px 0; text-align: center; color: #ffff00; }
+            #storeScore { font-size: clamp(14px, 3.5vw, 15px); margin-bottom: 15px; text-align: center; color: #fff; }
+            #storeItemsContainer { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 15px; }
+            .storeItem { padding: 10px; background-color: rgba(0, 50, 0, 0.7); border-radius: 5px; border: 1px solid #008800; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px; }
+            .storeItemInfo { margin-bottom: 8px; }
+            .storeItemInfo span { display: block; margin-bottom: 3px; }
+            .itemCost { color: #ffff00; }
+            .itemStock, .itemLevel { color: #aaa; font-size: clamp(10px, 2vw, 12px); }
+            .storeItemButtons { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; justify-content: flex-end; margin-top: 5px; }
+            .buyButton { padding: 6px 12px; font-size: clamp(11px, 2.5vw, 14px); min-width: auto; flex-shrink: 1; }
+            .buyMultipleButton { border-color: #00aaaa; color: #00cccc; box-shadow: 0 0 6px #00aaaa inset; padding: 6px 8px; font-size: clamp(10px, 2.2vw, 12px); }
+            .buyMultipleButton:hover:not(:disabled) { box-shadow: 0 0 10px #00aaaa inset, 0 0 6px #00aaaa; }
+            #storeContinueButton { display: block; margin: 20px auto 0 auto; }
 
-        /* --- Footer --- */
-        footer { width: 100%; max-width: 800px; margin-top: 20px; padding: 10px 0; border-top: 1px solid #005500; font-size: clamp(10px, 2.5vw, 12px); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; }
-        footer a { color: #00ff00; text-decoration: none; transition: color 0.3s, text-shadow 0.3s; display: inline-block; vertical-align: middle; line-height: 1; margin: 0 5px; }
-        footer a:hover, footer a:focus { color: #ffff00; text-shadow: 0 0 5px #ffff00; outline: none; }
-        footer a img { vertical-align: middle; margin: 0 3px; height: 20px; width: auto; }
-        footer .link-group { }
+            /* --- Footer --- */
+            footer { width: 100%; max-width: 800px; margin-top: 20px; padding: 10px 0; border-top: 1px solid #005500; font-size: clamp(10px, 2.5vw, 12px); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; }
+            footer a { color: #00ff00; text-decoration: none; transition: color 0.3s, text-shadow 0.3s; display: inline-block; vertical-align: middle; line-height: 1; margin: 0 5px; }
+            footer a:hover, footer a:focus { color: #ffff00; text-shadow: 0 0 5px #ffff00; outline: none; }
+            footer a img { vertical-align: middle; margin: 0 3px; height: 20px; width: auto; }
+            footer .link-group { }
 
-        /* --- Leaderboard Styles --- */
-        #leaderboardContainer {
-            margin-top: 20px;
-            padding: 15px;
-            border: 2px solid #00ffff; /* Cyan border */
-            border-radius: 10px;
-            background-color: rgba(0, 30, 30, 0.5);
-            width: 100%;
-            max-width: 400px; /* Adjust width as needed */
-            box-sizing: border-box;
-            color: #00ffff;
-            display: none; /* Initially hidden */
-            text-align: center;
-        }
-        #leaderboardContainer h3 {
-            margin: 0 0 10px 0;
-            font-size: clamp(16px, 4vw, 18px);
-            color: #ffffff;
-        }
-        #leaderboardList {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: clamp(12px, 3vw, 14px);
-            text-align: left;
-            max-height: 220px; /* Limit height and add scroll if needed */
-            overflow-y: auto;
-        }
-        #leaderboardList li {
-            display: flex;
-            justify-content: space-between;
-            padding: 3px 5px;
-            border-bottom: 1px dashed rgba(0, 255, 255, 0.3);
-        }
-         #leaderboardList li:last-child {
-            border-bottom: none;
-        }
-        #leaderboardList .rank {
-            flex-basis: 10%;
-            text-align: right;
-            padding-right: 10px;
-            color: #aaaaaa;
-        }
-        #leaderboardList .name {
-            flex-basis: 50%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        #leaderboardList .score {
-            flex-basis: 40%;
-            text-align: right;
-            color: #ffff00;
-        }
-        #leaderboardLoading {
-            color: #aaaaaa;
-        }
+            /* --- Leaderboard Styles --- */
+            #leaderboardContainer { margin-top: 20px; padding: 15px; border: 2px solid #00ffff; border-radius: 10px; background-color: rgba(0, 30, 30, 0.5); width: 100%; max-width: 400px; box-sizing: border-box; color: #00ffff; display: none; text-align: center; }
+            #leaderboardContainer h3 { margin: 0 0 10px 0; font-size: clamp(16px, 4vw, 18px); color: #ffffff; }
+            #leaderboardList { list-style: none; padding: 0; margin: 0; font-size: clamp(12px, 3vw, 14px); text-align: left; max-height: 220px; overflow-y: auto; }
+            #leaderboardList li { display: flex; justify-content: space-between; padding: 3px 5px; border-bottom: 1px dashed rgba(0, 255, 255, 0.3); }
+             #leaderboardList li:last-child { border-bottom: none; }
+            #leaderboardList .rank { flex-basis: 10%; text-align: right; padding-right: 10px; color: #aaaaaa; }
+            /* --- MODIFICATION START --- */
+            #leaderboardList .name { flex-basis: 35%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            #leaderboardList .wave { flex-basis: 15%; text-align: right; padding-right: 10px; color: #cccccc; white-space: nowrap; } /* Added */
+            #leaderboardList .score { flex-basis: 40%; text-align: right; color: #ffff00; }
+            /* --- MODIFICATION END --- */
+            #leaderboardLoading { color: #aaaaaa; }
 
-        /* --- Game Over Score Submission Styles --- */
-        #scoreSubmission {
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #550000;
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-        #scoreSubmission label {
-            font-size: clamp(11px, 2.8vw, 14px);
-            color: #ffff00;
-        }
-        #playerNameInput {
-            font-family: 'Press Start 2P', cursive;
-            background-color: #222;
-            color: #00ff00;
-            border: 1px solid #00ff00;
-            padding: 5px 8px;
-            font-size: clamp(12px, 3vw, 16px);
-            text-align: center;
-            width: 320px; /* Adjust as needed */
-            text-transform: uppercase;
-            border-radius: 3px;
-        }
-        #submitScoreButton {
-            /* Use existing button styles */
-            margin-top: 5px;
-        }
-        #submissionStatus {
-            margin-top: 5px;
-            font-size: clamp(10px, 2.5vw, 12px);
-            color: #00ff00;
-            min-height: 1em; /* Prevent layout shift */
-        }
+            /* --- Game Over Score Submission Styles --- */
+            #scoreSubmission { margin-top: 15px; padding-top: 10px; border-top: 1px solid #550000; display: none; flex-direction: column; align-items: center; gap: 8px; }
+            #scoreSubmission label { font-size: clamp(11px, 2.8vw, 14px); color: #ffff00; }
+            #playerNameInput { font-family: 'Press Start 2P', cursive; background-color: #222; color: #00ff00; border: 1px solid #00ff00; padding: 5px 8px; font-size: clamp(12px, 3vw, 16px); text-align: center; width: 320px; text-transform: uppercase; border-radius: 3px; }
+            #submitScoreButton { margin-top: 5px; }
+            #submissionStatus { margin-top: 5px; font-size: clamp(10px, 2.5vw, 12px); color: #00ff00; min-height: 1em; }
 
-        /* --- Media Queries --- */
-        @media (max-width: 768px) {
-            #uiContainer { gap: 6px; padding: 5px 0; font-size: clamp(9px, 2.2vw, 11px); }
-            #controlsContainer { gap: 8px; }
-            #specialWeaponsUI { gap: 10px; padding: 6px 8px; }
-            #difficultySelection { gap: 8px; padding: 10px; }
-            button { padding: 6px 12px; }
-            #messageBox { padding: 15px; max-width: 95%; }
-            #storeModal { padding: 10px; }
-            /* Adjust store grid for medium screens */
-            #storeItemsContainer { gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));}
-            footer { margin-top: 15px; gap: 8px; }
-            footer a { margin: 0 4px; }
-            footer a img { margin: 0 2px; height: 18px; }
-            .storeItem { flex-direction: column; align-items: stretch; padding: 8px 10px; min-height: 0; gap: 8px; }
-            .storeItemInfo { margin-bottom: 5px; flex-grow: 0; }
-            .storeItemInfo span { display: block; margin-bottom: 2px; line-height: 1.2; }
-            .storeItemButtons { justify-content: space-between; }
-            .buyButton { align-self: center; flex-shrink: 0; }
-        }
-
-        @media (max-width: 480px) {
-            body { padding: 5px; }
-            h1#mainTitle { font-size: 18px; margin-bottom: 10px; }
-            #uiContainer { font-size: 8px; gap: 4px; justify-content: space-between;}
-            #score, #highScore, #wave, #citiesLeft, #multiplier { min-width: 55px; }
-            #controlsContainer { gap: 5px; }
-            #specialWeaponsUI { gap: 8px; padding: 5px; }
-            #difficultySelection { padding: 8px; gap: 6px; }
-            #difficultySelection h3 { font-size: 14px; margin-bottom: 8px; }
-            button { padding: 5px 10px; font-size: 10px; }
-            .difficulty-button { font-size: 11px; }
-            #messageBox { padding: 10px; width: 95%; top: 45%; max-height: 80vh; }
-            #messageBox h2 { font-size: 18px; }
-            #messageBox p { font-size: 11px; }
-            #statsContainer {
-                font-size: 9px;
-                grid-template-columns: 1fr; /* Switch to single column on small screens */
-                gap: 3px 10px;
-             }
-            .messageBoxButtons { gap: 8px; }
-            #storeModal { padding: 8px; width: 95%; max-height: 75vh; }
-            #storeModal h2 { font-size: 18px; }
-            #storeScore { font-size: 12px; }
-            /* --- MODIFIED: Use auto-fit grid for store on small screens, aiming for 3 columns --- */
-            #storeItemsContainer {
-                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Aim for 3 columns if space allows */
-                gap: 6px; /* Slightly reduced gap */
+            /* --- Media Queries --- */
+            @media (max-width: 768px) {
+                #uiContainer { gap: 6px; padding: 5px 0; font-size: clamp(9px, 2.2vw, 11px); }
+                #controlsContainer { gap: 8px; }
+                #specialWeaponsUI { gap: 10px; padding: 6px 8px; }
+                #difficultySelection { gap: 8px; padding: 10px; }
+                button { padding: 6px 12px; }
+                #messageBox { padding: 15px; max-width: 95%; }
+                #storeModal { padding: 10px; }
+                #storeItemsContainer { gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));}
+                footer { margin-top: 15px; gap: 8px; }
+                footer a { margin: 0 4px; }
+                footer a img { margin: 0 2px; height: 18px; }
+                .storeItem { flex-direction: column; align-items: stretch; padding: 8px 10px; min-height: 0; gap: 8px; }
+                .storeItemInfo { margin-bottom: 5px; flex-grow: 0; }
+                .storeItemInfo span { display: block; margin-bottom: 2px; line-height: 1.2; }
+                .storeItemButtons { justify-content: space-between; }
+                .buyButton { align-self: center; flex-shrink: 0; }
             }
-            .storeItem { padding: 6px 8px; gap: 6px; }
-            .storeItemInfo span { font-size: 10px; margin-bottom: 1px; line-height: 1.15; }
-            .itemStock, .itemLevel { font-size: 9px; }
-            .storeItemButtons { gap: 4px; }
-            .buyButton { padding: 4px 8px; font-size: 10px; }
-            .buyMultipleButton { padding: 4px 6px; font-size: 9px; }
-            #pauseOverlay { font-size: 24px; }
-            footer { margin-top: 10px; font-size: 9px; padding: 8px 0; display: block; text-align: center; }
-            footer .link-group { display: block; margin-bottom: 5px; text-align: center; }
-            footer .link-group a { display: inline-block; margin: 2px 5px; vertical-align: middle; }
-            footer .link-group a img { margin: 0 2px; height: 16px; }
 
-            /* Leaderboard specific adjustments for small screens */
-             #leaderboardContainer {
-                max-width: 95%;
-             }
-             #leaderboardList .rank { flex-basis: 15%; }
-             #leaderboardList .name { flex-basis: 45%; }
-             #leaderboardList .score { flex-basis: 40%; }
-        }
-    </style>
+            @media (max-width: 480px) {
+                body { padding: 5px; }
+                h1#mainTitle { font-size: 18px; margin-bottom: 10px; }
+                #uiContainer { font-size: 8px; gap: 4px; justify-content: space-between;}
+                #score, #highScore, #wave, #citiesLeft, #multiplier { min-width: 55px; }
+                #controlsContainer { gap: 5px; }
+                #specialWeaponsUI { gap: 8px; padding: 5px; }
+                #difficultySelection { padding: 8px; gap: 6px; }
+                #difficultySelection h3 { font-size: 14px; margin-bottom: 8px; }
+                button { padding: 5px 10px; font-size: 10px; }
+                .difficulty-button { font-size: 11px; }
+                #messageBox { padding: 10px; width: 95%; top: 45%; max-height: 80vh; }
+                #messageBox h2 { font-size: 18px; }
+                #messageBox p { font-size: 11px; }
+                #statsContainer { font-size: 9px; grid-template-columns: 1fr; gap: 3px 10px; }
+                .messageBoxButtons { gap: 8px; }
+                #storeModal { padding: 8px; width: 95%; max-height: 75vh; }
+                #storeModal h2 { font-size: 18px; }
+                #storeScore { font-size: 12px; }
+                #storeItemsContainer { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 6px; }
+                .storeItem { padding: 6px 8px; gap: 6px; }
+                .storeItemInfo span { font-size: 10px; margin-bottom: 1px; line-height: 1.15; }
+                .itemStock, .itemLevel { font-size: 9px; }
+                .storeItemButtons { gap: 4px; }
+                .buyButton { padding: 4px 8px; font-size: 10px; }
+                .buyMultipleButton { padding: 4px 6px; font-size: 9px; }
+                #pauseOverlay { font-size: 24px; }
+                footer { margin-top: 10px; font-size: 9px; padding: 8px 0; display: block; text-align: center; }
+                footer .link-group { display: block; margin-bottom: 5px; text-align: center; }
+                footer .link-group a { display: inline-block; margin: 2px 5px; vertical-align: middle; }
+                footer .link-group a img { margin: 0 2px; height: 16px; }
+
+                /* Leaderboard specific adjustments for small screens */
+                 #leaderboardContainer { max-width: 95%; }
+                 /* --- MODIFICATION START --- */
+                 #leaderboardList .rank { flex-basis: 10%; }
+                 #leaderboardList .name { flex-basis: 35%; }
+                 #leaderboardList .wave { flex-basis: 15%; font-size: 11px; }
+                 #leaderboardList .score { flex-basis: 40%; }
+                 /* --- MODIFICATION END --- */
+            }
+        </style>
 </head>
 <body>
 
@@ -1780,12 +1684,22 @@
                         // Basic sanitization display-side (Function should sanitize on input)
                         nameSpan.textContent = entry.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+                        const waveSpan = document.createElement('span');
+                        waveSpan.className = 'wave'; // Add a class for styling
+                        // Check if wave exists and display it, otherwise show '-' or similar
+                        if (typeof entry.wave === 'number') {
+                            waveSpan.textContent = `W: ${entry.wave}`;
+                        } else {
+                            waveSpan.textContent = `W: -`; // Placeholder for older scores
+                        }
+
                         const scoreSpan = document.createElement('span');
                         scoreSpan.className = 'score';
                         scoreSpan.textContent = `$${entry.score}`;
 
                         li.appendChild(rankSpan);
                         li.appendChild(nameSpan);
+                        li.appendChild(waveSpan);
                         li.appendChild(scoreSpan);
                         leaderboardList.appendChild(li);
                     });
@@ -1806,6 +1720,7 @@
             const name = playerNameInput.value.trim().toUpperCase();
             // Use gameTotalScore for the final submission
             const finalScore = gameTotalScore; // Make sure gameTotalScore is correctly updated
+            const waveReached = currentWave + 1; // Get the wave number (currentWave is 0-indexed)
 
             if (!name || name.length === 0 || name.length > 18) {
                 submissionStatus.textContent = "Enter 1-18 characters."; // Error message
@@ -1819,7 +1734,7 @@
                  return;
             }
 
-            console.log(`Submitting score: Name=${name}, Score=${finalScore}`);
+            console.log(`Submitting score: Name=${name}, Score=${finalScore}, Wave=${waveReached}`);
             submitScoreButton.disabled = true;
             submissionStatus.textContent = "Submitting...";
             submissionStatus.style.color = "#00ff00";
@@ -1832,7 +1747,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name: name, score: finalScore }),
+                    body: JSON.stringify({ name: name, score: finalScore, wave: waveReached }),
                 });
 
                 if (!response.ok) {
