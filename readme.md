@@ -56,6 +56,10 @@ The game features an innovative AI-powered analysis system that:
 - Identifies strengths and weaknesses in your defensive approach
 - Offers actionable tips to improve performance in future games
 
+![Missile Command AI Gameplay Summary Analysis](/screenshots/gemini-2.5-pro-atari-missile-command-ai-summary-v1-1.png)
+
+![Missile Command AI Gameplay Summary Analysis](/screenshots/gemini-2.5-pro-atari-missile-command-ai-summary-v1-2.png)
+
 ## 🛠️ Technical Implementation
 
 ### Technologies Used
