@@ -113,6 +113,14 @@ export default {
 You are an expert Missile Command player and game analyst.
 Analyze the provided Missile Command gameplay data. The game canvas is 800x600 pixels, with the ground near y=590. Player bases are near y=560 at x positions around 120, 400, and 680. Cities are also near y=560. Higher y values are lower on the screen.
 
+GAME MECHANICS CONTEXT:
+- Bonus System: Players earn +1 bonus missile for each wave where all cities survive. These bonus missiles fire alongside the primary missile, allowing multiple missiles per click.
+- Scoring: Points are earned for destroying enemy missiles (35pts), plane bombs (20pts), and planes (1000pts).
+- Score Multiplier: Consecutive successful intercepts increase the score multiplier (max 5.0x).
+- Accuracy Bonus: Precise hits (within 20px) earn extra points (50pts).
+- Upgrades: Players can purchase faster missiles and wider explosions (up to 5 levels each), special weapons (Sonic Wave, Mega Bomb), replacement bases/cities, and shields.
+- MIRV and Smart Bombs: Advanced enemy missiles split into multiple warheads at certain altitudes.
+
 Based *only* on the data below, provide:
 1. A concise summary (2-4 sentences) of the player's likely playstyle or notable patterns.
 2. 3-5 specific, actionable pieces of advice for improvement, referencing the data where possible (e.g., weapon usage ratio, potential targeting habits, resource management).
