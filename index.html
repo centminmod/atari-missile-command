@@ -2637,8 +2637,20 @@
                 // Ensure the message box is visible
                 messageBox.style.display = 'block';
 
+                // Find the button container
+                const buttonContainer = messageBox.querySelector('.messageBoxButtons');
+
+                // First, remove any existing "Back to Score Submission" buttons
+                const existingBackButtons = buttonContainer.querySelectorAll('button');
+                existingBackButtons.forEach(btn => {
+                    if (btn.textContent === 'Back to Score Submission') {
+                        btn.remove();
+                    }
+                });
+
                 // Add a back button to return to score submission
                 const backButton = document.createElement('button');
+                backButton.id = 'backToScoreButton'; // Add an ID for easier selection
                 backButton.textContent = 'Back to Score Submission';
                 backButton.addEventListener('click', () => {
                     // Show game over screen again with score submission
@@ -2662,9 +2674,7 @@
                 });
 
                 // Add button to the message box buttons area
-                const buttonContainer = messageBox.querySelector('.messageBoxButtons');
                 buttonContainer.appendChild(backButton);
-                // END OF BACK BUTTON CODE
 
             } catch (error) {
                 // Catch errors from local storage access, fetch (network, timeout), or response handling
