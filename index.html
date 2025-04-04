@@ -291,29 +291,27 @@
                     font-size: clamp(8px, 2vw, 10px);
                 }
                 
-                /* Reposition special weapons UI for landscape */
-                #specialWeaponsUI {
-                    position: absolute;
-                    right: 10px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    flex-direction: column;
-                    background-color: rgba(34, 34, 34, 0.7);
-                    z-index: 10;
+                /* Ensure control buttons are properly sized in landscape */
+                #controlsContainer button {
+                    width: auto;
+                    min-width: 120px;
+                    max-width: 150px;
+                    font-size: 12px;
+                    padding: 6px 8px;
+                    margin: 3px 0;
                 }
                 
-                /* Adjust control buttons position */
-                #controlsContainer {
-                    position: absolute;
-                    left: 10px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    flex-direction: column;
-                    gap: 8px;
-                    z-index: 10;
+                /* Improve weapon controls visibility */
+                .weaponControl {
+                    margin: 5px 0;
                 }
                 
-                /* Adjust message box to be more compact */
+                /* Ensure the game canvas is properly positioned */
+                #canvasContainer {
+                    position: relative;
+                    z-index: 5;
+                }
+                
                 #messageBox {
                     max-width: 85vh;
                     max-height: 80vh;
@@ -321,7 +319,14 @@
                     top: 50%;
                 }
                 
-                /* Adjust store modal for landscape */
+                #messageBox h2 {
+                    font-size: clamp(16px, 4vw, 24px);
+                }
+                
+                #messageBox p {
+                    font-size: clamp(9px, 2.5vw, 10px);
+                }
+                
                 #storeModal {
                     max-width: 85vh;
                     max-height: 90vh;
@@ -343,7 +348,7 @@
                 }
             }
 
-            /* Specific optimizations for very small landscape screens */
+            /* IMPROVED: Very small landscape screens */
             @media (orientation: landscape) and (max-height: 350px) {
                 #canvasContainer {
                     max-width: 85vh;
@@ -358,22 +363,48 @@
                     font-size: 8px;
                 }
                 
-                button {
-                    padding: 4px 8px;
-                    font-size: clamp(9px, 2vw, 12px);
+                /* Even more compact UI for very small screens */
+                #controlsContainer button {
+                    min-width: 100px;
+                    font-size: 10px;
+                    padding: 4px 6px;
+                    margin: 2px 0;
                 }
                 
-                #messageBox h2 {
-                    font-size: clamp(16px, 4vw, 24px);
-                }
-                
-                #messageBox p {
-                    font-size: clamp(9px, 2.5vw, 10px);
-                }
-
-                /* Make side UI elements more compact */
+                /* Reduce opacity of UI panels to see more of the game */
                 #specialWeaponsUI, #controlsContainer {
-                    transform: scale(0.8) translateY(-60%);
+                    opacity: 0.85;
+                    transition: opacity 0.3s;
+                }
+                
+                #specialWeaponsUI:hover, #controlsContainer:hover {
+                    opacity: 1;
+                }
+                
+                .storeItem {
+                    padding: 4px;
+                }
+                
+                .buyButton {
+                    padding: 3px 6px;
+                    font-size: clamp(8px, 1.8vw, 10px);
+                }
+                
+                /* Optimize score submission form */
+                #scoreSubmission {
+                    margin-top: 10px;
+                    padding-top: 8px;
+                }
+                
+                #playerNameInput {
+                    font-size: clamp(10px, 2.5vw, 12px);
+                    padding: 4px 6px;
+                    width: 250px;
+                }
+                
+                #submitScoreButton {
+                    font-size: clamp(10px, 2.5vw, 12px);
+                    padding: 4px 8px;
                 }
             }
         </style>
@@ -1487,7 +1518,7 @@
         // --- Game Flow ---
         function startGame() {
             try {
-                console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding...");
+                console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding..."); optimizeCanvasForOrientation();
                 score = 0; scoreSubmitted = false; gameTotalScore = 0; gameClickData = []; storeActions = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
                 storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
                 inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null; satelliteBases = []; baseShields = [null, null, null]; planes = []; planeBombs = []; incomingMissiles = []; playerMissiles = []; explosions = []; statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0; playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; consecutiveIntercepts = 0; scoreMultiplier = 1.0; highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0'); console.log("startGame: State variables reset");
@@ -2225,18 +2256,121 @@
         // --- ADDED: Function to optimize canvas for orientation ---
         function optimizeCanvasForOrientation() {
             const isLandscape = window.innerWidth > window.innerHeight;
+            const isMobileOrSmallScreen = window.innerHeight < 700; // Threshold for mobile/small screens
             
             // Keep internal resolution the same to avoid breaking game logic
             canvas.width = INTERNAL_WIDTH;
             canvas.height = INTERNAL_HEIGHT;
             
-            // Adjust canvas container's max-width for better landscape fitting
-            if (isLandscape && window.innerHeight < 500) {
-                // In landscape mode on small screens, size based on viewport height
-                canvasContainer.style.maxWidth = `${Math.min(90, (window.innerHeight / window.innerWidth) * 100)}vh`;
+            // Apply landscape-specific layout adjustments ONLY for mobile/small screens
+            if (isLandscape && isMobileOrSmallScreen) {
+                console.log("Applying mobile landscape layout");
+                // Calculate available width accounting for UI elements
+                const uiSidePadding = 180; // Space for controls on both sides
+                const availableWidth = window.innerWidth - uiSidePadding;
+                
+                // Calculate available height with some margin
+                const topBottomMargin = 60; // Top/bottom margin
+                const availableHeight = window.innerHeight - topBottomMargin;
+                
+                // Determine size based on maintaining aspect ratio
+                // But prioritize filling the available width first
+                let canvasWidth, canvasHeight;
+                
+                // Calculate based on aspect ratio (800/600 = 1.33)
+                const gameAspectRatio = INTERNAL_WIDTH / INTERNAL_HEIGHT;
+                
+                // Calculate potential sizes
+                const widthBasedHeight = availableWidth / gameAspectRatio;
+                const heightBasedWidth = availableHeight * gameAspectRatio;
+                
+                if (widthBasedHeight <= availableHeight) {
+                    // Width is the limiting factor
+                    canvasWidth = availableWidth;
+                    canvasHeight = widthBasedHeight;
+                } else {
+                    // Height is the limiting factor
+                    canvasWidth = heightBasedWidth;
+                    canvasHeight = availableHeight;
+                }
+                
+                // Apply the calculated size
+                canvasContainer.style.width = `${canvasWidth}px`;
+                canvasContainer.style.height = `${canvasHeight}px`;
+                canvasContainer.style.maxWidth = 'none'; // Override max-width constraints
+                
+                // Center the canvas container
+                canvasContainer.style.margin = '0 auto';
+                
+                // Position controls on the left
+                controlsContainer.style.position = 'absolute';
+                controlsContainer.style.left = '10px';
+                controlsContainer.style.top = '50%';
+                controlsContainer.style.transform = 'translateY(-50%)';
+                controlsContainer.style.flexDirection = 'column';
+                controlsContainer.style.width = 'auto';
+                controlsContainer.style.backgroundColor = 'rgba(0,0,0,0.6)';
+                controlsContainer.style.padding = '8px';
+                controlsContainer.style.borderRadius = '8px';
+                controlsContainer.style.zIndex = '15';
+                
+                // Position special weapons UI on the right
+                specialWeaponsUIDiv.style.position = 'absolute';
+                specialWeaponsUIDiv.style.right = '10px';
+                specialWeaponsUIDiv.style.top = '50%';
+                specialWeaponsUIDiv.style.transform = 'translateY(-50%)';
+                specialWeaponsUIDiv.style.flexDirection = 'column';
+                specialWeaponsUIDiv.style.backgroundColor = 'rgba(0,0,0,0.6)';
+                specialWeaponsUIDiv.style.padding = '8px';
+                specialWeaponsUIDiv.style.borderRadius = '8px';
+                specialWeaponsUIDiv.style.zIndex = '15';
+                
+                // Make buttons more compact for landscape
+                const buttons = controlsContainer.querySelectorAll('button');
+                buttons.forEach(button => {
+                    button.style.padding = '6px 10px';
+                    button.style.margin = '3px 0';
+                    button.style.fontSize = '12px';
+                    button.style.width = '100%'; // Make buttons fill the container
+                });
             } else {
-                // Default sizing
+                // Use standard layout for desktop and portrait mode
+                console.log("Using standard layout");
+                canvasContainer.style.width = '';
+                canvasContainer.style.height = '';
                 canvasContainer.style.maxWidth = "800px";
+                
+                // Clear all the inline styles for controls container
+                controlsContainer.style.position = '';
+                controlsContainer.style.left = '';
+                controlsContainer.style.top = '';
+                controlsContainer.style.transform = '';
+                controlsContainer.style.flexDirection = '';
+                controlsContainer.style.width = '';
+                controlsContainer.style.backgroundColor = '';
+                controlsContainer.style.padding = '';
+                controlsContainer.style.borderRadius = '';
+                controlsContainer.style.zIndex = '';
+                
+                // Clear all the inline styles for special weapons
+                specialWeaponsUIDiv.style.position = '';
+                specialWeaponsUIDiv.style.right = '';
+                specialWeaponsUIDiv.style.top = '';
+                specialWeaponsUIDiv.style.transform = '';
+                specialWeaponsUIDiv.style.flexDirection = '';
+                specialWeaponsUIDiv.style.backgroundColor = '';
+                specialWeaponsUIDiv.style.padding = '';
+                specialWeaponsUIDiv.style.borderRadius = '';
+                specialWeaponsUIDiv.style.zIndex = '';
+                
+                // Reset button styles
+                const buttons = controlsContainer.querySelectorAll('button');
+                buttons.forEach(button => {
+                    button.style.padding = '';
+                    button.style.margin = '';
+                    button.style.fontSize = '';
+                    button.style.width = '';
+                });
             }
             
             // Force the canvas aspect ratio to remain constant
@@ -2755,6 +2889,20 @@
         // --- ADDED: Prevent default pinch-zoom gestures ---
         document.addEventListener('gesturestart', function(e) {
             e.preventDefault();
+        });
+
+        function debugDeviceInfo() {
+            console.log(`Window size: ${window.innerWidth} x ${window.innerHeight}`);
+            console.log(`Is landscape: ${window.innerWidth > window.innerHeight}`);
+            console.log(`Is mobile/small: ${window.innerHeight < 700}`);
+        }
+
+        // Debug event listeners
+        window.addEventListener('load', debugDeviceInfo);
+        window.addEventListener('resize', debugDeviceInfo);
+        window.addEventListener('orientationchange', function() {
+            console.log("Orientation changed");
+            setTimeout(debugDeviceInfo, 100);
         });
 
         // --- MODIFIED: window.onload ---
