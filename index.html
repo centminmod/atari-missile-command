@@ -616,6 +616,7 @@
         let planeBombs = [];
         let gameClickData = [];
         let storeActions = [];
+        let scoreSubmitted = false; // Track if score has been submitted
         const waveDefinitions = defineWaves();
         let currentWaveConfig = {};
         let waveTimer = 0;
@@ -1333,7 +1334,7 @@
         function startGame() {
             try {
                 console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding...");
-                score = 0; gameTotalScore = 0; gameClickData = []; storeActions = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
+                score = 0; scoreSubmitted = false; gameTotalScore = 0; gameClickData = []; storeActions = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
                 storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
                 inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null; satelliteBases = []; baseShields = [null, null, null]; planes = []; planeBombs = []; incomingMissiles = []; playerMissiles = []; explosions = []; statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0; playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; consecutiveIntercepts = 0; scoreMultiplier = 1.0; highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0'); console.log("startGame: State variables reset");
                 console.log("startGame: Setting up UI..."); startMenuContainer.style.display = 'none'; canvasContainer.style.display = 'block'; canvas.style.display = 'block'; uiContainer.style.display = 'flex'; controlsContainer.style.display = 'flex'; specialWeaponsUIDiv.style.display = 'flex'; screenshotButton.style.display = 'inline-block'; hideMessage(); statsContainer.style.display = 'none'; pauseOverlay.style.display = 'none'; canvas.style.cursor = 'crosshair'; console.log("startGame: UI setup complete");
@@ -2197,8 +2198,15 @@
                     messageSubText.innerHTML = "";
                     statsContainer.style.display = 'grid';
                     scoreSubmissionDiv.style.display = 'flex';
-                    submissionStatus.textContent = '';
-                    submitScoreButton.disabled = false;
+                    // Check if score was already submitted
+                    if (scoreSubmitted) {
+                        submissionStatus.textContent = 'Score already submitted!';
+                        submissionStatus.style.color = "#00ff00";
+                        submitScoreButton.disabled = true;
+                    } else {
+                        submissionStatus.textContent = '';
+                        submitScoreButton.disabled = false;
+                    }
                     
                     // Remove the back button itself
                     backButton.remove();
@@ -2297,6 +2305,10 @@
                 console.log("Submission response:", result);
                 submissionStatus.textContent = "Score Submitted!";
                 submissionStatus.style.color = "#00ff00";
+                submitScoreButton.disabled = true;
+                
+                // Set the flag to prevent resubmission
+                scoreSubmitted = true;
                 // Optionally, refresh the leaderboard display after submission
                 // fetchAndDisplayLeaderboard(); // Might be better to wait until restart
 
