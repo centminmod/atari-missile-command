@@ -143,7 +143,7 @@ Focus on clear, helpful analysis based *solely* on the provided data. Do not inv
       const requestBody = {
         model: targetModel,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 550
+        max_tokens: 800
       };
 
       // 7. Execute Fetch Request to AI Gateway
