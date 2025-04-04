@@ -73,7 +73,19 @@
             /* --- Message Box --- */
             #messageBox { position: fixed; top: 32%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.9); border: 3px solid #ff0000; padding: 20px; text-align: center; color: #ff0000; display: none; z-index: 30; box-shadow: 0 0 20px #ff0000; border-radius: 10px; width: 90%; max-width: 670px; box-sizing: border-box; max-height: 70vh; overflow-y: auto; padding-bottom: 25px; }
             #messageBox h2 { margin: 0 0 10px 0; font-size: clamp(20px, 5vw, 32px); }
-            #messageBox p { margin: 5px 0 10px 0; font-size: clamp(12px, 3vw, 16px); color: #ffff00; line-height: 1.4; }
+            #messageBox p { margin: 5px 0 10px 0; font-size: clamp(10.5px, 3vw, 10.5px); color: #ffff00; line-height: 1.4; }
+            #messageText, #messageSubText { text-align: left; /* This makes the message text left-aligned */ }
+            /* For the unordered lists in the AI advice section */
+            #messageSubText ul {
+                text-align: left;
+                padding-left: 20px; /* Add some indentation for the list */
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+
+            #messageSubText li {
+                margin-bottom: 4px; /* Spacing between list items */
+            }
             #messageBox p.bonus-alert { color: #ffaa00; font-weight: bold; display: block; min-height: 1em; margin-top: 8px; }
             #statsContainer { margin-top: 15px; padding-top: 10px; border-top: 1px solid #550000; font-size: clamp(10px, 2.5vw, 11.5px); color: #ccc; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 15px; }
             #statsContainer span { display: block; margin-bottom: 4px; white-space: nowrap; }
