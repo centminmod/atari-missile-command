@@ -6,7 +6,7 @@
   "display": "standalone", // Opens in its own window, like a native app
   "background_color": "#000000", // Color shown on the splash screen before the app loads
   "theme_color": "#000000", // Color for the browser UI elements (like the title bar)
-  "orientation": "portait", // Suggests the app is best viewed in landscape mode
+  "orientation": "portrait", // Suggests the app is best viewed in landscape mode
   "categories": ["games"],
   "icons": [
     {
