@@ -153,6 +153,18 @@
             #submitScoreButton { margin-top: 5px; }
             #submissionStatus { margin-top: 5px; font-size: clamp(10px, 2.5vw, 12px); color: #00ff00; min-height: 1em; }
 
+            .gameAnalysisButton, #viewGameSummaryLink {
+                background-color: #00AA00; /* Green background */
+                color: #FFFFFF; /* White text */
+                border-color: #00FF00; /* Bright green border */
+                box-shadow: 0 0 8px #00FF00 inset;
+            }
+
+            .gameAnalysisButton:hover:not(:disabled), #viewGameSummaryLink:hover:not(:disabled) {
+                box-shadow: 0 0 12px #00FF00 inset, 0 0 8px #00FF00;
+                background-color: #00CC00;
+            }
+
             /* --- Media Queries --- */
             @media (max-width: 768px) {
                 #uiContainer { gap: 6px; padding: 5px 0; font-size: clamp(9px, 2.2vw, 11px); }
@@ -603,6 +615,7 @@
         let planes = [];
         let planeBombs = [];
         let gameClickData = [];
+        let storeActions = [];
         const waveDefinitions = defineWaves();
         let currentWaveConfig = {};
         let waveTimer = 0;
@@ -1320,7 +1333,7 @@
         function startGame() {
             try {
                 console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding...");
-                score = 0; gameTotalScore = 0; gameClickData = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
+                score = 0; gameTotalScore = 0; gameClickData = []; storeActions = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
                 storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
                 inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null; satelliteBases = []; baseShields = [null, null, null]; planes = []; planeBombs = []; incomingMissiles = []; playerMissiles = []; explosions = []; statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0; playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; consecutiveIntercepts = 0; scoreMultiplier = 1.0; highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0'); console.log("startGame: State variables reset");
                 console.log("startGame: Setting up UI..."); startMenuContainer.style.display = 'none'; canvasContainer.style.display = 'block'; canvas.style.display = 'block'; uiContainer.style.display = 'flex'; controlsContainer.style.display = 'flex'; specialWeaponsUIDiv.style.display = 'flex'; screenshotButton.style.display = 'inline-block'; hideMessage(); statsContainer.style.display = 'none'; pauseOverlay.style.display = 'none'; canvas.style.cursor = 'crosshair'; console.log("startGame: UI setup complete");
@@ -1389,7 +1402,9 @@
                             // Add any other relevant stats you track
                         },
                         // The raw click data
-                        clicks: gameClickData
+                        clicks: gameClickData,
+                        // NEW: Add store actions
+                        storeActions: storeActions
                     };
 
                     localStorage.setItem(fixedStorageKey, JSON.stringify(dataToStore));
@@ -1465,32 +1480,22 @@
             if (localStorage.getItem('missileCommandLastGameData')) {
                 // Data exists, so ensure link is present and configured
                 if (!summaryLink) {
-                    // Link doesn't exist, create it
-                    summaryLink = document.createElement('a');
-                    summaryLink.href = '#';
+                    // Create a button instead of a link
+                    summaryLink = document.createElement('button');
                     summaryLink.id = 'viewGameSummaryLink';
-                    summaryLink.style.display = 'block'; // Make it visible
-                    summaryLink.style.marginTop = '10px'; // Add spacing
-                    summaryLink.style.color = '#00ffff'; // Match other link styles
-                    summaryLink.style.textDecoration = 'underline';
-                    summaryLink.addEventListener('click', handleViewSummaryClick); // Attach handler
+                    summaryLink.style.display = 'inline-block'; // Match restart button display
+                    summaryLink.classList.add('gameAnalysisButton'); // Optional class for additional styling
+                    summaryLink.addEventListener('click', handleViewSummaryClick);
 
-                    // Append it to the button container (ideally before restart)
+                    // Append it to the button container (alongside restart)
                     if (buttonContainer) {
-                        const restartBtn = buttonContainer.querySelector('#restartButton');
-                        if (restartBtn) {
-                            buttonContainer.insertBefore(summaryLink, restartBtn);
-                        } else {
-                            buttonContainer.appendChild(summaryLink); // Fallback append
-                        }
+                        buttonContainer.appendChild(summaryLink); // Add it next to restart button
                     }
                 }
                 
                 // Ensure text and state are correct (in case it was left in 'Analyzing...' state)
-                summaryLink.textContent = 'View AI Game Summary';
-                summaryLink.style.display = 'block';
-                summaryLink.style.pointerEvents = 'auto';
-                summaryLink.style.color = '#00ffff';
+                summaryLink.textContent = 'View Game Summary';
+                summaryLink.disabled = false;
             } else {
                 // No data saved, ensure link is removed if it exists
                 if (summaryLink) {
@@ -1662,31 +1667,254 @@
         }
         function findAndRebuildBase() { const deadBaseIndex = bases.findIndex(b => !b.alive); if (deadBaseIndex !== -1) { bases[deadBaseIndex].alive = true; bases[deadBaseIndex].ammo = selectedDifficultyAmmo; return true; } return false; }
         function findAndRebuildCity() { const deadCityIndex = cities.findIndex(c => !c.alive); if (deadCityIndex !== -1) { cities[deadCityIndex].alive = true; return true; } return false; }
-        function buyReplacementBase() { if (score >= COST_BASE && storeStockBase > 0) { if (findAndRebuildBase()) { score -= COST_BASE; storeStockBase--; updateStoreUI(); updateUI(); } } }
-        function buyReplacementCity() { if (score >= COST_CITY && storeStockCity > 0) { if (findAndRebuildCity()) { score -= COST_CITY; storeStockCity--; updateStoreUI(); updateUI(); } } }
-        function buySatellite() { const activeSatellitesCount = satelliteBases.filter(s => s.alive).length; if (score >= COST_SATELLITE && storeStockSatellite > 0 && activeSatellitesCount < MAX_ACTIVE_SATELLITES) { let placed = false; const basePositionsRatios = [0.15, 0.5, 0.85]; for (let i = 0; i < 3; i++) { const targetX = basePositionsRatios[i] * canvas.width; const satelliteX = targetX - (canvas.width * SATELLITE_WIDTH_RATIO / 2); const positionOccupied = satelliteBases.some(s => s.alive && Math.abs(s.x - satelliteX) < 1); if (!positionOccupied) { score -= COST_SATELLITE; storeStockSatellite--; const newSatellite = createSatelliteBase(basePositionsRatios[i], SATELLITE_Y_POS_RATIO); satelliteBases.push(newSatellite); placed = true; break; } } if(placed) { updateStoreUI(); updateUI(); } } }
-        function buyShield() { if (score >= COST_SHIELD && storeStockShield > 0) { let shieldPlaced = false; for (let i = 0; i < bases.length; i++) { if (bases[i].alive && (!baseShields[i] || !baseShields[i].alive)) { score -= COST_SHIELD; storeStockShield--; baseShields[i] = { alive: true, strength: SHIELD_STRENGTH_START, flashTimer: 0 }; shieldPlaced = true; break; } } if(shieldPlaced) { updateStoreUI(); updateUI(); } } }
-        function buySatShield() { if (score >= COST_SAT_SHIELD && storeStockSatShield > 0) { let shieldPlaced = false; for (let i = 0; i < satelliteBases.length; i++) { const sat = satelliteBases[i]; if (sat.alive && (!sat.shield || !sat.shield.alive)) { score -= COST_SAT_SHIELD; storeStockSatShield--; sat.shield = { alive: true, strength: SHIELD_STRENGTH_START, flashTimer: 0 }; shieldPlaced = true; break; } } if(shieldPlaced) { updateStoreUI(); updateUI(); } } }
-        function buySonicWave() { if (score >= COST_SONIC_WAVE && storeStockSonicWave > 0) { score -= COST_SONIC_WAVE; storeStockSonicWave--; inventorySonicWave++; updateStoreUI(); updateSpecialWeaponsUI(); } }
-        function buyBomb() { if (score >= COST_BOMB && storeStockBomb > 0) { score -= COST_BOMB; storeStockBomb--; inventoryBomb++; updateStoreUI(); updateSpecialWeaponsUI(); } }
-        function buyFasterMissile() { if (playerMissileSpeedLevel < MAX_UPGRADE_LEVEL) { const cost = calculateUpgradeCost(COST_FASTER_MISSILE_BASE, playerMissileSpeedLevel); if (score >= cost) { score -= cost; playerMissileSpeedLevel++; updateStoreUI(); } } }
-        function buyWiderExplosion() { if (explosionRadiusLevel < MAX_UPGRADE_LEVEL) { const cost = calculateUpgradeCost(COST_WIDER_EXPLOSION_BASE, explosionRadiusLevel); if (score >= cost) { score -= cost; explosionRadiusLevel++; updateStoreUI(); } } }
+        function buyReplacementBase() { 
+            if (score >= COST_BASE && storeStockBase > 0) { 
+                if (findAndRebuildBase()) { 
+                    score -= COST_BASE; 
+                    storeStockBase--; 
+                    
+                    // Track the purchase
+                    storeActions.push({
+                        action: "buy",
+                        item: "base",
+                        cost: COST_BASE,
+                        timestamp: Date.now()
+                    });
+                    
+                    updateStoreUI(); 
+                    updateUI(); 
+                } 
+            } 
+        }
+
+        function buyReplacementCity() { 
+            if (score >= COST_CITY && storeStockCity > 0) { 
+                if (findAndRebuildCity()) { 
+                    score -= COST_CITY; 
+                    storeStockCity--; 
+                    
+                    // Track the purchase
+                    storeActions.push({
+                        action: "buy",
+                        item: "city",
+                        cost: COST_CITY,
+                        timestamp: Date.now()
+                    });
+                    
+                    updateStoreUI(); 
+                    updateUI(); 
+                } 
+            } 
+        }
+
+        function buySatellite() { 
+            const activeSatellitesCount = satelliteBases.filter(s => s.alive).length; 
+            if (score >= COST_SATELLITE && storeStockSatellite > 0 && activeSatellitesCount < MAX_ACTIVE_SATELLITES) { 
+                let placed = false; 
+                const basePositionsRatios = [0.15, 0.5, 0.85]; 
+                for (let i = 0; i < 3; i++) { 
+                    const targetX = basePositionsRatios[i] * canvas.width; 
+                    const satelliteX = targetX - (canvas.width * SATELLITE_WIDTH_RATIO / 2); 
+                    const positionOccupied = satelliteBases.some(s => s.alive && Math.abs(s.x - satelliteX) < 1); 
+                    if (!positionOccupied) { 
+                        score -= COST_SATELLITE; 
+                        storeStockSatellite--; 
+                        const newSatellite = createSatelliteBase(basePositionsRatios[i], SATELLITE_Y_POS_RATIO); 
+                        satelliteBases.push(newSatellite); 
+                        placed = true; 
+                        
+                        // Track the purchase
+                        storeActions.push({
+                            action: "buy",
+                            item: "satellite",
+                            cost: COST_SATELLITE,
+                            timestamp: Date.now()
+                        });
+                        
+                        break; 
+                    } 
+                } 
+                if(placed) { 
+                    updateStoreUI(); 
+                    updateUI(); 
+                } 
+            } 
+        }
+
+        function buyShield() { 
+            if (score >= COST_SHIELD && storeStockShield > 0) { 
+                let shieldPlaced = false; 
+                for (let i = 0; i < bases.length; i++) { 
+                    if (bases[i].alive && (!baseShields[i] || !baseShields[i].alive)) { 
+                        score -= COST_SHIELD; 
+                        storeStockShield--; 
+                        baseShields[i] = { alive: true, strength: SHIELD_STRENGTH_START, flashTimer: 0 }; 
+                        shieldPlaced = true; 
+                        
+                        // Track the purchase
+                        storeActions.push({
+                            action: "buy",
+                            item: "baseShield",
+                            cost: COST_SHIELD,
+                            timestamp: Date.now()
+                        });
+                        
+                        break; 
+                    } 
+                } 
+                if(shieldPlaced) { 
+                    updateStoreUI(); 
+                    updateUI(); 
+                } 
+            } 
+        }
+
+        function buySatShield() { 
+            if (score >= COST_SAT_SHIELD && storeStockSatShield > 0) { 
+                let shieldPlaced = false; 
+                for (let i = 0; i < satelliteBases.length; i++) { 
+                    const sat = satelliteBases[i]; 
+                    if (sat.alive && (!sat.shield || !sat.shield.alive)) { 
+                        score -= COST_SAT_SHIELD; 
+                        storeStockSatShield--; 
+                        sat.shield = { alive: true, strength: SHIELD_STRENGTH_START, flashTimer: 0 }; 
+                        shieldPlaced = true; 
+                        
+                        // Track the purchase
+                        storeActions.push({
+                            action: "buy",
+                            item: "satelliteShield",
+                            cost: COST_SAT_SHIELD,
+                            timestamp: Date.now()
+                        });
+                        
+                        break; 
+                    } 
+                } 
+                if(shieldPlaced) { 
+                    updateStoreUI(); 
+                    updateUI(); 
+                } 
+            } 
+        }
+
+        function buySonicWave() { 
+            if (score >= COST_SONIC_WAVE && storeStockSonicWave > 0) { 
+                score -= COST_SONIC_WAVE; 
+                storeStockSonicWave--; 
+                inventorySonicWave++; 
+                
+                // Track the purchase
+                storeActions.push({
+                    action: "buy",
+                    item: "sonicWave",
+                    cost: COST_SONIC_WAVE,
+                    timestamp: Date.now()
+                });
+                
+                updateStoreUI(); 
+                updateSpecialWeaponsUI(); 
+            } 
+        }
+
+        function buyBomb() { 
+            if (score >= COST_BOMB && storeStockBomb > 0) { 
+                score -= COST_BOMB; 
+                storeStockBomb--; 
+                inventoryBomb++; 
+                
+                // Track the purchase
+                storeActions.push({
+                    action: "buy",
+                    item: "bomb",
+                    cost: COST_BOMB,
+                    timestamp: Date.now()
+                });
+                
+                updateStoreUI(); 
+                updateSpecialWeaponsUI(); 
+            } 
+        }
+
+        function buyFasterMissile() { 
+            if (playerMissileSpeedLevel < MAX_UPGRADE_LEVEL) { 
+                const cost = calculateUpgradeCost(COST_FASTER_MISSILE_BASE, playerMissileSpeedLevel); 
+                if (score >= cost) { 
+                    score -= cost; 
+                    playerMissileSpeedLevel++; 
+                    
+                    // Track the purchase
+                    storeActions.push({
+                        action: "upgrade",
+                        item: "missileSpeed",
+                        level: playerMissileSpeedLevel,
+                        cost: cost,
+                        timestamp: Date.now()
+                    });
+                    
+                    updateStoreUI(); 
+                } 
+            } 
+        }
+
+        function buyWiderExplosion() { 
+            if (explosionRadiusLevel < MAX_UPGRADE_LEVEL) { 
+                const cost = calculateUpgradeCost(COST_WIDER_EXPLOSION_BASE, explosionRadiusLevel); 
+                if (score >= cost) { 
+                    score -= cost; 
+                    explosionRadiusLevel++; 
+                    
+                    // Track the purchase
+                    storeActions.push({
+                        action: "upgrade",
+                        item: "explosionRadius",
+                        level: explosionRadiusLevel,
+                        cost: cost,
+                        timestamp: Date.now()
+                    });
+                    
+                    updateStoreUI(); 
+                } 
+            } 
+        }
+
         function buySonicWave10() {
             const cost10 = COST_SONIC_WAVE * 10;
             if (score >= cost10 && storeStockSonicWave >= 10) {
                 score -= cost10;
                 storeStockSonicWave -= 10;
                 inventorySonicWave += 10;
+                
+                // Track the purchase
+                storeActions.push({
+                    action: "buy",
+                    item: "sonicWave",
+                    quantity: 10,
+                    cost: cost10,
+                    timestamp: Date.now()
+                });
+                
                 updateStoreUI();
                 updateSpecialWeaponsUI();
             }
         }
+
         function buyBomb10() {
             const cost10 = COST_BOMB * 10;
             if (score >= cost10 && storeStockBomb >= 10) {
                 score -= cost10;
                 storeStockBomb -= 10;
                 inventoryBomb += 10;
+                
+                // Track the purchase
+                storeActions.push({
+                    action: "buy",
+                    item: "bomb",
+                    quantity: 10,
+                    cost: cost10,
+                    timestamp: Date.now()
+                });
+                
                 updateStoreUI();
                 updateSpecialWeaponsUI();
             }

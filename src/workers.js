@@ -1,6 +1,7 @@
 // Cloudflare Worker: src/worker.js
 // Handles POST requests with game data, calls OpenRouter via AI Gateway using fetch,
 // includes AI Gateway's own bearer token, and robustly parses LLM JSON response.
+// Added support for store action analysis.
 
 export default {
   /**
@@ -36,7 +37,11 @@ export default {
         return new Response(JSON.stringify({ error: 'Invalid game data format. Expected JSON object with a "clicks" array.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
       console.log(`Received game data: Difficulty=${gameData.difficulty}, Score=${gameData.score}, Wave=${gameData.wave}, Clicks=${gameData.clicks.length}`);
-
+      
+      // Log store actions if present
+      if (Array.isArray(gameData.storeActions)) {
+        console.log(`Store actions: ${gameData.storeActions.length} purchases/upgrades recorded`);
+      }
 
       // 4. Input Token Limit Handling (Pre-check & Summarization)
       const MAX_RAW_CLICKS_TO_INCLUDE = 500;
@@ -62,6 +67,26 @@ export default {
            clickSummaryText += "No clicks recorded. ";
       }
 
+      // Summarize store actions
+      let storeActionsSummary = "";
+      if (Array.isArray(gameData.storeActions) && gameData.storeActions.length > 0) {
+        // Count item types and total spent
+        const purchaseCounts = {};
+        let totalSpent = 0;
+        
+        gameData.storeActions.forEach(action => {
+          const itemType = action.item || 'unknown';
+          purchaseCounts[itemType] = (purchaseCounts[itemType] || 0) + (action.quantity || 1);
+          totalSpent += action.cost || 0;
+        });
+        
+        storeActionsSummary = `Store purchases: ${gameData.storeActions.length} total. `;
+        storeActionsSummary += `Items purchased: ${Object.entries(purchaseCounts)
+          .map(([item, count]) => `${item} (${count})`)
+          .join(', ')}. `;
+        storeActionsSummary += `Total spent: $${totalSpent}. `;
+      }
+
       // Select a sample of clicks
       let clickSampleForPrompt = gameData.clicks;
       let sampleInfo = `(${gameData.clicks.length} clicks)`;
@@ -73,6 +98,15 @@ export default {
           clickSampleForPrompt = [...firstHalf, ...lastHalf];
       }
 
+      // Select a sample of store actions (if any)
+      let storeActionsSample = [];
+      let storeActionsSampleInfo = "";
+      if (Array.isArray(gameData.storeActions) && gameData.storeActions.length > 0) {
+        storeActionsSample = gameData.storeActions.slice(0, 20); // Limit to 20 to save tokens
+        storeActionsSampleInfo = gameData.storeActions.length > 20 
+          ? `(First 20 of ${gameData.storeActions.length} store actions)`
+          : `(${gameData.storeActions.length} store actions)`;
+      }
 
       // 5. Construct the LLM Prompt
       const prompt = `
@@ -81,7 +115,7 @@ Analyze the provided Missile Command gameplay data. The game canvas is 800x600 p
 
 Based *only* on the data below, provide:
 1. A concise summary (2-4 sentences) of the player's likely playstyle or notable patterns.
-2. 3-5 specific, actionable pieces of advice for improvement, referencing the data where possible (e.g., weapon usage ratio, potential targeting habits).
+2. 3-5 specific, actionable pieces of advice for improvement, referencing the data where possible (e.g., weapon usage ratio, potential targeting habits, resource management).
 
 Respond ONLY in valid JSON format like this: {"summary": "Your concise summary here.", "advice": ["Actionable tip 1.", "Actionable tip 2.", ...]}
 
@@ -91,7 +125,9 @@ Game Session Data:
 - Wave Reached: ${gameData.wave || 1}
 - Game Stats: ${JSON.stringify(gameData.stats || {})}
 - Gameplay Click Summary: ${clickSummaryText}
+${storeActionsSummary ? `- Store Purchases: ${storeActionsSummary}` : ''}
 - Click Data Sample ${sampleInfo}: ${JSON.stringify(clickSampleForPrompt)}
+${storeActionsSample.length > 0 ? `- Store Actions Sample ${storeActionsSampleInfo}: ${JSON.stringify(storeActionsSample)}` : ''}
 
 Focus on clear, helpful analysis based *solely* on the provided data. Do not invent information. Ensure the output is valid JSON.
 `;
