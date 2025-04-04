@@ -117,6 +117,7 @@ Based *only* on the data below, provide:
 1. A concise summary (2-4 sentences) of the player's likely playstyle or notable patterns.
 2. 3-5 specific, actionable pieces of advice for improvement, referencing the data where possible (e.g., weapon usage ratio, potential targeting habits, resource management).
 
+Please keep your advice items brief and concise to ensure complete response delivery.
 Respond ONLY in valid JSON format like this: {"summary": "Your concise summary here.", "advice": ["Actionable tip 1.", "Actionable tip 2.", ...]}
 
 Game Session Data:
@@ -142,7 +143,7 @@ Focus on clear, helpful analysis based *solely* on the provided data. Do not inv
       const requestBody = {
         model: targetModel,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 400
+        max_tokens: 550
       };
 
       // 7. Execute Fetch Request to AI Gateway
