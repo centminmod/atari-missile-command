@@ -1360,6 +1360,11 @@
             else if (bonusChangeMsg !== "" && citiesLost > 0) { bonusChangeMsg += ` (Bonus Fire deactivated)`; }
             else if (bonusChangeMsg === "" && citiesLost > 0){ bonusChangeMsg = ""; }
             isBombArmed = false; canvas.style.cursor = 'crosshair'; bombControl.classList.remove('armed');
+            // remove any existing summary link before showing wave completion message
+            const summaryLink = document.getElementById('viewGameSummaryLink');
+            if (summaryLink) {
+                summaryLink.remove();
+            }
             showMessage(`WAVE ${currentWave + 1} CLEARED`, `Score Bonus: $${Math.round(bonusEarned * difficultyScoreMultiplier)}`, "", bonusChangeMsg);
             goToStoreButton.style.display = 'inline-block'; skipStoreButton.style.display = 'inline-block'; pauseButton.disabled = true; statsContainer.style.display = 'none'; updateUI();
         }
@@ -1477,7 +1482,8 @@
             const buttonContainer = messageBox.querySelector('.messageBoxButtons');
             let summaryLink = document.getElementById('viewGameSummaryLink');
 
-            if (localStorage.getItem('missileCommandLastGameData')) {
+            // Only show when game is over AND data exists
+            if (isGameOver && localStorage.getItem('missileCommandLastGameData')) {
                 // Data exists, so ensure link is present and configured
                 if (!summaryLink) {
                     // Create a button instead of a link
