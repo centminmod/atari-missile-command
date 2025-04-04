@@ -1877,7 +1877,7 @@
                 const gameData = JSON.parse(storedDataString);
 
                 // 2. Call your Cloudflare Worker
-                const workerUrl = 'https://missile-command-game-api.centminmod.com/api'; // Adjust to your actual worker URL
+                const workerUrl = '/api'; // Adjust to your actual worker URL
                 console.log(`Sending ${gameData.clicks?.length || 0} clicks to worker: ${workerUrl}`);
 
                 const response = await fetch(workerUrl, {
