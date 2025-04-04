@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- UPDATED: Improved viewport meta tag for better mobile handling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <meta name="description" content="Missile Command - Atari Classic Clone Game">
     <meta name="theme-color" content="#000000"/>
@@ -13,15 +14,41 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="manifest" href="manifest.json">
 
+    <!-- ADDED: Enhanced mobile meta tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Missile Cmd">
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <title>Missile Command</title>
     <link href="/css/fonts.css" rel="stylesheet">
     <style>
             /* --- General Body and Font --- */
             html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
             body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px; box-sizing: border-box; min-height: 100vh; background-color: #000; font-family: 'Press Start 2P', cursive; color: #00ff00; }
+
+            /* ADDED: Touch optimization */
+            html {
+                touch-action: manipulation; /* Optimizes touch actions */
+            }
+            
+            /* This ensures no selection is possible during gameplay */
+            #gameCanvas, #specialWeaponsUI, #controlsContainer {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            
+            /* Improve tap target sizes for mobile */
+            button, .weaponControl, .buyButton {
+                min-height: 34px; /* Minimum height recommended for touch targets */
+            }
+            
+            /* Additional mobile optimization */
+            * {
+                -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+            }
 
             /* --- Game Title --- */
             h1#mainTitle { color: #ff0000; font-size: clamp(20px, 5vw, 32px); margin-bottom: 15px; text-shadow: 2px 2px #ffff00; text-align: center; }
@@ -230,6 +257,124 @@
                  #leaderboardList .wave { flex-basis: 15%; }
                  #leaderboardList .score { flex-basis: 35%; }
                  /* --- MODIFICATION END --- */
+            }
+
+            /* ADDED: Landscape-specific adjustments */
+            @media (orientation: landscape) and (max-height: 500px) {
+                /* Make better use of horizontal space */
+                #canvasContainer {
+                    max-width: 90vh; /* Base max-width on viewport height instead */
+                    aspect-ratio: 800 / 600; /* Maintain aspect ratio */
+                    margin: 0 auto;
+                }
+                
+                body {
+                    padding: 5px;
+                    overflow: hidden; /* Prevent scrolling */
+                }
+                
+                h1#mainTitle {
+                    font-size: clamp(16px, 3vw, 24px);
+                    margin: 5px 0;
+                }
+                
+                /* Optimize UI layout for landscape */
+                #uiContainer {
+                    padding: 4px 0;
+                    flex-wrap: nowrap;
+                    justify-content: space-between;
+                    gap: 5px;
+                }
+                
+                #score, #highScore, #wave, #citiesLeft, #multiplier {
+                    min-width: auto;
+                    font-size: clamp(8px, 2vw, 10px);
+                }
+                
+                /* Reposition special weapons UI for landscape */
+                #specialWeaponsUI {
+                    position: absolute;
+                    right: 10px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    flex-direction: column;
+                    background-color: rgba(34, 34, 34, 0.7);
+                    z-index: 10;
+                }
+                
+                /* Adjust control buttons position */
+                #controlsContainer {
+                    position: absolute;
+                    left: 10px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    flex-direction: column;
+                    gap: 8px;
+                    z-index: 10;
+                }
+                
+                /* Adjust message box to be more compact */
+                #messageBox {
+                    max-width: 85vh;
+                    max-height: 80vh;
+                    padding: 10px;
+                    top: 50%;
+                }
+                
+                /* Adjust store modal for landscape */
+                #storeModal {
+                    max-width: 85vh;
+                    max-height: 90vh;
+                }
+                
+                #storeItemsContainer {
+                    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                    gap: 6px;
+                }
+                
+                .storeItem {
+                    padding: 6px;
+                    min-height: 0;
+                }
+                
+                .buyButton {
+                    padding: 4px 8px;
+                    font-size: clamp(9px, 2vw, 11px);
+                }
+            }
+
+            /* Specific optimizations for very small landscape screens */
+            @media (orientation: landscape) and (max-height: 350px) {
+                #canvasContainer {
+                    max-width: 85vh;
+                }
+                
+                h1#mainTitle {
+                    font-size: clamp(14px, 2.5vw, 18px);
+                    margin: 2px 0;
+                }
+                
+                #score, #highScore, #wave, #citiesLeft, #multiplier {
+                    font-size: 8px;
+                }
+                
+                button {
+                    padding: 4px 8px;
+                    font-size: clamp(9px, 2vw, 12px);
+                }
+                
+                #messageBox h2 {
+                    font-size: clamp(16px, 4vw, 24px);
+                }
+                
+                #messageBox p {
+                    font-size: clamp(9px, 2.5vw, 10px);
+                }
+
+                /* Make side UI elements more compact */
+                #specialWeaponsUI, #controlsContainer {
+                    transform: scale(0.8) translateY(-60%);
+                }
             }
         </style>
         <script>
@@ -626,6 +771,11 @@
         let waveTimer = 0;
         let waveEnemiesSpawned = 0;
         let waveEnemiesRequired = 0;
+        // ADDED: Variables for performance tracking
+        let lastFrameTime = 0;
+        let frameCount = 0;
+        let frameTimes = [];
+        const FRAME_SAMPLE_SIZE = 60; // Number of frames to sample for performance
 
         // --- Utility Functions ---
         function distance(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return Math.sqrt(dx * dx + dy * dy); }
@@ -1345,7 +1495,10 @@
                 console.log("startGame: Initializing game objects..."); cities = []; const cityWidth = canvas.width * CITY_WIDTH_RATIO; const citySpacingRatio = (INTERNAL_WIDTH - 6 * (INTERNAL_WIDTH * CITY_WIDTH_RATIO)) / (7 * INTERNAL_WIDTH); const cityWidthRatio = CITY_WIDTH_RATIO; for (let i = 0; i < 3; i++) cities.push(createCity(citySpacingRatio * (i + 1) + cityWidthRatio * i)); for (let i = 0; i < 3; i++) cities.push(createCity(citySpacingRatio * (i + 4) + cityWidthRatio * (i + 3))); cities.forEach(c => c.alive = true); bases = []; const basePositionsRatios = [0.15, 0.5, 0.85]; bases.push(createBase(basePositionsRatios[0])); bases.push(createBase(basePositionsRatios[1])); bases.push(createBase(basePositionsRatios[2])); bases.forEach(b => b.alive = true); console.log("startGame: Game objects initialized");
                 console.log("startGame: Calling initWave(0)..."); initWave(0); console.log("startGame: initWave(0) complete");
                 restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = false;
-                if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } console.log("startGame: Calling gameLoop()..."); gameLoop(); console.log("startGame: Exiting");
+                if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } console.log("startGame: Calling gameLoop()..."); 
+                // Update to use new startGameLoop function
+                startGameLoop(); 
+                console.log("startGame: Exiting");
             } catch (error) { console.error("Error during startGame:", error); showMessage("STARTUP ERROR", `Failed to start game: ${error.message}`, "Check console for details."); isGameOver = true; }
         }
         function nextWave() {
@@ -1373,11 +1526,11 @@
             showMessage(`WAVE ${currentWave + 1} CLEARED`, `Score Bonus: $${Math.round(bonusEarned * difficultyScoreMultiplier)}`, "", bonusChangeMsg);
             goToStoreButton.style.display = 'inline-block'; skipStoreButton.style.display = 'inline-block'; pauseButton.disabled = true; statsContainer.style.display = 'none'; updateUI();
         }
-        function proceedToNextWave() { storeModal.style.display = 'none'; hideMessage(); initWave(currentWave + 1); transitioningWave = false; pauseButton.disabled = false; if (!isPaused && !gameLoopId) { gameLoop(); } }
+        function proceedToNextWave() { storeModal.style.display = 'none'; hideMessage(); initWave(currentWave + 1); transitioningWave = false; pauseButton.disabled = false; if (!isPaused && !gameLoopId) { startGameLoop(); } }
         function calculateBonus() { let bonus = 0; cities.forEach(city => { if (city.alive) bonus += POINTS_PER_CITY; }); bases.forEach(base => { if (base.alive) bonus += base.ammo * POINTS_PER_AMMO; }); satelliteBases.forEach(sat => { if (sat.alive) bonus += sat.ammo * POINTS_PER_AMMO; }); return bonus; }
         function checkGameOverConditions() { if (isGameOver || !gameHasStarted) return; const basesRemaining = bases.filter(b => b.alive).length; const citiesRemaining = cities.filter(c => c.alive).length; const satellitesRemaining = satelliteBases.filter(s => s.alive).length; if (citiesRemaining === 0 || (basesRemaining === 0 && satellitesRemaining === 0)) { gameOver(); } }
 
-        // --- MODIFIED: gameOver Function (Incorporates submission UI) ---
+        // --- Game Over Function (Incorporates submission UI) ---
         function gameOver() {
             if (isGameOver) return; // Prevent running multiple times
             console.log("Game Over triggered.");
@@ -1413,7 +1566,7 @@
                         },
                         // The raw click data
                         clicks: gameClickData,
-                        // NEW: Add store actions
+                        // Add store actions
                         storeActions: storeActions
                     };
 
@@ -1542,7 +1695,7 @@
 
         // --- Pause/Resume Logic ---
         function pauseGame() { if (isGameOver || transitioningWave || !gameHasStarted || storeModal.style.display === 'block' || messageBox.style.display === 'block') return; isPaused = true; pauseOverlay.style.display = 'flex'; pauseButton.textContent = 'Resume'; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } }
-        function resumeGame() { if (isGameOver || transitioningWave || !isPaused) return; isPaused = false; pauseOverlay.style.display = 'none'; pauseButton.textContent = 'Pause'; if (!gameLoopId) { gameLoop(); } }
+        function resumeGame() { if (isGameOver || transitioningWave || !isPaused) return; isPaused = false; pauseOverlay.style.display = 'none'; pauseButton.textContent = 'Pause'; if (!gameLoopId) { startGameLoop(); } }
         function togglePause() { if (isPaused) { resumeGame(); } else { pauseGame(); } isBombArmed = false; canvas.style.cursor = 'crosshair'; bombControl.classList.remove('armed'); updateSpecialWeaponsUI(); }
 
         // --- Screenshot Logic ---
@@ -1990,18 +2143,45 @@
             if (bonusMissileCount > 0) { bonusIndicator.textContent = `BONUS FIRE +${bonusMissileCount}!`; }
         }
 
-        // --- Game Loop ---
-        function gameLoop() {
-            if (isPaused) { gameLoopId = null; return; }
+        // --- MODIFIED: Game Loop with Performance Monitoring ---
+        function gameLoop(timestamp) {
+            if (!lastFrameTime) {
+                lastFrameTime = timestamp;
+            }
+            
+            // Calculate frame time for performance monitoring
+            const frameTime = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+            
+            // Monitor performance (optional)
+            if (frameCount < FRAME_SAMPLE_SIZE) {
+                frameTimes.push(frameTime);
+                frameCount++;
+            } else if (frameCount === FRAME_SAMPLE_SIZE) {
+                const avgFrameTime = frameTimes.reduce((sum, time) => sum + time, 0) / FRAME_SAMPLE_SIZE;
+                console.log(`Average frame time: ${avgFrameTime.toFixed(2)}ms (${(1000/avgFrameTime).toFixed(2)} FPS)`);
+                frameCount++; // Only log once
+            }
+
+            if (isPaused) { 
+                gameLoopId = null; 
+                return; 
+            }
+            
             checkGameOverConditions();
             if (isGameOver && explosions.length === 0 && planeBombs.length === 0 && !activeSonicWave && !transitioningWave) {
                 console.log("gameLoop: Stopping loop (Game Over condition met)");
                 gameLoopId = null;
                 return;
             }
+            
+            // Clear only what's necessary - for better performance on mobile
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Only draw what's visible on screen
             drawBackground();
             drawGameObjects();
+            
             if (!isGameOver && !transitioningWave) {
                 updateGameObjects();
                 updateUI();
@@ -2011,13 +2191,17 @@
                 // Only update explosions and bombs if game is over but effects are still active
                 explosions.forEach(explosion => explosion.update());
                 planeBombs.forEach(bomb => bomb.update());
-                 if (activeSonicWave && activeSonicWave.alive) {
+                if (activeSonicWave && activeSonicWave.alive) {
                     activeSonicWave.y -= SONIC_WAVE_SPEED;
-                     if (activeSonicWave.y - SONIC_WAVE_HEIGHT <= 0) { activeSonicWave.alive = false; activeSonicWave = null; }
-                 }
+                    if (activeSonicWave.y - SONIC_WAVE_HEIGHT <= 0) { 
+                        activeSonicWave.alive = false; 
+                        activeSonicWave = null; 
+                    }
+                }
                 explosions = explosions.filter(explosion => explosion.alive);
                 planeBombs = planeBombs.filter(bomb => bomb.alive);
             }
+            
             // Request next frame if game isn't over OR if there are still active effects
             if (!isGameOver || explosions.length > 0 || planeBombs.length > 0 || activeSonicWave) {
                 gameLoopId = requestAnimationFrame(gameLoop);
@@ -2025,6 +2209,133 @@
                 console.log("gameLoop: Stopping loop (End condition met)");
                 gameLoopId = null; // Ensure loop stops
             }
+        }
+
+        // --- ADDED: Function to start game loop ---
+        function startGameLoop() {
+            if (gameLoopId) {
+                cancelAnimationFrame(gameLoopId);
+            }
+            frameCount = 0;
+            frameTimes = [];
+            lastFrameTime = 0;
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        // --- ADDED: Function to optimize canvas for orientation ---
+        function optimizeCanvasForOrientation() {
+            const isLandscape = window.innerWidth > window.innerHeight;
+            
+            // Keep internal resolution the same to avoid breaking game logic
+            canvas.width = INTERNAL_WIDTH;
+            canvas.height = INTERNAL_HEIGHT;
+            
+            // Adjust canvas container's max-width for better landscape fitting
+            if (isLandscape && window.innerHeight < 500) {
+                // In landscape mode on small screens, size based on viewport height
+                canvasContainer.style.maxWidth = `${Math.min(90, (window.innerHeight / window.innerWidth) * 100)}vh`;
+            } else {
+                // Default sizing
+                canvasContainer.style.maxWidth = "800px";
+            }
+            
+            // Force the canvas aspect ratio to remain constant
+            canvasContainer.style.aspectRatio = `${INTERNAL_WIDTH} / ${INTERNAL_HEIGHT}`;
+            
+            // Update all UI positions
+            updateUI();
+            updateSpecialWeaponsUI();
+        }
+
+        // --- Function to standardize input coordinates ---
+        function getCanvasCoordinates(canvas, event) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            // Handle both mouse and touch events
+            let clientX, clientY;
+            
+            if (event.type.startsWith('touch')) {
+                // Prevent default to avoid scrolling/zooming on mobile
+                event.preventDefault();
+                // Use the first touch point
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // --- Generic handler function that processes clicks/touches ---
+        function handleCanvasInput(event) {
+            if (isGameOver || isPaused || transitioningWave || !gameHasStarted) return;
+            
+            const coords = getCanvasCoordinates(canvas, event);
+            const clickX = coords.x;
+            const clickY = coords.y;
+            const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
+
+            // Record Click Data for AI analysis
+            recordGameClick(clickX, clickY, isBombArmed ? 'bomb' : 'missile');
+
+            if (clickY < 20 || clickY > groundY) return; // Ignore clicks too high or low
+            if (isBombArmed) { deployBomb(clickX, clickY); return; } // Deploy bomb if armed
+
+            // Find nearest base/satellite with ammo
+            let nearestSource = null; 
+            let minDistance = Infinity;
+            const potentialSources = [ 
+                ...bases.filter(b => b.alive && b.ammo > 0), 
+                ...satelliteBases.filter(s => s.alive && s.ammo > 0) 
+            ];
+            
+            potentialSources.forEach(source => {
+                const sourceCenterX = source.x + source.width / 2;
+                const sourceTopY = source.isSatellite ? source.y + source.height : source.y;
+                const d = distance(clickX, clickY, sourceCenterX, sourceTopY);
+                if (d < minDistance) { 
+                    minDistance = d; 
+                    nearestSource = source; 
+                }
+            });
+
+            // Fire missile(s) from the nearest source
+            if (nearestSource) {
+                const startX = nearestSource.x + nearestSource.width / 2;
+                const startY = nearestSource.isSatellite ? nearestSource.y + nearestSource.height : nearestSource.y;
+                const totalMissilesToFire = 1 + bonusMissileCount; // Base + bonus
+                const actualMissilesToFire = Math.min(totalMissilesToFire, nearestSource.ammo);
+
+                if (actualMissilesToFire > 0) {
+                    nearestSource.ammo -= actualMissilesToFire;
+                    for (let i = 0; i < actualMissilesToFire; i++) {
+                        const currentOffset = (actualMissilesToFire > 1) ? 
+                            (i - (actualMissilesToFire - 1) / 2) * BONUS_FIRE_SPREAD : 0;
+                        playerMissiles.push(createPlayerMissile(
+                            startX + currentOffset, startY, clickX, clickY
+                        ));
+                    }
+                    updateUI(); // Update ammo display on base
+                }
+            }
+        }
+
+        // --- NEW: Function to Record Game Click ---
+        function recordGameClick(clickX, clickY, armedWeapon) {
+            // Record click data for AI analysis
+            gameClickData.push({
+                x: Math.round(clickX),
+                y: Math.round(clickY),
+                timestamp: Date.now(),
+                armedWeapon: armedWeapon || 'missile'
+            });
         }
 
         // --- NEW: Function to Fetch and Display Leaderboard ---
@@ -2254,17 +2565,6 @@
             }
         }
 
-        // --- Click Recording Function for Canvas Event Listener ---
-        function recordGameClick(clickX, clickY, armedWeapon) {
-            // Record click data for AI analysis
-            gameClickData.push({
-                x: Math.round(clickX),
-                y: Math.round(clickY),
-                timestamp: Date.now(),
-                armedWeapon: armedWeapon || 'missile'
-            });
-        }
-
         // --- NEW: Function to Submit Score ---
         async function submitHighScore() {
             const name = playerNameInput.value.trim().toUpperCase();
@@ -2325,54 +2625,28 @@
         }
 
         // --- Event Listeners ---
-        canvas.addEventListener('click', (event) => {
-            if (isGameOver || isPaused || transitioningWave || !gameHasStarted) return;
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const clickX = (event.clientX - rect.left) * scaleX;
-            const clickY = (event.clientY - rect.top) * scaleY;
-            const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
+        // MODIFIED: Replace click listener with handleCanvasInput
+        canvas.addEventListener('click', handleCanvasInput);
 
-            // Record Click Data for AI analysis
-            gameClickData.push({
-                x: Math.round(clickX),
-                y: Math.round(clickY),
-                timestamp: Date.now(), 
-                armedWeapon: isBombArmed ? 'bomb' : 'missile'
-            });
+        // ADDED: Touch event listeners
+        canvas.addEventListener('touchstart', handleCanvasInput, { passive: false });
+        canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+        canvas.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
 
-            if (clickY < 20 || clickY > groundY) return; // Ignore clicks too high or low
-            if (isBombArmed) { deployBomb(clickX, clickY); return; } // Deploy bomb if armed
-
-            // Find nearest base/satellite with ammo
-            let nearestSource = null; let minDistance = Infinity;
-            const potentialSources = [ ...bases.filter(b => b.alive && b.ammo > 0), ...satelliteBases.filter(s => s.alive && s.ammo > 0) ];
-            potentialSources.forEach(source => {
-                const sourceCenterX = source.x + source.width / 2;
-                const sourceTopY = source.isSatellite ? source.y + source.height : source.y; // Use top of base, bottom of satellite for launch point
-                const d = distance(clickX, clickY, sourceCenterX, sourceTopY);
-                if (d < minDistance) { minDistance = d; nearestSource = source; }
-            });
-
-            // Fire missile(s) from the nearest source
-            if (nearestSource) {
-                const startX = nearestSource.x + nearestSource.width / 2;
-                const startY = nearestSource.isSatellite ? nearestSource.y + nearestSource.height : nearestSource.y;
-                const totalMissilesToFire = 1 + bonusMissileCount; // Base + bonus
-                const actualMissilesToFire = Math.min(totalMissilesToFire, nearestSource.ammo); // Don't fire more than available
-
-                if (actualMissilesToFire > 0) {
-                    nearestSource.ammo -= actualMissilesToFire;
-                    for (let i = 0; i < actualMissilesToFire; i++) {
-                        // Apply spread if firing multiple bonus missiles
-                        const currentOffset = (actualMissilesToFire > 1) ? (i - (actualMissilesToFire - 1) / 2) * BONUS_FIRE_SPREAD : 0;
-                        playerMissiles.push(createPlayerMissile(startX + currentOffset, startY, clickX, clickY));
-                    }
-                    updateUI(); // Update ammo display on base
-                }
+        // ADDED: Enhance special weapon controls for touch
+        sonicWaveControl.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            if (!sonicWaveControl.classList.contains('disabled')) {
+                triggerSonicWave();
             }
-        });
+        }, { passive: false });
+
+        bombControl.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            if (!bombControl.classList.contains('disabled')) {
+                armBomb();
+            }
+        }, { passive: false });
 
         // --- [ADDED] Event Listener for View More Leaderboard ---
         leaderboardViewMoreLink.addEventListener('click', (event) => {
@@ -2471,11 +2745,26 @@
             }
         });
 
+        // --- ADDED: Window resize and orientation change listeners ---
+        window.addEventListener('resize', optimizeCanvasForOrientation);
+        window.addEventListener('orientationchange', () => {
+            // Small delay to ensure orientation has fully changed
+            setTimeout(optimizeCanvasForOrientation, 100);
+        });
+
+        // --- ADDED: Prevent default pinch-zoom gestures ---
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
         // --- MODIFIED: window.onload ---
         window.onload = () => {
             // Set canvas dimensions
             canvas.width = INTERNAL_WIDTH; canvas.height = INTERNAL_HEIGHT;
 
+            // ADDED: Optimize for current orientation on load
+            optimizeCanvasForOrientation();
+            
             // Load high score
             highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0');
             startHighScoreDisplay.textContent = `High Score: $${highScore}`;
