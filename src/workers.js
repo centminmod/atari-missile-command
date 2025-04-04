@@ -142,7 +142,7 @@ Focus on clear, helpful analysis based *solely* on the provided data. Do not inv
       const requestBody = {
         model: targetModel,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 350
+        max_tokens: 400
       };
 
       // 7. Execute Fetch Request to AI Gateway
@@ -154,7 +154,9 @@ Focus on clear, helpful analysis based *solely* on the provided data. Do not inv
              headers: {
                  'Content-Type': 'application/json',
                  'Authorization': `Bearer ${env.OPENROUTER_TOKEN}`,
-                 'cf-aig-authorization': `Bearer ${env.CF_GATEWAY_AI_BEARER_TOKEN}`
+                 'cf-aig-authorization': `Bearer ${env.CF_GATEWAY_AI_BEARER_TOKEN}`,
+                 'HTTP-Referer': 'https://missile-command-game.centminmod.com/',
+                 'X-Title': 'Missile Command AI Gameplay Analysis'
              },
              body: JSON.stringify(requestBody)
          });
