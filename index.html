@@ -590,6 +590,7 @@
         let statsAccuracyBonusHits = 0;
         let planes = [];
         let planeBombs = [];
+        let gameClickData = [];
         const waveDefinitions = defineWaves();
         let currentWaveConfig = {};
         let waveTimer = 0;
@@ -1307,7 +1308,7 @@
         function startGame() {
             try {
                 console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding...");
-                score = 0; gameTotalScore = 0; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
+                score = 0; gameTotalScore = 0; gameClickData = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
                 storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
                 inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null; satelliteBases = []; baseShields = [null, null, null]; planes = []; planeBombs = []; incomingMissiles = []; playerMissiles = []; explosions = []; statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0; playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; consecutiveIntercepts = 0; scoreMultiplier = 1.0; highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0'); console.log("startGame: State variables reset");
                 console.log("startGame: Setting up UI..."); startMenuContainer.style.display = 'none'; canvasContainer.style.display = 'block'; canvas.style.display = 'block'; uiContainer.style.display = 'flex'; controlsContainer.style.display = 'flex'; specialWeaponsUIDiv.style.display = 'flex'; screenshotButton.style.display = 'inline-block'; hideMessage(); statsContainer.style.display = 'none'; pauseOverlay.style.display = 'none'; canvas.style.cursor = 'crosshair'; console.log("startGame: UI setup complete");
@@ -1344,14 +1345,68 @@
         // --- MODIFIED: gameOver Function (Incorporates submission UI) ---
         function gameOver() {
             if (isGameOver) return; // Prevent running multiple times
-            isGameOver = true; gameHasStarted = false; transitioningWave = false; isPaused = false; bonusMissileCount = 0; baseShields = [null, null, null]; isBombArmed = false; activeSonicWave = null; canvas.style.cursor = 'crosshair'; planes = []; planeBombs = [];
-            let newHighScore = false;
-            // Use gameTotalScore for high score comparison and storage
-            if (gameTotalScore > highScore) {
-                 highScore = gameTotalScore;
-                 localStorage.setItem('missileCommandHighScore', highScore.toString());
-                 newHighScore = true;
+            console.log("Game Over triggered.");
+            isGameOver = true;
+            gameHasStarted = false; transitioningWave = false; isPaused = false;
+            bonusMissileCount = 0; baseShields = [null, null, null];
+            isBombArmed = false; activeSonicWave = null;
+            canvas.style.cursor = 'default'; // Change cursor back from crosshair/cell
+            planes = []; planeBombs = []; // Clear remaining enemies
+
+            // --- Save Click Data to Local Storage ---
+            const fixedStorageKey = 'missileCommandLastGameData';
+            if (gameClickData && gameClickData.length > 0) {
+                try {
+                    const difficulty = selectedDifficultyName || 'Unknown';
+                    const timestamp = new Date().toISOString();
+                    const dataToStore = {
+                        // Metadata about the game session
+                        difficulty: difficulty,
+                        timestamp: timestamp,
+                        score: gameTotalScore, // Use the final total score
+                        wave: currentWave + 1, // Record wave reached
+                        // Include game stats for analysis context
+                        stats: {
+                            missilesFired: statsMissilesFired,
+                            enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
+                            planeBombsDestroyed: statsPlaneBombsDestroyed,
+                            planesDestroyed: statsPlanesDestroyed,
+                            citiesLost: statsCitiesLost,
+                            basesLost: statsBasesLost,
+                            accuracyBonusHits: statsAccuracyBonusHits,
+                            // Add any other relevant stats you track
+                        },
+                        // The raw click data
+                        clicks: gameClickData
+                    };
+
+                    localStorage.setItem(fixedStorageKey, JSON.stringify(dataToStore));
+                    console.log(`Saved game data (${gameClickData.length} clicks) to local storage key: ${fixedStorageKey}`);
+
+                } catch (e) {
+                    console.error("Failed to save game data to local storage:", e);
+                    // Clear potentially partial data if saving failed
+                    localStorage.removeItem(fixedStorageKey);
+                } finally {
+                    // Clear the runtime array regardless of save success for the next game
+                    gameClickData = [];
+                }
+            } else {
+                // If no clicks were recorded, ensure no old data persists for this key
+                localStorage.removeItem(fixedStorageKey);
+                console.log("No click data recorded for this game. Cleared any old saved data.");
             }
+            // --- END NEW SAVE ---
+
+            // High score check (using gameTotalScore)
+            let newHighScore = false;
+            if (gameTotalScore > highScore) {
+                highScore = gameTotalScore;
+                localStorage.setItem('missileCommandHighScore', highScore.toString());
+                newHighScore = true;
+            }
+
+            // Determine game over reason
             const basesRemaining = bases.filter(b => b.alive).length;
             const citiesRemaining = cities.filter(c => c.alive).length;
             const satellitesRemaining = satelliteBases.filter(s => s.alive).length;
@@ -1359,10 +1414,11 @@
             if (citiesRemaining === 0) { reason = "All cities destroyed!"; }
             else if (basesRemaining === 0 && satellitesRemaining === 0) { reason = "All launch sites destroyed!"; }
             else { reason = "Targets eliminated!"; }
+            
+            // Calculate and display stats
             const accuracy = statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "N/A";
 
-            statsContainer.innerHTML = ''; // Clear existing content
-            // Generate stats array
+            statsContainer.innerHTML = ''; // Clear previous stats
             const stats = [
                 `Wave Reached: ${currentWave + 1}`,
                 `Accuracy Bonuses: ${statsAccuracyBonusHits}`,
@@ -1373,41 +1429,87 @@
                 `Accuracy: ${accuracy}%`,
                 `Bases Lost: ${statsBasesLost}`,
                 `Enemy Missiles Down: ${statsEnemyMissilesDestroyed}`,
-                `Final Score: $${gameTotalScore}`, // Use gameTotalScore
+                `Final Score: $${gameTotalScore}`,
                 `Plane Bombs Down: ${statsPlaneBombsDestroyed}`,
                 newHighScore ? `NEW HIGH SCORE!` : `High Score: $${highScore}`
             ];
-            stats.forEach(statText => { const span = document.createElement('span'); span.textContent = statText; statsContainer.appendChild(span); });
+            stats.forEach(statText => { 
+                const span = document.createElement('span'); 
+                span.textContent = statText; 
+                statsContainer.appendChild(span); 
+            });
 
+            // Show the main game over message
             const title = newHighScore ? "GAME OVER - NEW HIGH SCORE!" : "GAME OVER";
-            showMessage(title, `Total Score: $${gameTotalScore}`, reason); // Use gameTotalScore
+            showMessage(title, `Total Score: $${gameTotalScore}`, reason);
             messageBonusText.textContent = "";
             statsContainer.style.display = 'grid';
             goToStoreButton.style.display = 'none'; skipStoreButton.style.display = 'none';
 
-            // Show Score Submission if score > 0
-            if (gameTotalScore > 0) {
-                scoreSubmissionDiv.style.display = 'flex'; // Show the submission section
-                // playerNameInput.value = localStorage.getItem('lastPlayerName') || ''; // Pre-fill last name
-                playerNameInput.value = 'ACE';
-                submissionStatus.textContent = ''; // Clear previous status
-                submitScoreButton.disabled = false; // Ensure button is enabled
-                playerNameInput.focus(); // Focus the input field
+            // --- [NEW/MODIFIED] Manage AI Summary Link ---
+            const buttonContainer = messageBox.querySelector('.messageBoxButtons');
+            let summaryLink = document.getElementById('viewGameSummaryLink');
+
+            if (localStorage.getItem('missileCommandLastGameData')) {
+                // Data exists, so ensure link is present and configured
+                if (!summaryLink) {
+                    // Link doesn't exist, create it
+                    summaryLink = document.createElement('a');
+                    summaryLink.href = '#';
+                    summaryLink.id = 'viewGameSummaryLink';
+                    summaryLink.style.display = 'block'; // Make it visible
+                    summaryLink.style.marginTop = '10px'; // Add spacing
+                    summaryLink.style.color = '#00ffff'; // Match other link styles
+                    summaryLink.style.textDecoration = 'underline';
+                    summaryLink.addEventListener('click', handleViewSummaryClick); // Attach handler
+
+                    // Append it to the button container (ideally before restart)
+                    if (buttonContainer) {
+                        const restartBtn = buttonContainer.querySelector('#restartButton');
+                        if (restartBtn) {
+                            buttonContainer.insertBefore(summaryLink, restartBtn);
+                        } else {
+                            buttonContainer.appendChild(summaryLink); // Fallback append
+                        }
+                    }
+                }
+                
+                // Ensure text and state are correct (in case it was left in 'Analyzing...' state)
+                summaryLink.textContent = 'View AI Game Summary';
+                summaryLink.style.display = 'block';
+                summaryLink.style.pointerEvents = 'auto';
+                summaryLink.style.color = '#00ffff';
             } else {
-                 scoreSubmissionDiv.style.display = 'none'; // Hide if score is 0
+                // No data saved, ensure link is removed if it exists
+                if (summaryLink) {
+                    summaryLink.remove();
+                }
+            }
+            // --- END LINK MANAGEMENT ---
+
+            // Show/Hide Score Submission Form
+            if (gameTotalScore > 0) {
+                scoreSubmissionDiv.style.display = 'flex';
+                playerNameInput.value = 'ACE';
+                submissionStatus.textContent = '';
+                submitScoreButton.disabled = false;
+            } else {
+                scoreSubmissionDiv.style.display = 'none';
             }
 
-            // Ensure restart button is visible in the message box buttons area
-            // Note: It's already inside .messageBoxButtons in the HTML
-            restartButton.style.display = 'inline-block';
+            // Display restart button in message box, disable pause button
+            const messageRestartButton = messageBox.querySelector('#restartButton');
+            if (messageRestartButton) messageRestartButton.style.display = 'inline-block';
             pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = true;
-            pauseOverlay.style.display = 'none'; bonusIndicator.style.display = 'none'; storeModal.style.display = 'none'; specialWeaponsUIDiv.style.display = 'none';
+            pauseOverlay.style.display = 'none'; bonusIndicator.style.display = 'none'; storeModal.style.display = 'none';
+            specialWeaponsUIDiv.style.display = 'none';
 
             // Stop game loop if running
             if (gameLoopId) {
                 cancelAnimationFrame(gameLoopId);
                 gameLoopId = null;
             }
+            console.log("Game Over processing complete.");
         }
 
         // --- Pause/Resume Logic ---
@@ -1750,6 +1852,139 @@
             }
         }
 
+        // --- Function to Handle AI Summary Request ---
+        async function handleViewSummaryClick(event) {
+            event.preventDefault(); // Prevent default link navigation behaviour
+            const summaryLink = event.target; // Get the link element that was clicked
+            const originalText = summaryLink.textContent; // Store original text
+            summaryLink.textContent = 'Analyzing... Please Wait'; // Provide user feedback
+            summaryLink.style.pointerEvents = 'none'; // Disable link during processing
+            summaryLink.style.color = '#ffff00'; // Change color to indicate processing
+
+            // Timeout controller for the fetch request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+                console.log("Fetch aborted due to timeout.");
+            }, 20000); // 20-second timeout for the analysis request
+
+            try {
+                // 1. Retrieve data from Local Storage
+                const storedDataString = localStorage.getItem('missileCommandLastGameData');
+                if (!storedDataString) {
+                    throw new Error("No game data found in local storage. Cannot analyze.");
+                }
+                const gameData = JSON.parse(storedDataString);
+
+                // 2. Call your Cloudflare Worker
+                const workerUrl = 'https://missile-command-game-api.centminmod.com/api'; // Adjust to your actual worker URL
+                console.log(`Sending ${gameData.clicks?.length || 0} clicks to worker: ${workerUrl}`);
+
+                const response = await fetch(workerUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(gameData), // Send the entire game data object
+                    signal: controller.signal // Link the AbortController signal
+                });
+
+                // Clear the timeout timer as the fetch completed (successfully or not)
+                clearTimeout(timeoutId);
+
+                // 3. Handle Worker Response
+                if (!response.ok) {
+                    // Handle HTTP errors from the Worker (e.g., 4xx, 5xx)
+                    const errorText = await response.text();
+                    let detail = `Status: ${response.status}.`;
+                    try { // Try to parse error JSON from worker
+                        const errorJson = JSON.parse(errorText);
+                        detail += ` Message: ${errorJson.error || 'Unknown worker error'}`;
+                    } catch {
+                        detail += ` Response: ${errorText || '(empty)'}`;
+                    }
+                    console.error("Worker request failed:", detail);
+                    throw new Error(`Analysis request failed. ${detail}`);
+                }
+
+                // Parse the successful JSON response from the Worker
+                const analysisResult = await response.json();
+                console.log("Received analysis:", analysisResult);
+
+                // 4. Display the Analysis Result
+                messageTitle.textContent = "AI Gameplay Analysis";
+                messageText.innerHTML = analysisResult.summary || "Analysis complete, but no summary provided.";
+                
+                // Format advice as an unordered list if available
+                if (analysisResult.advice && analysisResult.advice.length > 0) {
+                    let adviceHtml = "<ul>";
+                    analysisResult.advice.forEach(tip => {
+                        adviceHtml += `<li>${tip}</li>`;
+                    });
+                    adviceHtml += "</ul>";
+                    messageSubText.innerHTML = adviceHtml;
+                    messageSubText.style.display = 'block';
+                } else {
+                    messageSubText.innerHTML = "";
+                    messageSubText.style.display = 'none';
+                }
+                
+                messageBonusText.textContent = ""; // Clear bonus text area
+                messageBonusText.style.display = 'none';
+                statsContainer.style.display = 'none'; // Hide game stats
+                scoreSubmissionDiv.style.display = 'none'; // Hide score submission
+
+                // Hide store buttons
+                goToStoreButton.style.display = 'none';
+                skipStoreButton.style.display = 'none';
+
+                // Ensure the message box is visible
+                messageBox.style.display = 'block';
+
+            } catch (error) {
+                // Catch errors from local storage access, fetch (network, timeout), or response handling
+                clearTimeout(timeoutId); // Ensure timeout is cleared on error
+                console.error("Error in handleViewSummaryClick:", error);
+
+                // Display Error in Message Box
+                messageTitle.textContent = "Analysis Error";
+                if (error.name === 'AbortError') {
+                    messageText.innerHTML = "The analysis request timed out. The AI might be busy or the request too large. Please try again later.";
+                    messageSubText.innerHTML = "";
+                } else {
+                    messageText.innerHTML = "Could not retrieve or process game analysis.";
+                    // Provide specific error message for debugging
+                    messageSubText.innerHTML = `Error: ${error.message}`;
+                }
+                messageSubText.style.display = messageSubText.innerHTML ? 'block' : 'none';
+                messageBonusText.textContent = "";
+                messageBonusText.style.display = 'none';
+                statsContainer.style.display = 'none';
+                scoreSubmissionDiv.style.display = 'none';
+                goToStoreButton.style.display = 'none';
+                skipStoreButton.style.display = 'none';
+
+                messageBox.style.display = 'block'; // Ensure message box shows error
+
+            } finally {
+                // Always reset the link state, whether success or error
+                summaryLink.textContent = originalText; // Restore original text
+                summaryLink.style.pointerEvents = 'auto'; // Re-enable link
+                summaryLink.style.color = '#00ffff'; // Restore original color
+            }
+        }
+
+        // --- Click Recording Function for Canvas Event Listener ---
+        function recordGameClick(clickX, clickY, armedWeapon) {
+            // Record click data for AI analysis
+            gameClickData.push({
+                x: Math.round(clickX),
+                y: Math.round(clickY),
+                timestamp: Date.now(),
+                armedWeapon: armedWeapon || 'missile'
+            });
+        }
+
         // --- NEW: Function to Submit Score ---
         async function submitHighScore() {
             const name = playerNameInput.value.trim().toUpperCase();
@@ -1814,6 +2049,15 @@
             const clickX = (event.clientX - rect.left) * scaleX;
             const clickY = (event.clientY - rect.top) * scaleY;
             const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
+
+            // Record Click Data for AI analysis
+            gameClickData.push({
+                x: Math.round(clickX),
+                y: Math.round(clickY),
+                timestamp: Date.now(), 
+                armedWeapon: isBombArmed ? 'bomb' : 'missile'
+            });
+
             if (clickY < 20 || clickY > groundY) return; // Ignore clicks too high or low
             if (isBombArmed) { deployBomb(clickX, clickY); return; } // Deploy bomb if armed
 
