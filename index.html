@@ -1756,12 +1756,12 @@
                     const boxX = (canvas.width - boxWidth) / 2;
                     const boxY = (canvas.height - boxHeight) / 2;
                     
-                    // Draw semi-transparent overlay for dimming the background
-                    tempCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    // Background colors and styles similar to the game UI
+                    tempCtx.fillStyle = 'rgba(0, 0, 0, 1)'; // Pure black background
                     tempCtx.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    // Draw message box background
-                    tempCtx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+                    // No semi-transparent overlay, just draw a black box with red border
+                    tempCtx.fillStyle = 'rgba(0, 0, 0, 1)';
                     tempCtx.beginPath();
                     // Use rounded rectangle
                     const radius = 10;
@@ -1787,27 +1787,21 @@
                     const subText = messageSubText.style.display !== 'none' ? messageSubText.textContent : '';
                     const bonusText = messageBonusText.style.display !== 'none' ? messageBonusText.textContent : '';
                     
-                    // Draw title
+                    // Draw title - much larger, matching game UI
                     tempCtx.fillStyle = '#ff0000';
-                    tempCtx.font = '28px "Press Start 2P", monospace';
+                    tempCtx.font = '32px "Press Start 2P", monospace';
                     tempCtx.textAlign = 'center';
                     tempCtx.textBaseline = 'top';
-                    tempCtx.fillText(title, boxX + boxWidth/2, boxY + 30);
+                    tempCtx.fillText(title, boxX + boxWidth/2, boxY + 50);
                     
                     // Draw main message text
                     tempCtx.fillStyle = '#ffff00';
                     tempCtx.font = '16px "Press Start 2P", monospace';
-                    tempCtx.fillText(text, boxX + boxWidth/2, boxY + 80);
+                    tempCtx.fillText(text, boxX + boxWidth/2, boxY + 100);
                     
                     // Draw sub text if visible
                     if (subText) {
-                        tempCtx.fillText(subText, boxX + boxWidth/2, boxY + 115);
-                    }
-                    
-                    // Draw bonus text if visible
-                    if (bonusText) {
-                        tempCtx.fillStyle = '#ffaa00';
-                        tempCtx.fillText(bonusText, boxX + boxWidth/2, boxY + (subText ? 150 : 115));
+                        tempCtx.fillText(subText, boxX + boxWidth/2, boxY + 130);
                     }
                     
                     // Draw game stats if visible
@@ -1816,13 +1810,13 @@
                         const statSpans = Array.from(statsContainer.querySelectorAll('span'));
                         
                         if (statSpans.length > 0) {
-                            // Set up for stats drawing
-                            tempCtx.font = '12px "Press Start 2P", monospace'; // Reduced font size from 14px to 12px
-                            
-                            // Draw stats title with more space
-                            tempCtx.fillStyle = '#cccccc';
-                            tempCtx.textAlign = 'center';
-                            tempCtx.fillText("GAME STATISTICS", boxX + boxWidth/2, boxY + 150);
+                            // Add red horizontal line above stats (matching game UI)
+                            tempCtx.strokeStyle = '#ff0000';
+                            tempCtx.lineWidth = 1;
+                            tempCtx.beginPath();
+                            tempCtx.moveTo(boxX + boxWidth * 0.05, boxY + 170);
+                            tempCtx.lineTo(boxX + boxWidth * 0.95, boxY + 170);
+                            tempCtx.stroke();
                             
                             // Define the specific order of stats based on actual game UI
                             const leftColOrder = [
@@ -1843,11 +1837,14 @@
                                 "High Score:"
                             ];
                             
-                            // Adjusted column positioning - moved both columns to the left
-                            const leftCol = boxX + boxWidth * 0.08; // Moved further left (was 0.10)
-                            const rightCol = boxX + boxWidth * 0.55; // Moved left (was 0.60)
-                            const topRow = boxY + 185; // Same as before
-                            const rowHeight = 24; // Same as before
+                            // Adjusted positioning to match game UI exactly
+                            const leftCol = boxX + boxWidth * 0.05; // Far left
+                            const rightCol = boxX + boxWidth * 0.62; // Far right
+                            const topRow = boxY + 190; // Start position
+                            const rowHeight = 20; // Reduced row height
+                            
+                            // Set smaller font size matching game UI
+                            tempCtx.font = '10px "Press Start 2P", monospace';
                             
                             // Draw left column stats in correct order
                             tempCtx.textAlign = 'left';
@@ -1872,6 +1869,14 @@
                                     tempCtx.fillText(statSpan.textContent, rightCol, topRow + (index * rowHeight));
                                 }
                             });
+                            
+                            // Add red horizontal line below stats (matching game UI)
+                            tempCtx.strokeStyle = '#ff0000';
+                            tempCtx.lineWidth = 1;
+                            tempCtx.beginPath();
+                            tempCtx.moveTo(boxX + boxWidth * 0.05, topRow + (6 * rowHeight) + 10);
+                            tempCtx.lineTo(boxX + boxWidth * 0.95, topRow + (6 * rowHeight) + 10);
+                            tempCtx.stroke();
                         }
                     }
                 }
