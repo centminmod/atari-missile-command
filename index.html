@@ -2541,8 +2541,13 @@
                             tempCtx.strokeStyle = '#ff0000';
                             tempCtx.lineWidth = 1;
                             tempCtx.beginPath();
-                            tempCtx.moveTo(boxX + boxWidth * 0.05, topRow + (6 * rowHeight) + 10);
-                            tempCtx.lineTo(boxX + boxWidth * 0.95, topRow + (6 * rowHeight) + 10);
+                            
+                            // Calculate maximum rows between columns and add more padding (20px instead of 10px)
+                            const maxRows = Math.max(leftColOrder.length, rightColOrder.length);
+                            const bottomLineY = topRow + (maxRows * rowHeight) + 20; // Increased from 10px to 20px
+                            
+                            tempCtx.moveTo(boxX + boxWidth * 0.05, bottomLineY);
+                            tempCtx.lineTo(boxX + boxWidth * 0.95, bottomLineY);
                             tempCtx.stroke();
                         }
                     }

@@ -2,7 +2,7 @@
 
 // --- Configuration ---
 // Increment this version number when you update any assets in urlsToCache
-const APP_VERSION = 'v78';
+const APP_VERSION = 'v79';
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
 
 // List of assets to cache on installation
