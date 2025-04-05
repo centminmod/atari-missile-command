@@ -594,7 +594,7 @@
         </div>
         <!-- ADDED: Sound Controls -->
         <div class="link-group sound-controls" style="margin-left: 15px;">
-            <button id="muteMusicButton" style="padding: 4px 8px; font-size: 10px;">Mute Music</button>
+            <button id="muteMusicButton" style="padding: 4px 8px; font-size: 10px;">Unmute Music</button>
             <button id="muteSfxButton" style="padding: 4px 8px; font-size: 10px;">Mute SFX</button>
         </div>
     </footer>
@@ -826,7 +826,7 @@
         let launchBuffer = null;
         let explosionBuffer = null;
         let musicSourceNode = null; // To keep track of the playing music source
-        let isMusicMuted = false;
+        let isMusicMuted = true; // Start muted by default
         let isSfxMuted = false;
         let audioInitialized = false;
         const audioFilePaths = {
@@ -894,6 +894,11 @@
                 loadSound(audioFilePaths.explosion)
             ]);
             console.log("Sound loading process finished.");
+            // ADDED: Attempt to play music now if conditions are right
+            if (gameHasStarted && !isGameOver && !isPaused && !isMusicMuted && musicBuffer && !musicSourceNode) {
+                console.log("Attempting to play music after loading sounds.");
+                playMusic();
+            }
             // Optionally, enable sound-related UI elements here if they were disabled
         }
 
@@ -1693,7 +1698,7 @@
                 if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } console.log("startGame: Calling gameLoop()..."); 
                 // Update to use new startGameLoop function
                 startGameLoop();
-                playMusic(); // ADDED: Start music
+                // playMusic(); // REMOVED: Don't autoplay music
                 console.log("startGame: Exiting");
             } catch (error) { console.error("Error during startGame:", error); showMessage("STARTUP ERROR", `Failed to start game: ${error.message}`, "Check console for details."); isGameOver = true; }
         }
