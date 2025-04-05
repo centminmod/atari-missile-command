@@ -1813,7 +1813,7 @@
                     // Draw game stats if visible
                     if (statsContainer.style.display !== 'none') {
                         // Get all stat spans from the statsContainer
-                        const statSpans = statsContainer.querySelectorAll('span');
+                        const statSpans = Array.from(statsContainer.querySelectorAll('span'));
                         
                         if (statSpans.length > 0) {
                             // Set up for stats drawing
@@ -1824,122 +1824,59 @@
                             tempCtx.textAlign = 'center';
                             tempCtx.fillText("GAME STATISTICS", boxX + boxWidth/2, boxY + 130);
                             
+                            // Define the specific order of stats based on actual game UI
+                            const leftColOrder = [
+                                "Wave Reached:",
+                                "Difficulty:",
+                                "Missiles Fired:",
+                                "Accuracy:",
+                                "Enemy Missiles Down:",
+                                "Plane Bombs Down:"
+                            ];
+                            
+                            const rightColOrder = [
+                                "Accuracy Bonuses:",
+                                "Planes Down:",
+                                "Cities Lost:",
+                                "Bases Lost:",
+                                "Final Score:",
+                                "High Score:"
+                            ];
+                            
                             // Calculate columns
                             const leftCol = boxX + boxWidth * 0.15; // Left column x position
                             const rightCol = boxX + boxWidth * 0.55; // Right column x position
                             const topRow = boxY + 160; // First row y position
                             const rowHeight = 20; // Height between rows
                             
-                            // Draw each stat in the appropriate position
-                            // We'll manually position them to match the game's layout
+                            // Draw left column stats in correct order
                             tempCtx.textAlign = 'left';
-                            tempCtx.fillStyle = '#ffffff';
-                            
-                            // Determine how many items to put in each column
-                            // Typically stats are shown in two columns with equal items
-                            const itemsPerColumn = Math.ceil(statSpans.length / 2);
-                            
-                            statSpans.forEach((span, index) => {
-                                let x, y;
-                                
-                                if (index < itemsPerColumn) {
-                                    // Left column
-                                    x = leftCol;
-                                    y = topRow + (index * rowHeight);
-                                } else {
-                                    // Right column
-                                    x = rightCol;
-                                    y = topRow + ((index - itemsPerColumn) * rowHeight);
+                            leftColOrder.forEach((statPrefix, index) => {
+                                const statSpan = statSpans.find(span => span.textContent.startsWith(statPrefix));
+                                if (statSpan) {
+                                    tempCtx.fillStyle = '#ffffff';
+                                    if (statSpan.textContent.includes('HIGH SCORE')) {
+                                        tempCtx.fillStyle = '#ffff00';
+                                    }
+                                    tempCtx.fillText(statSpan.textContent, leftCol, topRow + (index * rowHeight));
                                 }
-                                
-                                // Change color for high score or special items
-                                if (span.textContent.includes('HIGH SCORE')) {
-                                    tempCtx.fillStyle = '#ffff00'; // Yellow for high score
-                                } else {
-                                    tempCtx.fillStyle = '#ffffff'; // White for regular stats
+                            });
+                            
+                            // Draw right column stats in correct order
+                            rightColOrder.forEach((statPrefix, index) => {
+                                const statSpan = statSpans.find(span => span.textContent.startsWith(statPrefix));
+                                if (statSpan) {
+                                    tempCtx.fillStyle = '#ffffff';
+                                    if (statSpan.textContent.includes('HIGH SCORE')) {
+                                        tempCtx.fillStyle = '#ffff00';
+                                    }
+                                    tempCtx.fillText(statSpan.textContent, rightCol, topRow + (index * rowHeight));
                                 }
-                                
-                                tempCtx.fillText(span.textContent, x, y);
                             });
                         }
                     }
                     
-                    // Draw score submission form if visible
-                    if (scoreSubmissionDiv.style.display === 'flex') {
-                        const submissionY = boxY + boxHeight - 120;
-                        
-                        // Draw label
-                        tempCtx.fillStyle = '#ffff00';
-                        tempCtx.font = '14px "Press Start 2P", monospace';
-                        tempCtx.textAlign = 'center';
-                        tempCtx.fillText("Enter Name (max 18 chars):", boxX + boxWidth/2, submissionY);
-                        
-                        // Draw input field
-                        tempCtx.fillStyle = '#222222';
-                        const inputWidth = boxWidth * 0.6;
-                        const inputHeight = 30;
-                        const inputX = boxX + (boxWidth - inputWidth)/2;
-                        const inputY = submissionY + 20;
-                        tempCtx.fillRect(inputX, inputY, inputWidth, inputHeight);
-                        
-                        // Draw input border
-                        tempCtx.strokeStyle = '#00ff00';
-                        tempCtx.lineWidth = 1;
-                        tempCtx.strokeRect(inputX, inputY, inputWidth, inputHeight);
-                        
-                        // Draw input content
-                        tempCtx.fillStyle = '#00ff00';
-                        tempCtx.textAlign = 'center';
-                        tempCtx.fillText(playerNameInput.value || "ACE", boxX + boxWidth/2, inputY + 20);
-                        
-                        // Draw submit button
-                        const buttonWidth = 200;
-                        const buttonHeight = 40;
-                        const buttonX = boxX + (boxWidth - buttonWidth)/2;
-                        const buttonY = inputY + inputHeight + 20;
-                        
-                        tempCtx.fillStyle = '#00aa00';
-                        tempCtx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-                        tempCtx.strokeStyle = '#00ff00';
-                        tempCtx.lineWidth = 2;
-                        tempCtx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
-                        
-                        tempCtx.fillStyle = '#ffffff';
-                        tempCtx.font = '14px "Press Start 2P", monospace';
-                        tempCtx.fillText("Submit Score", boxX + boxWidth/2, buttonY + 25);
-                    }
-                    
-                    // Draw restart button if visible
-                    const messageRestartButton = messageBox.querySelector('#restartButton');
-                    if (messageRestartButton && getComputedStyle(messageRestartButton).display !== 'none') {
-                        const buttonWidth = 200;
-                        const buttonHeight = 40;
-                        const buttonX = boxX + (boxWidth - buttonWidth)/2;
-                        const buttonY = boxY + boxHeight - 60;
-                        
-                        tempCtx.fillStyle = '#00aa00';
-                        tempCtx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-                        tempCtx.strokeStyle = '#00ff00';
-                        tempCtx.lineWidth = 2;
-                        tempCtx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
-                        
-                        tempCtx.fillStyle = '#ffffff';
-                        tempCtx.font = '14px "Press Start 2P", monospace';
-                        tempCtx.textAlign = 'center';
-                        tempCtx.fillText("Restart Game", boxX + boxWidth/2, buttonY + 25);
-                    }
-                    
-                    // Draw a note about game summary button if visible
-                    const summaryLink = document.getElementById('viewGameSummaryLink');
-                    if (summaryLink && getComputedStyle(summaryLink).display !== 'none') {
-                        if (!messageBox.querySelector('#restartButton') || getComputedStyle(messageBox.querySelector('#restartButton')).display === 'none') {
-                            // Only show if restart button isn't already shown
-                            tempCtx.fillStyle = '#00ff00';
-                            tempCtx.font = '12px "Press Start 2P", monospace';
-                            tempCtx.textAlign = 'center';
-                            tempCtx.fillText("AI Game Analysis Available", boxX + boxWidth/2, boxY + boxHeight - 30);
-                        }
-                    }
+                    // No form elements or buttons drawn as requested
                 }
 
                 // Convert canvas to Blob
