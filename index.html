@@ -1735,6 +1735,7 @@
             const originalText = screenshotButton.textContent;
             screenshotButton.textContent = 'Saving...';
             screenshotButton.disabled = true;
+            
             try {
                 // Create a temporary canvas to draw everything onto
                 const tempCanvas = document.createElement('canvas');
@@ -1744,10 +1745,140 @@
 
                 // Draw the game canvas content
                 tempCtx.drawImage(canvas, 0, 0);
-
-                // If game over message is visible, draw it too (simplified)
-                if (messageBox.style.display === 'block' && isGameOver) {
-                    console.warn("Screenshotting the message box overlay is complex and not fully implemented. Capturing game canvas only.");
+                
+                // If message box is visible, draw it manually
+                if (messageBox.style.display === 'block') {
+                    console.log("Message box is visible, manually drawing it on the screenshot");
+                    
+                    // Calculate message box position relative to the canvas
+                    // Fixed positioning that centers the message box on the canvas
+                    const boxWidth = canvas.width * 0.8; // 80% of canvas width
+                    const boxHeight = canvas.height * 0.7; // 70% of canvas height
+                    const boxX = (canvas.width - boxWidth) / 2;
+                    const boxY = (canvas.height - boxHeight) / 2;
+                    
+                    // Draw semi-transparent overlay for dimming the background
+                    tempCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw message box background
+                    tempCtx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+                    tempCtx.beginPath();
+                    // Use rounded rectangle
+                    const radius = 10;
+                    tempCtx.moveTo(boxX + radius, boxY);
+                    tempCtx.lineTo(boxX + boxWidth - radius, boxY);
+                    tempCtx.arcTo(boxX + boxWidth, boxY, boxX + boxWidth, boxY + radius, radius);
+                    tempCtx.lineTo(boxX + boxWidth, boxY + boxHeight - radius);
+                    tempCtx.arcTo(boxX + boxWidth, boxY + boxHeight, boxX + boxWidth - radius, boxY + boxHeight, radius);
+                    tempCtx.lineTo(boxX + radius, boxY + boxHeight);
+                    tempCtx.arcTo(boxX, boxY + boxHeight, boxX, boxY + boxHeight - radius, radius);
+                    tempCtx.lineTo(boxX, boxY + radius);
+                    tempCtx.arcTo(boxX, boxY, boxX + radius, boxY, radius);
+                    tempCtx.fill();
+                    
+                    // Draw message box border
+                    tempCtx.strokeStyle = '#ff0000';
+                    tempCtx.lineWidth = 3;
+                    tempCtx.stroke();
+                    
+                    // Get message content
+                    const title = messageTitle.textContent;
+                    const text = messageText.textContent;
+                    const subText = messageSubText.style.display !== 'none' ? messageSubText.textContent : '';
+                    const bonusText = messageBonusText.style.display !== 'none' ? messageBonusText.textContent : '';
+                    
+                    // Draw title
+                    tempCtx.fillStyle = '#ff0000';
+                    tempCtx.font = '20px "Press Start 2P", monospace';
+                    tempCtx.textAlign = 'center';
+                    tempCtx.fillText(title, boxX + boxWidth/2, boxY + 30);
+                    
+                    // Draw main message text
+                    tempCtx.fillStyle = '#ffff00';
+                    tempCtx.font = '14px "Press Start 2P", monospace';
+                    tempCtx.fillText(text, boxX + boxWidth/2, boxY + 70);
+                    
+                    // Draw sub text if visible
+                    if (subText) {
+                        tempCtx.fillText(subText, boxX + boxWidth/2, boxY + 100);
+                    }
+                    
+                    // Draw bonus text if visible
+                    if (bonusText) {
+                        tempCtx.fillStyle = '#ffaa00';
+                        tempCtx.fillText(bonusText, boxX + boxWidth/2, boxY + (subText ? 130 : 100));
+                    }
+                    
+                    // Set initial Y position for additional content
+                    let currentY = boxY + (bonusText ? 160 : (subText ? 130 : 100));
+                    
+                    // Draw game stats if visible
+                    if (statsContainer.style.display !== 'none') {
+                        // Get all stat spans from the statsContainer
+                        const statSpans = statsContainer.querySelectorAll('span');
+                        
+                        if (statSpans.length > 0) {
+                            tempCtx.fillStyle = '#ffffff';
+                            tempCtx.font = '10px "Press Start 2P", monospace';
+                            tempCtx.textAlign = 'left';
+                            
+                            // Calculate grid layout
+                            const colWidth = boxWidth * 0.45; // Width of each column
+                            const rowHeight = 18; // Height of each row
+                            const leftCol = boxX + boxWidth * 0.05; // Start of left column
+                            const rightCol = boxX + boxWidth * 0.5; // Start of right column
+                            const statsY = currentY + 10; // Start Y position for stats
+                            
+                            // Draw stats title
+                            tempCtx.fillStyle = '#cccccc';
+                            tempCtx.textAlign = 'center';
+                            tempCtx.fillText("GAME STATISTICS", boxX + boxWidth/2, statsY - 5);
+                            tempCtx.textAlign = 'left';
+                            
+                            // Draw stats in two columns
+                            statSpans.forEach((span, index) => {
+                                const isRightColumn = index >= Math.ceil(statSpans.length / 2);
+                                const col = isRightColumn ? rightCol : leftCol;
+                                const row = isRightColumn ? 
+                                           index - Math.ceil(statSpans.length / 2) : 
+                                           index;
+                                
+                                // Highlight high score stat with yellow color
+                                if (span.textContent.includes('HIGH SCORE')) {
+                                    tempCtx.fillStyle = '#ffff00';
+                                } else {
+                                    tempCtx.fillStyle = '#ffffff';
+                                }
+                                
+                                tempCtx.fillText(
+                                    span.textContent, 
+                                    col, 
+                                    statsY + 15 + (row * rowHeight)
+                                );
+                            });
+                            
+                            // Update current Y position after stats
+                            currentY = statsY + 15 + (Math.ceil(statSpans.length / 2) * rowHeight) + 10;
+                        }
+                    }
+                    
+                    // Draw score submission indication if visible
+                    if (scoreSubmissionDiv.style.display === 'flex') {
+                        tempCtx.fillStyle = '#00ff00';
+                        tempCtx.font = '12px "Press Start 2P", monospace';
+                        tempCtx.textAlign = 'center';
+                        tempCtx.fillText("Score Submission Screen", boxX + boxWidth/2, boxY + boxHeight - 50);
+                    }
+                    
+                    // Draw a note about game summary button if visible
+                    const summaryLink = document.getElementById('viewGameSummaryLink');
+                    if (summaryLink && getComputedStyle(summaryLink).display !== 'none') {
+                        tempCtx.fillStyle = '#00ff00';
+                        tempCtx.font = '12px "Press Start 2P", monospace';
+                        tempCtx.textAlign = 'center';
+                        tempCtx.fillText("AI Game Analysis Available", boxX + boxWidth/2, boxY + boxHeight - 30);
+                    }
                 }
 
                 // Convert canvas to Blob
@@ -1756,25 +1887,25 @@
                         throw new Error("Canvas toBlob failed.");
                     }
                     try {
-                         // Use Clipboard API to copy the image
-                         await navigator.clipboard.write([
-                             new ClipboardItem({ 'image/png': blob })
-                         ]);
-                         console.log("Screenshot copied to clipboard.");
-                         screenshotButton.textContent = 'Copied!';
+                        // Use Clipboard API to copy the image
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        console.log("Screenshot copied to clipboard.");
+                        screenshotButton.textContent = 'Copied!';
                     } catch (clipErr) {
-                         console.error("Clipboard API failed, falling back to download:", clipErr);
-                         // Fallback: Create a download link
-                         const url = URL.createObjectURL(blob);
-                         const a = document.createElement('a');
-                         a.href = url;
-                         a.download = `missile_command_screenshot_${Date.now()}.png`;
-                         document.body.appendChild(a);
-                         a.click();
-                         document.body.removeChild(a);
-                         URL.revokeObjectURL(url);
-                         console.log("Screenshot download initiated.");
-                         screenshotButton.textContent = 'Saved!';
+                        console.error("Clipboard API failed, falling back to download:", clipErr);
+                        // Fallback: Create a download link
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `missile_command_screenshot_${Date.now()}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        console.log("Screenshot download initiated.");
+                        screenshotButton.textContent = 'Saved!';
                     } finally {
                         setTimeout(() => {
                             screenshotButton.textContent = "Save Screenshot";
