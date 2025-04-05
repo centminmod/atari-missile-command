@@ -4,7 +4,7 @@ Demo https://missile-command-game.centminmod.com/ hosted on Cloudflare Pages
 
 # Missile Command
 
-A modern HTML5 canvas remake of the classic Atari game from 1980, featuring enhanced graphics, additional gameplay mechanics, and AI-powered gameplay analysis. Demo https://missile-command-game.centminmod.com/ hosted on Cloudflare Pages.
+A modern HTML5 canvas remake of the [classic Atari game](https://en.wikipedia.org/wiki/Missile_Command) from 1980, featuring enhanced graphics, additional gameplay mechanics, and AI-powered gameplay analysis. Demo https://missile-command-game.centminmod.com/ hosted on Cloudflare Pages.
 
 <img src="/images/logo1-1024x1024.png" alt="Missile Command Game" width="300" height="300"> <img src="/images/missile-command-product.png" alt="Missile Command Game" width="300" height="300">
 
