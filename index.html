@@ -2213,10 +2213,14 @@
             else if (bonusChangeMsg !== "" && citiesLost > 0) { bonusChangeMsg += ` (Bonus Fire deactivated)`; }
             else if (bonusChangeMsg === "" && citiesLost > 0){ bonusChangeMsg = ""; }
             isBombArmed = false; canvas.style.cursor = 'crosshair'; bombControl.classList.remove('armed');
-            // remove any existing summary link before showing wave completion message
+            // remove any existing summary link or back button before showing wave completion message
             const summaryLink = document.getElementById('viewGameSummaryLink');
             if (summaryLink) {
                 summaryLink.remove();
+            }
+            const backButton = document.getElementById('backToScoreButton'); // ADDED: Find back button
+            if (backButton) { // ADDED: Remove back button if it exists
+                backButton.remove();
             }
             showMessage(`WAVE ${currentWave + 1} CLEARED`, `Score Bonus: $${Math.round(bonusEarned * difficultyScoreMultiplier)}`, "", bonusChangeMsg);
             goToStoreButton.style.display = 'inline-block'; skipStoreButton.style.display = 'inline-block'; pauseButton.disabled = true; statsContainer.style.display = 'none'; updateUI();
