@@ -592,6 +592,11 @@
             </a>
              <a target="_blank" href="https://jam.pieter.com" style="font-family: 'system-ui', sans-serif; position: fixed; bottom: -1px; right: -1px; padding: 7px; font-size: 14px; font-weight: bold; background: #fff; color: #000; text-decoration: none; z-index: 10; border-top-left-radius: 12px; z-index: 10000; border: 1px solid #fff;">🕹️ Vibe Jam 2025</a>
         </div>
+        <!-- ADDED: Sound Controls -->
+        <div class="link-group sound-controls" style="margin-left: 15px;">
+            <button id="muteMusicButton" style="padding: 4px 8px; font-size: 10px;">Mute Music</button>
+            <button id="muteSfxButton" style="padding: 4px 8px; font-size: 10px;">Mute SFX</button>
+        </div>
     </footer>
 
     <script>
@@ -653,6 +658,10 @@
         const costWiderExplosionDisplay = document.getElementById('costWiderExplosion');
         const levelWiderExplosionDisplay = document.getElementById('levelWiderExplosion');
         const buyWiderExplosionButton = document.getElementById('buyWiderExplosionButton');
+
+        // --- ADDED: Audio Elements ---
+        const muteMusicButton = document.getElementById('muteMusicButton');
+        const muteSfxButton = document.getElementById('muteSfxButton');
 
         // --- NEW: Leaderboard Elements ---
         const leaderboardContainer = document.getElementById('leaderboardContainer');
@@ -807,6 +816,158 @@
         let frameCount = 0;
         let frameTimes = [];
         const FRAME_SAMPLE_SIZE = 60; // Number of frames to sample for performance
+
+        // --- ADDED: Web Audio API Setup ---
+        let audioContext;
+        let masterGainNode;
+        let musicGainNode;
+        let sfxGainNode;
+        let musicBuffer = null;
+        let launchBuffer = null;
+        let explosionBuffer = null;
+        let musicSourceNode = null; // To keep track of the playing music source
+        let isMusicMuted = false;
+        let isSfxMuted = false;
+        const audioFilePaths = {
+            music: 'audio/music.mp3', // Placeholder
+            launch: 'audio/launch.mp3', // Placeholder - Changed to mp3
+            explosion: 'audio/explosion.mp3' // Placeholder - Changed to mp3
+        };
+
+        // Function to initialize AudioContext (must be called after user interaction)
+        function initAudioContext() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    masterGainNode = audioContext.createGain();
+                    musicGainNode = audioContext.createGain();
+                    sfxGainNode = audioContext.createGain();
+
+                    musicGainNode.connect(masterGainNode);
+                    sfxGainNode.connect(masterGainNode);
+                    masterGainNode.connect(audioContext.destination);
+
+                    console.log("AudioContext initialized successfully.");
+                    loadAllSounds(); // Start loading sounds once context is ready
+                } catch (e) {
+                    console.error("Web Audio API is not supported in this browser", e);
+                    // Disable sound buttons if context fails
+                    if (muteMusicButton) muteMusicButton.disabled = true;
+                    if (muteSfxButton) muteSfxButton.disabled = true;
+                }
+            }
+            // Resume context if it was suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        // Function to load a single sound file
+        async function loadSound(url) {
+            if (!audioContext) return null;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} for ${url}`);
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                console.log(`Sound loaded successfully: ${url}`);
+                return audioBuffer;
+            } catch (error) {
+                console.error(`Error loading sound ${url}:`, error);
+                // Display a user-friendly message or disable related features
+                // For now, just log the error. You might want to show a message in the UI.
+                return null; // Return null to indicate failure
+            }
+        }
+
+
+        // Function to load all sounds
+        async function loadAllSounds() {
+            if (!audioContext) return;
+            console.log("Loading all sounds...");
+            [musicBuffer, launchBuffer, explosionBuffer] = await Promise.all([
+                loadSound(audioFilePaths.music),
+                loadSound(audioFilePaths.launch),
+                loadSound(audioFilePaths.explosion)
+            ]);
+            console.log("Sound loading process finished.");
+            // Optionally, enable sound-related UI elements here if they were disabled
+        }
+
+        // Function to play a sound effect
+        function playSfx(buffer) {
+            if (!audioContext || !buffer || isSfxMuted) return;
+            // Resume context if needed (e.g., after inactivity)
+             if (audioContext.state === 'suspended') {
+                 audioContext.resume();
+             }
+            const source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(sfxGainNode);
+            source.start(0);
+        }
+
+        // Function to play background music (loops)
+        function playMusic() {
+            if (!audioContext || !musicBuffer || musicSourceNode || isMusicMuted) return;
+            // Resume context if needed
+             if (audioContext.state === 'suspended') {
+                 audioContext.resume();
+             }
+            musicSourceNode = audioContext.createBufferSource();
+            musicSourceNode.buffer = musicBuffer;
+            musicSourceNode.loop = true;
+            musicSourceNode.connect(musicGainNode);
+            musicSourceNode.start(0);
+            console.log("Music started.");
+        }
+
+        // Function to stop background music
+        function stopMusic() {
+            if (musicSourceNode) {
+                musicSourceNode.stop(0);
+                musicSourceNode.disconnect();
+                musicSourceNode = null;
+                console.log("Music stopped.");
+            }
+        }
+
+        // Function to toggle music mute
+        function toggleMusicMute() {
+            if (!audioContext) return;
+            isMusicMuted = !isMusicMuted;
+            if (isMusicMuted) {
+                musicGainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                muteMusicButton.textContent = 'Unmute Music';
+                stopMusic(); // Stop current playback when muting
+            } else {
+                musicGainNode.gain.setValueAtTime(1, audioContext.currentTime);
+                muteMusicButton.textContent = 'Mute Music';
+                // Optionally restart music if the game is running
+                if (gameHasStarted && !isGameOver && !isPaused) {
+                     playMusic();
+                }
+            }
+            console.log("Music Muted:", isMusicMuted);
+        }
+
+        // Function to toggle SFX mute
+        function toggleSfxMute() {
+            if (!audioContext) return;
+            isSfxMuted = !isSfxMuted;
+            if (isSfxMuted) {
+                sfxGainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                muteSfxButton.textContent = 'Unmute SFX';
+            } else {
+                sfxGainNode.gain.setValueAtTime(1, audioContext.currentTime);
+                muteSfxButton.textContent = 'Mute SFX';
+            }
+            console.log("SFX Muted:", isSfxMuted);
+        }
+        // --- END Web Audio API Setup ---
+
 
         // --- Utility Functions ---
         function distance(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return Math.sqrt(dx * dx + dy * dy); }
@@ -1237,6 +1398,7 @@
         }
         function createPlayerMissile(startX, startY, targetX, targetY) {
             const currentSpeed = getCurrentPlayerMissileSpeed(); const angle = Math.atan2(targetY - startY, targetX - startX); statsMissilesFired++;
+            playSfx(launchBuffer); // ADDED: Play launch sound
             return {
                 x: startX, y: startY, targetX: targetX, targetY: targetY, dx: Math.cos(angle) * currentSpeed, dy: Math.sin(angle) * currentSpeed, speed: currentSpeed, color: '#00ff00', trailColor: 'rgba(100, 255, 100, 0.5)', alive: true, trail: [{x: startX, y: startY}],
                 update() {
@@ -1264,6 +1426,7 @@
         function createExplosion(x, y, startRadius, color, maxRadius = EXPLOSION_RADIUS_MAX_BASE, duration = EXPLOSION_DURATION, ignoreEnemyObjectsWhenExploding = false) {
             const effectiveMaxRadius = maxRadius || getCurrentPlayerExplosionRadius();
             if (typeof color !== 'string' || (!color.startsWith('#') && !color.startsWith('rgba'))) { color = '#888888'; }
+            playSfx(explosionBuffer); // ADDED: Play explosion sound
             explosions.push({
                 x: x, y: y, radius: startRadius, maxRadius: effectiveMaxRadius, duration: duration, currentFrame: 0, color: color, alive: true, collidedMissiles: new Set(), collidedBombs: new Set(), collidedPlanes: new Set(), ignoreEnemyObjectsWhenExploding: ignoreEnemyObjectsWhenExploding,
                 update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = this.duration * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (this.duration - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if (this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } },
@@ -1528,7 +1691,8 @@
                 restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = false;
                 if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } console.log("startGame: Calling gameLoop()..."); 
                 // Update to use new startGameLoop function
-                startGameLoop(); 
+                startGameLoop();
+                playMusic(); // ADDED: Start music
                 console.log("startGame: Exiting");
             } catch (error) { console.error("Error during startGame:", error); showMessage("STARTUP ERROR", `Failed to start game: ${error.message}`, "Check console for details."); isGameOver = true; }
         }
@@ -1721,12 +1885,13 @@
                 cancelAnimationFrame(gameLoopId);
                 gameLoopId = null;
             }
+            stopMusic(); // ADDED: Stop music on game over
             console.log("Game Over processing complete.");
         }
 
         // --- Pause/Resume Logic ---
-        function pauseGame() { if (isGameOver || transitioningWave || !gameHasStarted || storeModal.style.display === 'block' || messageBox.style.display === 'block') return; isPaused = true; pauseOverlay.style.display = 'flex'; pauseButton.textContent = 'Resume'; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } }
-        function resumeGame() { if (isGameOver || transitioningWave || !isPaused) return; isPaused = false; pauseOverlay.style.display = 'none'; pauseButton.textContent = 'Pause'; if (!gameLoopId) { startGameLoop(); } }
+        function pauseGame() { if (isGameOver || transitioningWave || !gameHasStarted || storeModal.style.display === 'block' || messageBox.style.display === 'block') return; isPaused = true; pauseOverlay.style.display = 'flex'; pauseButton.textContent = 'Resume'; if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } stopMusic(); } // ADDED: Stop music on pause
+        function resumeGame() { if (isGameOver || transitioningWave || !isPaused) return; isPaused = false; pauseOverlay.style.display = 'none'; pauseButton.textContent = 'Pause'; if (!gameLoopId) { startGameLoop(); } playMusic(); } // ADDED: Resume music
         function togglePause() { if (isPaused) { resumeGame(); } else { pauseGame(); } isBombArmed = false; canvas.style.cursor = 'crosshair'; bombControl.classList.remove('armed'); updateSpecialWeaponsUI(); }
 
         // --- Screenshot Logic ---
@@ -2901,9 +3066,19 @@
 
         // --- Event Listeners ---
         // MODIFIED: Replace click listener with handleCanvasInput
-        canvas.addEventListener('click', handleCanvasInput);
+        // Initialize AudioContext on first user interaction (click or touch)
+        function handleFirstInteraction(event) {
+            initAudioContext();
+            // Call the actual input handler
+            handleCanvasInput(event);
+            // Remove this listener after first use
+            canvas.removeEventListener('click', handleFirstInteraction);
+            canvas.removeEventListener('touchstart', handleFirstInteraction);
+        }
+        canvas.addEventListener('click', handleFirstInteraction);
 
         // ADDED: Touch event listeners
+        canvas.addEventListener('touchstart', handleFirstInteraction, { passive: false });
         canvas.addEventListener('touchstart', handleCanvasInput, { passive: false });
         canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
         canvas.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
@@ -2934,6 +3109,7 @@
         document.querySelectorAll('#restartButton').forEach(button => {
             button.addEventListener('click', () => {
                 if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; }
+                stopMusic(); // ADDED: Stop music on restart
                 isGameOver = true; gameHasStarted = false; isPaused = false; transitioningWave = false; difficultySelected = false;
                 // Reset game state variables
                 score = 0; gameTotalScore = 0; currentWave = -1; consecutiveIntercepts = 0; scoreMultiplier = 1.0;
@@ -3005,10 +3181,19 @@
                 }
             });
         });
-        actualStartButton.addEventListener('click', () => { if (difficultySelected) { startGame(); } });
+        actualStartButton.addEventListener('click', () => {
+             if (difficultySelected) {
+                 initAudioContext(); // Ensure audio context is ready before starting
+                 startGame();
+             }
+        });
         sonicWaveControl.addEventListener('click', () => { if (!sonicWaveControl.classList.contains('disabled')) { triggerSonicWave(); } });
         bombControl.addEventListener('click', () => { if (!bombControl.classList.contains('disabled')) { armBomb(); } });
         window.addEventListener('keydown', (event) => { if (event.code === 'Space' && !isGameOver && !transitioningWave && gameHasStarted && storeModal.style.display === 'none' && messageBox.style.display === 'none' ) { event.preventDefault(); togglePause(); } });
+
+        // --- ADDED: Mute Button Listeners ---
+        muteMusicButton.addEventListener('click', toggleMusicMute);
+        muteSfxButton.addEventListener('click', toggleSfxMute);
 
         // --- NEW: Event Listener for Score Submission ---
         submitScoreButton.addEventListener('click', submitHighScore);

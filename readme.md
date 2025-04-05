@@ -19,6 +19,10 @@ In Missile Command, you defend your cities and missile bases from incoming enemy
 - **Wave-based Progression**: Waves with increasing difficulty and procedural generation for infinite gameplay
 - **High Score Tracking**: Local storage and online leaderboards with player names and wave details
 - **Responsive Design**: Fully playable on mobile and desktop with adaptive UI scaling
+- **Sound & Music**: experimental sound and music via royalty free sounds at https://pixabay.com/sound-effects/search/missile/.
+  - explosion https://pixabay.com/sound-effects/missile-explosion-168600/
+  - missile fire https://pixabay.com/sound-effects/missile-blast-2-95177/
+  - music via Suno https://suno.com/invite/@georgesl
 
 ### Enhanced Mechanics
 - **Special Weapons System**: 
