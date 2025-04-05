@@ -2,7 +2,7 @@
 
 // --- Configuration ---
 // Increment this version number when you update any assets in urlsToCache
-const APP_VERSION = 'v75';
+const APP_VERSION = 'v76';
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
 
 // List of assets to cache on installation
@@ -19,7 +19,10 @@ const urlsToCache = [
   '/icons/android-launchericon-48-48.png',
   '/css/fonts.css',
   '/fonts/press-start-2p-v15-latin-regular.woff2',
-  '/fonts/press-start-2p-v15-latin-regular.ttf'
+  '/fonts/press-start-2p-v15-latin-regular.ttf',
+  '/audio/explosion.mp3',
+  '/audio/launch.mp3',
+  '/audio/music.mp3'
 ];
 
 // --- Installation Event ---
