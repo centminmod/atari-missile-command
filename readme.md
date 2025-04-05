@@ -6,6 +6,10 @@ Demo https://missile-command-game.centminmod.com/ hosted on Cloudflare Pages
 
 A modern HTML5 canvas remake of the classic Atari game from 1980, featuring enhanced graphics, additional gameplay mechanics, and AI-powered gameplay analysis. Demo https://missile-command-game.centminmod.com/ hosted on Cloudflare Pages.
 
+<img src="/images/logo1-1024x1024.png" alt="Missile Command Game" width="512" height="512">
+
+<img src="/images/missile-command-product.png" alt="Missile Command Game" width="512" height="512">
+
 ## 🎮 Game Overview
 
 In Missile Command, you defend your cities and missile bases from incoming enemy attacks. Using your missile launchers, you must intercept and destroy enemy missiles, bombers, and other threats before they reach your bases and cities. As waves progress, enemies become faster and more numerous, testing your reflexes and strategic resource management.
