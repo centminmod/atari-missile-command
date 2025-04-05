@@ -1789,7 +1789,7 @@
                     
                     // Draw title
                     tempCtx.fillStyle = '#ff0000';
-                    tempCtx.font = '24px "Press Start 2P", monospace';
+                    tempCtx.font = '28px "Press Start 2P", monospace';
                     tempCtx.textAlign = 'center';
                     tempCtx.textBaseline = 'top';
                     tempCtx.fillText(title, boxX + boxWidth/2, boxY + 30);
@@ -1797,17 +1797,17 @@
                     // Draw main message text
                     tempCtx.fillStyle = '#ffff00';
                     tempCtx.font = '16px "Press Start 2P", monospace';
-                    tempCtx.fillText(text, boxX + boxWidth/2, boxY + 70);
+                    tempCtx.fillText(text, boxX + boxWidth/2, boxY + 80);
                     
                     // Draw sub text if visible
                     if (subText) {
-                        tempCtx.fillText(subText, boxX + boxWidth/2, boxY + 100);
+                        tempCtx.fillText(subText, boxX + boxWidth/2, boxY + 115);
                     }
                     
                     // Draw bonus text if visible
                     if (bonusText) {
                         tempCtx.fillStyle = '#ffaa00';
-                        tempCtx.fillText(bonusText, boxX + boxWidth/2, boxY + (subText ? 130 : 100));
+                        tempCtx.fillText(bonusText, boxX + boxWidth/2, boxY + (subText ? 150 : 115));
                     }
                     
                     // Draw game stats if visible
@@ -1817,12 +1817,12 @@
                         
                         if (statSpans.length > 0) {
                             // Set up for stats drawing
-                            tempCtx.font = '12px "Press Start 2P", monospace';
+                            tempCtx.font = '14px "Press Start 2P", monospace';
                             
-                            // Draw stats title
+                            // Draw stats title with more space
                             tempCtx.fillStyle = '#cccccc';
                             tempCtx.textAlign = 'center';
-                            tempCtx.fillText("GAME STATISTICS", boxX + boxWidth/2, boxY + 130);
+                            tempCtx.fillText("GAME STATISTICS", boxX + boxWidth/2, boxY + 150);
                             
                             // Define the specific order of stats based on actual game UI
                             const leftColOrder = [
@@ -1843,11 +1843,11 @@
                                 "High Score:"
                             ];
                             
-                            // Calculate columns
-                            const leftCol = boxX + boxWidth * 0.15; // Left column x position
-                            const rightCol = boxX + boxWidth * 0.55; // Right column x position
-                            const topRow = boxY + 160; // First row y position
-                            const rowHeight = 20; // Height between rows
+                            // Improved spacing
+                            const leftCol = boxX + boxWidth * 0.12; // Adjusted left column position
+                            const rightCol = boxX + boxWidth * 0.52; // Adjusted right column position
+                            const topRow = boxY + 185; // More space after title
+                            const rowHeight = 24; // Increased row height
                             
                             // Draw left column stats in correct order
                             tempCtx.textAlign = 'left';
@@ -1855,9 +1855,6 @@
                                 const statSpan = statSpans.find(span => span.textContent.startsWith(statPrefix));
                                 if (statSpan) {
                                     tempCtx.fillStyle = '#ffffff';
-                                    if (statSpan.textContent.includes('HIGH SCORE')) {
-                                        tempCtx.fillStyle = '#ffff00';
-                                    }
                                     tempCtx.fillText(statSpan.textContent, leftCol, topRow + (index * rowHeight));
                                 }
                             });
@@ -1866,17 +1863,17 @@
                             rightColOrder.forEach((statPrefix, index) => {
                                 const statSpan = statSpans.find(span => span.textContent.startsWith(statPrefix));
                                 if (statSpan) {
-                                    tempCtx.fillStyle = '#ffffff';
+                                    // Use yellow color for High Score
                                     if (statSpan.textContent.includes('HIGH SCORE')) {
                                         tempCtx.fillStyle = '#ffff00';
+                                    } else {
+                                        tempCtx.fillStyle = '#ffffff';
                                     }
                                     tempCtx.fillText(statSpan.textContent, rightCol, topRow + (index * rowHeight));
                                 }
                             });
                         }
                     }
-                    
-                    // No form elements or buttons drawn as requested
                 }
 
                 // Convert canvas to Blob
