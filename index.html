@@ -828,6 +828,7 @@
         let musicSourceNode = null; // To keep track of the playing music source
         let isMusicMuted = false;
         let isSfxMuted = false;
+        let audioInitialized = false;
         const audioFilePaths = {
             music: 'audio/music.mp3', // Placeholder
             launch: 'audio/launch.mp3', // Placeholder - Changed to mp3
@@ -2707,6 +2708,12 @@
         function handleCanvasInput(event) {
             if (isGameOver || isPaused || transitioningWave || !gameHasStarted) return;
             
+            // Initialize audio context if not done already
+            if (!audioInitialized) {
+                initAudioContext();
+                audioInitialized = true;
+            }
+            
             const coords = getCanvasCoordinates(canvas, event);
             const clickX = coords.x;
             const clickY = coords.y;
@@ -2756,6 +2763,7 @@
                 }
             }
         }
+
 
         // --- NEW: Function to Record Game Click ---
         function recordGameClick(clickX, clickY, armedWeapon) {
@@ -3067,18 +3075,9 @@
         // --- Event Listeners ---
         // MODIFIED: Replace click listener with handleCanvasInput
         // Initialize AudioContext on first user interaction (click or touch)
-        function handleFirstInteraction(event) {
-            initAudioContext();
-            // Call the actual input handler
-            handleCanvasInput(event);
-            // Remove this listener after first use
-            canvas.removeEventListener('click', handleFirstInteraction);
-            canvas.removeEventListener('touchstart', handleFirstInteraction);
-        }
-        canvas.addEventListener('click', handleFirstInteraction);
 
         // ADDED: Touch event listeners
-        canvas.addEventListener('touchstart', handleFirstInteraction, { passive: false });
+        canvas.addEventListener('click', handleCanvasInput);
         canvas.addEventListener('touchstart', handleCanvasInput, { passive: false });
         canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
         canvas.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
