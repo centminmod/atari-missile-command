@@ -1457,16 +1457,442 @@
             };
         }
 
+        function createShieldBomb(config = {}) {
+            const type = config.type || Math.floor(Math.random() * 3) + 1; // Random type 1-3 if not specified
+            const startX = config.startX !== undefined ? config.startX : Math.random() * canvas.width;
+            const startY = config.startY !== undefined ? config.startY : 0;
+            const target = config.target || getRandomTarget();
+            
+            // Shield bombs move slower than regular missiles
+            const baseSpeed = config.speed || (MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.05)) * 0.7;
+            const angle = Math.atan2(target.y - startY, target.x - startX);
+            const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
+            
+            // Size is 4x larger than regular missiles
+            const size = 20; // Adjust based on your game scale
+            
+            // Define colors based on shield bomb type
+            let colors = {
+                coreColor: '#ff4400',
+                innerShieldColor: '#ffcc00',
+                middleShieldColor: '#44cc44',
+                outerShieldColor: '#4488ff',
+                trailColor: 'rgba(255, 100, 100, 0.4)'
+            };
+            
+            // Adjust colors based on shield bomb type
+            if (type === 2) { // Orbital Defense
+                colors = {
+                    coreColor: '#990000',
+                    innerShieldColor: '#ffcc00',
+                    middleShieldColor: '#ff8800',
+                    outerShieldColor: '#ff4400',
+                    trailColor: 'rgba(255, 150, 100, 0.4)'
+                };
+            } else if (type === 3) { // Tech Sphere
+                colors = {
+                    coreColor: '#ff3300',
+                    innerShieldColor: '#00ccff',
+                    middleShieldColor: '#00ffaa',
+                    outerShieldColor: '#88ff00',
+                    trailColor: 'rgba(100, 255, 150, 0.4)'
+                };
+            }
+            
+            return {
+                x: startX,
+                y: startY,
+                targetX: target.x,
+                targetY: target.y,
+                dx: Math.cos(angle) * baseSpeed,
+                dy: Math.sin(angle) * baseSpeed,
+                speed: baseSpeed,
+                color: colors.coreColor,
+                trailColor: colors.trailColor,
+                alive: true,
+                trail: [{x: startX, y: startY}],
+                
+                // Shield bomb specific properties
+                isShieldBomb: true,
+                shieldBombType: type,
+                shieldLayers: 3,
+                hitsPerLayer: 3,
+                currentLayerHits: 0,
+                totalHitsTaken: 0,
+                colors: colors,
+                size: size,
+                // IMPORTANT: Ensure the wavePartType is correctly set for counting
+                wavePartType: 'shield_bomb', // Fixed value to ensure proper counting
+                
+                update() {
+                    if (!this.alive) return;
+                    
+                    this.x += this.dx;
+                    this.y += this.dy;
+                    
+                    // Update trail
+                    this.trail.push({x: this.x, y: this.y});
+                    if (this.trail.length > 20) { // Longer trail for shield bombs
+                        this.trail.shift();
+                    }
+                    
+                    // Check if reached target
+                    if (this.y >= this.targetY || this.y >= groundY) {
+                        this.alive = false;
+                        // Create a large explosion
+                        const impactY = Math.min(this.targetY, groundY);
+                        createExplosion(this.x, impactY, EXPLOSION_RADIUS_START * 2, this.color, EXPLOSION_RADIUS_MAX_BASE * 2, EXPLOSION_DURATION * 1.5);
+                        checkObjectImpact(this.x, impactY, false);
+                    }
+                },
+                
+                draw() {
+                    if (!this.alive) return;
+                    
+                    // Draw trail
+                    ctx.strokeStyle = this.trailColor;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.stroke();
+                    
+                    // Draw based on type
+                    if (this.shieldBombType === 1) {
+                        this.drawConcentricRings();
+                    } else if (this.shieldBombType === 2) {
+                        this.drawOrbitalDefense();
+                    } else if (this.shieldBombType === 3) {
+                        this.drawTechSphere();
+                    }
+                },
+                
+                drawConcentricRings() {
+                    // Draw core
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw glow
+                    ctx.fillStyle = '#ff8800';
+                    ctx.globalAlpha = 0.6;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size / 2 - 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                    
+                    // Draw shields based on remaining layers
+                    if (this.shieldLayers >= 1) {
+                        // Inner shield
+                        ctx.strokeStyle = this.colors.innerShieldColor;
+                        ctx.lineWidth = 4;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    
+                    if (this.shieldLayers >= 2) {
+                        // Middle shield
+                        ctx.strokeStyle = this.colors.middleShieldColor;
+                        ctx.lineWidth = 4;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    
+                    if (this.shieldLayers >= 3) {
+                        // Outer shield
+                        ctx.strokeStyle = this.colors.outerShieldColor;
+                        ctx.lineWidth = 4;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                },
+                
+                drawOrbitalDefense() {
+                    // Draw core
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Inner orbit
+                    if (this.shieldLayers >= 1) {
+                        // Draw orbit path
+                        ctx.strokeStyle = this.colors.innerShieldColor;
+                        ctx.setLineDash([2, 2]);
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        // Draw satellites (3 satellites in inner orbit)
+                        const innerRadius = this.size;
+                        for (let i = 0; i < 3; i++) {
+                            const angle = (i * (Math.PI * 2 / 3)) + (Date.now() / 1000);
+                            const satX = this.x + Math.cos(angle) * innerRadius;
+                            const satY = this.y + Math.sin(angle) * innerRadius;
+                            
+                            ctx.fillStyle = this.colors.innerShieldColor;
+                            ctx.beginPath();
+                            ctx.arc(satX, satY, 4, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    
+                    // Middle orbit
+                    if (this.shieldLayers >= 2) {
+                        // Draw orbit path
+                        ctx.strokeStyle = this.colors.middleShieldColor;
+                        ctx.setLineDash([2, 2]);
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        // Draw satellites (6 satellites in middle orbit)
+                        const middleRadius = this.size * 1.5;
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (i * (Math.PI * 2 / 6)) + (Date.now() / 1200);
+                            const satX = this.x + Math.cos(angle) * middleRadius;
+                            const satY = this.y + Math.sin(angle) * middleRadius;
+                            
+                            ctx.fillStyle = this.colors.middleShieldColor;
+                            ctx.beginPath();
+                            ctx.arc(satX, satY, 4, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    
+                    // Outer orbit
+                    if (this.shieldLayers >= 3) {
+                        // Draw orbit path
+                        ctx.strokeStyle = this.colors.outerShieldColor;
+                        ctx.setLineDash([2, 2]);
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        // Draw satellites (12 satellites in outer orbit)
+                        const outerRadius = this.size * 2;
+                        for (let i = 0; i < 12; i++) {
+                            const angle = (i * (Math.PI * 2 / 12)) + (Date.now() / 1500);
+                            const satX = this.x + Math.cos(angle) * outerRadius;
+                            const satY = this.y + Math.sin(angle) * outerRadius;
+                            
+                            ctx.fillStyle = this.colors.outerShieldColor;
+                            ctx.beginPath();
+                            ctx.arc(satX, satY, 4, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                },
+                
+                drawTechSphere() {
+                    // Draw core
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Inner shield
+                    if (this.shieldLayers >= 1) {
+                        // Main circle
+                        ctx.strokeStyle = this.colors.innerShieldColor;
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                        // Dashed overlay
+                        ctx.setLineDash([1, 2]);
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        // Cross pattern
+                        ctx.beginPath();
+                        ctx.moveTo(this.x - this.size * 0.7, this.y - this.size * 0.7);
+                        ctx.lineTo(this.x + this.size * 0.7, this.y + this.size * 0.7);
+                        ctx.moveTo(this.x - this.size * 0.7, this.y + this.size * 0.7);
+                        ctx.lineTo(this.x + this.size * 0.7, this.y - this.size * 0.7);
+                        ctx.strokeStyle = this.colors.innerShieldColor;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                    
+                    // Middle shield
+                    if (this.shieldLayers >= 2) {
+                        // Main circle
+                        ctx.strokeStyle = this.colors.middleShieldColor;
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                        // Dashed overlay
+                        ctx.setLineDash([3, 2]);
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        // Cross pattern
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y - this.size * 1.5);
+                        ctx.lineTo(this.x, this.y + this.size * 1.5);
+                        ctx.moveTo(this.x - this.size * 1.5, this.y);
+                        ctx.lineTo(this.x + this.size * 1.5, this.y);
+                        ctx.strokeStyle = this.colors.middleShieldColor;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                    
+                    // Outer shield
+                    if (this.shieldLayers >= 3) {
+                        // Main circle
+                        ctx.strokeStyle = this.colors.outerShieldColor;
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                        // Dashed overlay
+                        ctx.setLineDash([5, 3]);
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        // Tech nodes
+                        const radius = this.size * 2;
+                        for (let i = 0; i < 8; i++) {
+                            const angle = (i * (Math.PI / 4)) + (Date.now() / 3000);
+                            const nodeX = this.x + Math.cos(angle) * radius;
+                            const nodeY = this.y + Math.sin(angle) * radius;
+                            
+                            ctx.fillStyle = this.colors.outerShieldColor;
+                            ctx.beginPath();
+                            ctx.arc(nodeX, nodeY, 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+            };
+        }
+
         // --- Collision Detection ---
         function checkExplosionCollisions(explosion) {
             let explosionMadeKill = false;
 
             // Only check collisions with enemy missiles/planes/bombs if ignoreEnemyObjectsWhenExploding is false
             if (!explosion.ignoreEnemyObjectsWhenExploding) {
-                incomingMissiles.forEach((missile, index) => { if (missile.alive && !explosion.collidedMissiles.has(index)) { const dist = distance(explosion.x, explosion.y, missile.x, missile.y); if (dist < explosion.radius) { missile.alive = false; explosion.collidedMissiles.add(index); explosionMadeKill = true; statsEnemyMissilesDestroyed++; let pointsToAdd = POINTS_PER_MISSILE; if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { pointsToAdd += ACCURACY_BONUS_POINTS; statsAccuracyBonusHits++; messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; accuracyBonusMessageTimer = 120; } const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } } });
+                incomingMissiles.forEach((missile, index) => { 
+                    if (missile.alive && !explosion.collidedMissiles.has(index)) { 
+                        const dist = distance(explosion.x, explosion.y, missile.x, missile.y); 
+                        if (dist < explosion.radius) { 
+                            // Special handling for shield bombs
+                            if (missile.isShieldBomb) {
+                                // Register collision to prevent multiple hits from same explosion
+                                explosion.collidedMissiles.add(index);
+                                
+                                // Apply damage to shield
+                                missile.currentLayerHits++;
+                                missile.totalHitsTaken++;
+                                
+                                // Create shield impact effect
+                                const impactColor = missile.shieldLayers === 3 ? missile.colors.outerShieldColor : 
+                                                    missile.shieldLayers === 2 ? missile.colors.middleShieldColor : 
+                                                    missile.colors.innerShieldColor;
+                                createExplosion(explosion.x, explosion.y, Math.min(explosion.radius * 0.5, 10), impactColor, null, 15, true);
+                                
+                                // Check if current layer is destroyed
+                                if (missile.currentLayerHits >= missile.hitsPerLayer) {
+                                    missile.shieldLayers--;
+                                    missile.currentLayerHits = 0;
+                                    
+                                    // Create shield break effect
+                                    const breakColor = missile.shieldLayers === 2 ? missile.colors.outerShieldColor : 
+                                                      missile.shieldLayers === 1 ? missile.colors.middleShieldColor : 
+                                                      missile.colors.innerShieldColor;
+                                    createExplosion(missile.x, missile.y, missile.size * (missile.shieldLayers + 1), breakColor, missile.size * (missile.shieldLayers + 1.5), 30, true);
+                                    
+                                    // If all shields destroyed, explode the shield bomb
+                                    if (missile.shieldLayers <= 0) {
+                                        missile.alive = false;
+                                        explosionMadeKill = true;
+                                        statsEnemyMissilesDestroyed++;
+                                        
+                                        // Award points (3x normal missile points)
+                                        let pointsToAdd = POINTS_PER_MISSILE * 3;
+                                        if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { 
+                                            pointsToAdd += ACCURACY_BONUS_POINTS; 
+                                            statsAccuracyBonusHits++; 
+                                            messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; 
+                                            accuracyBonusMessageTimer = 120; 
+                                        }
+                                        
+                                        const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier);
+                                        score += finalPoints;
+                                        gameTotalScore += finalPoints;
+                                        
+                                        // Create large explosion
+                                        createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START * 2, missile.color, EXPLOSION_RADIUS_MAX_BASE * 2, EXPLOSION_DURATION * 1.5);
+                                        
+                                        // Spawn 2 smart bombs and 2 MIRVs
+                                        for (let i = 0; i < 2; i++) {
+                                            // Smart bombs - top and bottom
+                                            const angle1 = Math.PI / 4 + (i * Math.PI);
+                                            const spawnX1 = missile.x + Math.cos(angle1) * 20;
+                                            const spawnY1 = missile.y + Math.sin(angle1) * 20;
+                                            
+                                            incomingMissiles.push(createIncomingMissile({
+                                                startX: spawnX1,
+                                                startY: spawnY1,
+                                                isSmartBomb: true,
+                                                speed: missile.speed * 1.1,
+                                                color: SMART_BOMB_SPLIT_COLOR,
+                                                trailColor: 'rgba(255, 200, 100, 0.5)'
+                                            }));
+                                            
+                                            // MIRVs - left and right
+                                            const angle2 = -Math.PI / 4 + (i * Math.PI);
+                                            const spawnX2 = missile.x + Math.cos(angle2) * 20;
+                                            const spawnY2 = missile.y + Math.sin(angle2) * 20;
+                                            
+                                            incomingMissiles.push(createIncomingMissile({
+                                                startX: spawnX2,
+                                                startY: spawnY2,
+                                                isMIRV: true,
+                                                speed: missile.speed * 1.1,
+                                                color: MIRV_WARHEAD_COLOR,
+                                                trailColor: 'rgba(255, 150, 150, 0.5)'
+                                            }));
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Original code for regular missiles
+                                missile.alive = false; explosion.collidedMissiles.add(index); explosionMadeKill = true; statsEnemyMissilesDestroyed++; let pointsToAdd = POINTS_PER_MISSILE; if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { pointsToAdd += ACCURACY_BONUS_POINTS; statsAccuracyBonusHits++; messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; accuracyBonusMessageTimer = 120; } const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color);
+                            }
+                        } 
+                    } 
+                });
 
+                // Original code for planes and bombs (unchanged)
                 planes.forEach((plane, index) => { if (plane.alive && !explosion.collidedPlanes.has(index)) { if (explosion.x + explosion.radius > plane.x && explosion.x - explosion.radius < plane.x + plane.width && explosion.y + explosion.radius > plane.y && explosion.y - explosion.radius < plane.y + plane.height) { plane.alive = false; explosion.collidedPlanes.add(index); explosionMadeKill = true; statsPlanesDestroyed++; const finalPoints = Math.round(PLANE_BONUS_SCORE * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(plane.x + plane.width / 2, plane.y + plane.height / 2, EXPLOSION_RADIUS_START * 1.5, plane.bodyColor, EXPLOSION_RADIUS_MAX_BASE * 1.2, EXPLOSION_DURATION * 1.2); } } });
-
                 planeBombs.forEach((bomb, index) => { if (bomb.alive && !explosion.collidedBombs.has(index)) { const dist = distance(explosion.x, explosion.y, bomb.x, bomb.y); if (dist < explosion.radius) { bomb.alive = false; explosion.collidedBombs.add(index); explosionMadeKill = true; statsPlaneBombsDestroyed++; const finalPoints = Math.round(PLANE_BOMB_POINTS * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color); } } });
             }
 
@@ -1484,19 +1910,39 @@
 
         // --- Wave System Logic ---
         function defineWaves() {
-             return [
-                 [{ type: 'missile', count: 16, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 1
-                 [{ type: 'missile', count: 22, speedFactor: 1.15 }, { type: 'plane', count: 1 }], // Wave 2
-                 [{ type: 'missile', count: 26, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }], // Wave 3
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 6, speedFactor: 1.0 }], // Wave 4
-                 [{ type: 'missile', count: 21, speedFactor: 1.25 }, { type: 'plane', count: 6, variantChance: 0.2 }, { type: 'smart_bomb', count: 8, speedFactor: 1.1 }], // Wave 5
-                 [{ type: 'missile', count: 24, speedFactor: 1.35 }, { type: 'plane', count: 8, variantChance: 0.2 }, { type: 'mirv', count: 8, speedFactor: 1.0 }], // Wave 6
-                 [{ type: 'missile', count: 24, speedFactor: 1.40 }, { type: 'smart_bomb', count: 8, speedFactor: 1.15 }, { type: 'plane', count: 10, variantChance: 0.35, speedFactor: 1.1 }], // Wave 7
-                 [{ type: 'missile', count: 28, speedFactor: 1.45 }, { type: 'mirv', count: 18, speedFactor: 1.15 }, { type: 'smart_bomb', count: 8, speedFactor: 1.2 }], // Wave 8
-                 [{ type: 'missile', count: 28, speedFactor: 1.5 }, { type: 'smart_bomb', count: 8, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 8, variantChance: 0.5, speedFactor: 1.2 }], // Wave 9
-                 [{ type: 'missile', count: 32, speedFactor: 1.6 }, { type: 'smart_bomb', count: 8, speedFactor: 1.5 }, { type: 'mirv', count: 7, speedFactor: 1.4 }, { type: 'plane', count: 12, variantChance: 0.6, speedFactor: 1.3 }], // Wave 10
-                 [{ type: 'missile', count: 36, speedFactor: 1.7 }, { type: 'smart_bomb', count: 8, speedFactor: 1.6 }, { type: 'mirv', count: 8, speedFactor: 1.5 }, { type: 'plane', count: 12, variantChance: 0.7, speedFactor: 1.4 }], // Wave 11
-             ];
+            return [
+                [{ type: 'missile', count: 16, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 1
+                
+                // Wave 2 - Introduce a single shield bomb (Type 1: Concentric Rings) at lower speed
+                [{ type: 'missile', count: 20, speedFactor: 1.15 }, { type: 'plane', count: 1 }, { type: 'shield_bomb', count: 1, bombType: 1, speedFactor: 0.8 }],
+                
+                // Wave 3 - Slightly faster shield bomb, same type for consistency
+                [{ type: 'missile', count: 24, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }, { type: 'shield_bomb', count: 1, bombType: 1, speedFactor: 0.9 }],
+                
+                // Wave 4 - Introduce Type 2 shield bomb (Orbital Defense)
+                [{ type: 'missile', count: 18, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 5, speedFactor: 1.0 }, { type: 'shield_bomb', count: 1, bombType: 2, speedFactor: 0.9 }],
+                
+                // Wave 5 - Introduce Type 3 shield bomb (Tech Sphere)
+                [{ type: 'missile', count: 18, speedFactor: 1.25 }, { type: 'plane', count: 6, variantChance: 0.2 }, { type: 'smart_bomb', count: 7, speedFactor: 1.1 }, { type: 'shield_bomb', count: 1, bombType: 3, speedFactor: 0.95 }],
+                
+                // Wave 6 - Two shield bombs (mixed types)
+                [{ type: 'missile', count: 22, speedFactor: 1.35 }, { type: 'plane', count: 7, variantChance: 0.2 }, { type: 'mirv', count: 7, speedFactor: 1.0 }, { type: 'shield_bomb', count: 2, speedFactor: 1.0 }],
+                
+                // Wave 7 - Increase shield bomb count
+                [{ type: 'missile', count: 22, speedFactor: 1.40 }, { type: 'smart_bomb', count: 7, speedFactor: 1.15 }, { type: 'plane', count: 9, variantChance: 0.35, speedFactor: 1.1 }, { type: 'shield_bomb', count: 2, speedFactor: 1.05 }],
+                
+                // Wave 8 - More shield bombs at faster speed
+                [{ type: 'missile', count: 25, speedFactor: 1.45 }, { type: 'mirv', count: 16, speedFactor: 1.15 }, { type: 'smart_bomb', count: 7, speedFactor: 1.2 }, { type: 'shield_bomb', count: 3, speedFactor: 1.1 }],
+                
+                // Wave 9 - Mix of all enemy types
+                [{ type: 'missile', count: 25, speedFactor: 1.5 }, { type: 'smart_bomb', count: 7, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 7, variantChance: 0.5, speedFactor: 1.2 }, { type: 'shield_bomb', count: 3, speedFactor: 1.15 }],
+                
+                // Wave 10 - Even more challenging
+                [{ type: 'missile', count: 28, speedFactor: 1.6 }, { type: 'smart_bomb', count: 7, speedFactor: 1.5 }, { type: 'mirv', count: 6, speedFactor: 1.4 }, { type: 'plane', count: 10, variantChance: 0.6, speedFactor: 1.3 }, { type: 'shield_bomb', count: 4, speedFactor: 1.2 }],
+                
+                // Wave 11 - Maximum challenge with all types and specific shield bomb types
+                [{ type: 'missile', count: 32, speedFactor: 1.7 }, { type: 'smart_bomb', count: 7, speedFactor: 1.6 }, { type: 'mirv', count: 7, speedFactor: 1.5 }, { type: 'plane', count: 10, variantChance: 0.7, speedFactor: 1.4 }, { type: 'shield_bomb', count: 2, bombType: 1, speedFactor: 1.25 }, { type: 'shield_bomb', count: 2, bombType: 2, speedFactor: 1.25 }, { type: 'shield_bomb', count: 2, bombType: 3, speedFactor: 1.25 }],
+            ];
         }
         function initWave(waveIndex) {
             try {
@@ -1592,33 +2038,58 @@
         }
         function spawnEnemiesForWave() {
             if (transitioningWave || isGameOver || isPaused || waveEnemiesSpawned >= waveEnemiesRequired) return;
-
+            
+            // DEBUG: Log current shield bombs to help troubleshoot
+            if (currentWave <= 5) { // Only for first few waves to minimize log spam
+                const shieldBombsConfig = currentWaveConfig.find(p => p.type === 'shield_bomb');
+                const shieldBombsRequired = shieldBombsConfig ? shieldBombsConfig.count : 0;
+                const currentShieldBombs = incomingMissiles.filter(m => m.isShieldBomb).length;
+                console.log(`Wave ${currentWave + 1}: Shield bombs - Current: ${currentShieldBombs}, Required: ${shieldBombsRequired}`);
+            }
+            
             const potentialSpawns = [];
             currentWaveConfig.forEach(part => {
                 const requiredForThisPart = part.count || 0;
-                const currentSpawnedForThisPart = (part.type === 'plane' ? planes : incomingMissiles).filter(e => e.wavePartType === part.type).length;
+                
+                // IMPROVED: Directly check for shield bombs by using isShieldBomb property
+                let currentSpawnedForThisPart;
+                if (part.type === 'plane') {
+                    currentSpawnedForThisPart = planes.filter(e => e.wavePartType === part.type).length;
+                } else if (part.type === 'shield_bomb') {
+                    // Use isShieldBomb property for more reliable tracking
+                    currentSpawnedForThisPart = incomingMissiles.filter(m => m.isShieldBomb).length;
+                } else {
+                    // Regular missile types
+                    currentSpawnedForThisPart = incomingMissiles.filter(e => e.wavePartType === part.type).length;
+                }
+                
                 if (currentSpawnedForThisPart < requiredForThisPart) {
                     // Cap the spawn rate multiplier to prevent excessively high spawn chances
                     const spawnRateMultiplier = Math.min(5.0, 1 + currentWave * 0.15);
+                    
+                    // Adjust base spawn chances by enemy type
                     let baseSpawnChance = 0.025;
                     if (part.type === 'plane') { baseSpawnChance = PLANE_SPAWN_CHANCE; }
-
+                    if (part.type === 'shield_bomb') { baseSpawnChance = 0.015; } // Lower chance for shield bombs
+                    
                     // Cap the speed factor to prevent excessively fast enemies
                     const safeFactor = Math.min(3.0, part.speedFactor || 1.0);
-
+                    
                     // Cap the final spawn chance to prevent issues
                     let spawnChance = Math.min(0.75, baseSpawnChance * spawnRateMultiplier * safeFactor);
-
+                    
                     potentialSpawns.push({ partConfig: part, spawnChance: spawnChance });
                 }
             });
-
+            
             if (potentialSpawns.length > 0) {
-                 const randomIndex = Math.floor(Math.random() * potentialSpawns.length);
-                 const selectedSpawn = potentialSpawns[randomIndex];
-                 const part = selectedSpawn.partConfig;
+                const randomIndex = Math.floor(Math.random() * potentialSpawns.length);
+                const selectedSpawn = potentialSpawns[randomIndex];
+                const part = selectedSpawn.partConfig;
+                
                 if (Math.random() < selectedSpawn.spawnChance) {
                     if (part.type === 'missile' || part.type === 'smart_bomb' || part.type === 'mirv') {
+                        // Original code for regular missiles, smart bombs, and MIRVs
                         let missileType = part.type;
                         let baseSpeed = MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.08);
                         baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED);
@@ -1630,7 +2101,28 @@
                         };
                         incomingMissiles.push(createIncomingMissile(config));
                         waveEnemiesSpawned++;
-                    } else if (part.type === 'plane') {
+                    } 
+                    else if (part.type === 'shield_bomb') {
+                        // Shield bomb creation - with fixed wavePartType
+                        let baseSpeed = (MISSILE_SPEED_ENEMY_BASE + (currentWave * 0.05)) * 0.7; // Shield bombs move slower
+                        baseSpeed = Math.min(baseSpeed, MAX_ENEMY_MISSILE_SPEED * 0.7);
+                        
+                        const shieldBomb = createShieldBomb({
+                            type: part.bombType || Math.floor(Math.random() * 3) + 1, // Random type if not specified
+                            speed: baseSpeed * Math.min(3.0, part.speedFactor || 1.0)
+                            // NOTE: wavePartType is now hardcoded in the createShieldBomb function
+                        });
+                        
+                        incomingMissiles.push(shieldBomb);
+                        waveEnemiesSpawned++;
+                        
+                        // DEBUG: Log when a shield bomb is spawned
+                        if (currentWave <= 5) {
+                            const currentShieldBombs = incomingMissiles.filter(m => m.isShieldBomb).length;
+                            console.log(`Added shield bomb of type ${shieldBomb.shieldBombType}. Current count: ${currentShieldBombs}`);
+                        }
+                    }
+                    else if (part.type === 'plane') {
                         const newPlane = createPlane();
                         newPlane.wavePartType = part.type;
                         planes.push(newPlane);
@@ -1638,7 +2130,7 @@
                     }
                 }
             }
-
+            
             // Force wave completion when we've spawned enough enemies
             // This is an additional safeguard
             if (waveEnemiesSpawned >= waveEnemiesRequired) {

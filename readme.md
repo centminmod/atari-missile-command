@@ -35,6 +35,10 @@ In Missile Command, you defend your cities and missile bases from incoming enemy
   - Shields for protection
 - **Advanced Enemy Types**:
   - Smart Bombs that split into multiple warheads
+  - Shield Bombs that requires 9 hits to destroy (3 layers, 3 hits each). There are 3 types, Concentric Rings, Orbital Defense, Tech Sphere:
+    1. Concentric Rings: Classic orbital rings with color-coded shields
+    2. Orbital Defense: Satellite-based protection system with rotating defensive bodies
+    3. Tech Sphere: High-tech holographic shield system with circuit patterns
   - MIRVs (Multiple Independent Re-entry Vehicles) with 4-way splits
   - Enemy Aircraft that drop bombs at regular intervals
   - Variable-speed missiles with different trajectories
