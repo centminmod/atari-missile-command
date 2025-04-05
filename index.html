@@ -1735,6 +1735,7 @@
             const originalText = screenshotButton.textContent;
             screenshotButton.textContent = 'Saving...';
             screenshotButton.disabled = true;
+            
             try {
                 // Create a temporary canvas to draw everything onto
                 const tempCanvas = document.createElement('canvas');
@@ -1744,10 +1745,138 @@
 
                 // Draw the game canvas content
                 tempCtx.drawImage(canvas, 0, 0);
-
-                // If game over message is visible, draw it too (simplified)
-                if (messageBox.style.display === 'block' && isGameOver) {
-                    console.warn("Screenshotting the message box overlay is complex and not fully implemented. Capturing game canvas only.");
+                
+                // If message box is visible, draw it manually
+                if (messageBox.style.display === 'block') {
+                    console.log("Message box is visible, manually drawing it on the screenshot");
+                    
+                    // Calculate message box position relative to the canvas
+                    const boxWidth = canvas.width * 0.8; // 80% of canvas width
+                    const boxHeight = canvas.height * 0.7; // 70% of canvas height
+                    const boxX = (canvas.width - boxWidth) / 2;
+                    const boxY = (canvas.height - boxHeight) / 2;
+                    
+                    // Draw semi-transparent overlay for dimming the background
+                    tempCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw message box background
+                    tempCtx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+                    tempCtx.beginPath();
+                    // Use rounded rectangle
+                    const radius = 10;
+                    tempCtx.moveTo(boxX + radius, boxY);
+                    tempCtx.lineTo(boxX + boxWidth - radius, boxY);
+                    tempCtx.arcTo(boxX + boxWidth, boxY, boxX + boxWidth, boxY + radius, radius);
+                    tempCtx.lineTo(boxX + boxWidth, boxY + boxHeight - radius);
+                    tempCtx.arcTo(boxX + boxWidth, boxY + boxHeight, boxX + boxWidth - radius, boxY + boxHeight, radius);
+                    tempCtx.lineTo(boxX + radius, boxY + boxHeight);
+                    tempCtx.arcTo(boxX, boxY + boxHeight, boxX, boxY + boxHeight - radius, radius);
+                    tempCtx.lineTo(boxX, boxY + radius);
+                    tempCtx.arcTo(boxX, boxY, boxX + radius, boxY, radius);
+                    tempCtx.fill();
+                    
+                    // Draw message box border
+                    tempCtx.strokeStyle = '#ff0000';
+                    tempCtx.lineWidth = 3;
+                    tempCtx.stroke();
+                    
+                    // Get message content
+                    const title = messageTitle.textContent;
+                    const text = messageText.textContent;
+                    const subText = messageSubText.style.display !== 'none' ? messageSubText.textContent : '';
+                    const bonusText = messageBonusText.style.display !== 'none' ? messageBonusText.textContent : '';
+                    
+                    // Draw title
+                    tempCtx.fillStyle = '#ff0000';
+                    tempCtx.font = '24px "Press Start 2P", monospace';
+                    tempCtx.textAlign = 'center';
+                    tempCtx.textBaseline = 'top';
+                    tempCtx.fillText(title, boxX + boxWidth/2, boxY + 30);
+                    
+                    // Draw main message text
+                    tempCtx.fillStyle = '#ffff00';
+                    tempCtx.font = '16px "Press Start 2P", monospace';
+                    tempCtx.fillText(text, boxX + boxWidth/2, boxY + 70);
+                    
+                    // Draw sub text if visible
+                    if (subText) {
+                        tempCtx.fillText(subText, boxX + boxWidth/2, boxY + 100);
+                    }
+                    
+                    // Draw bonus text if visible
+                    if (bonusText) {
+                        tempCtx.fillStyle = '#ffaa00';
+                        tempCtx.fillText(bonusText, boxX + boxWidth/2, boxY + (subText ? 130 : 100));
+                    }
+                    
+                    // Draw game stats if visible
+                    if (statsContainer.style.display !== 'none') {
+                        // Get all stat spans from the statsContainer
+                        const statSpans = Array.from(statsContainer.querySelectorAll('span'));
+                        
+                        if (statSpans.length > 0) {
+                            // Set up for stats drawing
+                            tempCtx.font = '12px "Press Start 2P", monospace';
+                            
+                            // Draw stats title
+                            tempCtx.fillStyle = '#cccccc';
+                            tempCtx.textAlign = 'center';
+                            tempCtx.fillText("GAME STATISTICS", boxX + boxWidth/2, boxY + 130);
+                            
+                            // Define the specific order of stats based on actual game UI
+                            const leftColOrder = [
+                                "Wave Reached:",
+                                "Difficulty:",
+                                "Missiles Fired:",
+                                "Accuracy:",
+                                "Enemy Missiles Down:",
+                                "Plane Bombs Down:"
+                            ];
+                            
+                            const rightColOrder = [
+                                "Accuracy Bonuses:",
+                                "Planes Down:",
+                                "Cities Lost:",
+                                "Bases Lost:",
+                                "Final Score:",
+                                "High Score:"
+                            ];
+                            
+                            // Calculate columns
+                            const leftCol = boxX + boxWidth * 0.15; // Left column x position
+                            const rightCol = boxX + boxWidth * 0.55; // Right column x position
+                            const topRow = boxY + 160; // First row y position
+                            const rowHeight = 20; // Height between rows
+                            
+                            // Draw left column stats in correct order
+                            tempCtx.textAlign = 'left';
+                            leftColOrder.forEach((statPrefix, index) => {
+                                const statSpan = statSpans.find(span => span.textContent.startsWith(statPrefix));
+                                if (statSpan) {
+                                    tempCtx.fillStyle = '#ffffff';
+                                    if (statSpan.textContent.includes('HIGH SCORE')) {
+                                        tempCtx.fillStyle = '#ffff00';
+                                    }
+                                    tempCtx.fillText(statSpan.textContent, leftCol, topRow + (index * rowHeight));
+                                }
+                            });
+                            
+                            // Draw right column stats in correct order
+                            rightColOrder.forEach((statPrefix, index) => {
+                                const statSpan = statSpans.find(span => span.textContent.startsWith(statPrefix));
+                                if (statSpan) {
+                                    tempCtx.fillStyle = '#ffffff';
+                                    if (statSpan.textContent.includes('HIGH SCORE')) {
+                                        tempCtx.fillStyle = '#ffff00';
+                                    }
+                                    tempCtx.fillText(statSpan.textContent, rightCol, topRow + (index * rowHeight));
+                                }
+                            });
+                        }
+                    }
+                    
+                    // No form elements or buttons drawn as requested
                 }
 
                 // Convert canvas to Blob
@@ -1756,25 +1885,25 @@
                         throw new Error("Canvas toBlob failed.");
                     }
                     try {
-                         // Use Clipboard API to copy the image
-                         await navigator.clipboard.write([
-                             new ClipboardItem({ 'image/png': blob })
-                         ]);
-                         console.log("Screenshot copied to clipboard.");
-                         screenshotButton.textContent = 'Copied!';
+                        // Use Clipboard API to copy the image
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        console.log("Screenshot copied to clipboard.");
+                        screenshotButton.textContent = 'Copied!';
                     } catch (clipErr) {
-                         console.error("Clipboard API failed, falling back to download:", clipErr);
-                         // Fallback: Create a download link
-                         const url = URL.createObjectURL(blob);
-                         const a = document.createElement('a');
-                         a.href = url;
-                         a.download = `missile_command_screenshot_${Date.now()}.png`;
-                         document.body.appendChild(a);
-                         a.click();
-                         document.body.removeChild(a);
-                         URL.revokeObjectURL(url);
-                         console.log("Screenshot download initiated.");
-                         screenshotButton.textContent = 'Saved!';
+                        console.error("Clipboard API failed, falling back to download:", clipErr);
+                        // Fallback: Create a download link
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `missile_command_screenshot_${Date.now()}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        console.log("Screenshot download initiated.");
+                        screenshotButton.textContent = 'Saved!';
                     } finally {
                         setTimeout(() => {
                             screenshotButton.textContent = "Save Screenshot";
