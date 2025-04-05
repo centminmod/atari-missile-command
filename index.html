@@ -1817,7 +1817,7 @@
                         
                         if (statSpans.length > 0) {
                             // Set up for stats drawing
-                            tempCtx.font = '14px "Press Start 2P", monospace';
+                            tempCtx.font = '12px "Press Start 2P", monospace'; // Reduced font size from 14px to 12px
                             
                             // Draw stats title with more space
                             tempCtx.fillStyle = '#cccccc';
@@ -1843,11 +1843,11 @@
                                 "High Score:"
                             ];
                             
-                            // Significantly increased column spacing
-                            const leftCol = boxX + boxWidth * 0.10; // Left column moved further left
-                            const rightCol = boxX + boxWidth * 0.60; // Right column moved further right
-                            const topRow = boxY + 185; // More space after title
-                            const rowHeight = 24; // Increased row height
+                            // Adjusted column positioning - moved both columns to the left
+                            const leftCol = boxX + boxWidth * 0.08; // Moved further left (was 0.10)
+                            const rightCol = boxX + boxWidth * 0.55; // Moved left (was 0.60)
+                            const topRow = boxY + 185; // Same as before
+                            const rowHeight = 24; // Same as before
                             
                             // Draw left column stats in correct order
                             tempCtx.textAlign = 'left';
