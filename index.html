@@ -803,6 +803,7 @@
         let statsAccuracyBonusHits = 0;
         let planes = [];
         let planeBombs = [];
+        let statsShieldBombsDestroyed = 0;
         let gameClickData = [];
         let storeActions = [];
         let scoreSubmitted = false; // Track if score has been submitted
@@ -1834,6 +1835,7 @@
                                         missile.alive = false;
                                         explosionMadeKill = true;
                                         statsEnemyMissilesDestroyed++;
+                                        statsShieldBombsDestroyed++;
                                         
                                         // Award points (3x normal missile points)
                                         let pointsToAdd = POINTS_PER_MISSILE * 3;
@@ -2244,22 +2246,22 @@
                         // Metadata about the game session
                         difficulty: difficulty,
                         timestamp: timestamp,
-                        score: gameTotalScore, // Use the final total score
-                        wave: currentWave + 1, // Record wave reached
+                        score: gameTotalScore,
+                        wave: currentWave + 1,
                         // Include game stats for analysis context
                         stats: {
                             missilesFired: statsMissilesFired,
                             enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
+                            shieldBombsDestroyed: statsShieldBombsDestroyed,
                             planeBombsDestroyed: statsPlaneBombsDestroyed,
                             planesDestroyed: statsPlanesDestroyed,
                             citiesLost: statsCitiesLost,
                             basesLost: statsBasesLost,
                             accuracyBonusHits: statsAccuracyBonusHits,
-                            // Add any other relevant stats you track
                         },
                         // The raw click data
                         clicks: gameClickData,
-                        // Add store actions
+                        // Store actions
                         storeActions: storeActions
                     };
 
@@ -2312,6 +2314,7 @@
                 `Accuracy: ${accuracy}%`,
                 `Bases Lost: ${statsBasesLost}`,
                 `Enemy Missiles Down: ${statsEnemyMissilesDestroyed}`,
+                `Shield Bombs Down: ${statsShieldBombsDestroyed}`,
                 `Final Score: $${gameTotalScore}`,
                 `Plane Bombs Down: ${statsPlaneBombsDestroyed}`,
                 newHighScore ? `NEW HIGH SCORE!` : `High Score: $${highScore}`
@@ -2488,7 +2491,8 @@
                                 "Missiles Fired:",
                                 "Accuracy:",
                                 "Enemy Missiles Down:",
-                                "Plane Bombs Down:"
+                                "Final Score:",
+                                "High Score:"
                             ];
                             
                             const rightColOrder = [
@@ -2496,8 +2500,8 @@
                                 "Planes Down:",
                                 "Cities Lost:",
                                 "Bases Lost:",
-                                "Final Score:",
-                                "High Score:"
+                                "Shield Bombs Down:",
+                                "Plane Bombs Down:"
                             ];
                             
                             // Adjusted positioning to match game UI exactly
@@ -2537,8 +2541,13 @@
                             tempCtx.strokeStyle = '#ff0000';
                             tempCtx.lineWidth = 1;
                             tempCtx.beginPath();
-                            tempCtx.moveTo(boxX + boxWidth * 0.05, topRow + (6 * rowHeight) + 10);
-                            tempCtx.lineTo(boxX + boxWidth * 0.95, topRow + (6 * rowHeight) + 10);
+                            
+                            // Calculate maximum rows between columns and add more padding (20px instead of 10px)
+                            const maxRows = Math.max(leftColOrder.length, rightColOrder.length);
+                            const bottomLineY = topRow + (maxRows * rowHeight) + 20; // Increased from 10px to 20px
+                            
+                            tempCtx.moveTo(boxX + boxWidth * 0.05, bottomLineY);
+                            tempCtx.lineTo(boxX + boxWidth * 0.95, bottomLineY);
                             tempCtx.stroke();
                         }
                     }
