@@ -67,6 +67,11 @@ export default {
            clickSummaryText += "No clicks recorded. ";
       }
 
+      const shieldBombsDestroyed = gameData.stats?.shieldBombsDestroyed || 0;
+      if (shieldBombsDestroyed > 0) {
+          clickSummaryText += `Shield Bombs Destroyed: ${shieldBombsDestroyed}. `;
+      }
+
       // Summarize store actions
       let storeActionsSummary = "";
       if (Array.isArray(gameData.storeActions) && gameData.storeActions.length > 0) {
@@ -120,6 +125,7 @@ GAME MECHANICS CONTEXT:
 - Accuracy Bonus: Precise hits (within 20px) earn extra points (50pts).
 - Upgrades: Players can purchase faster missiles and wider explosions (up to 5 levels each), special weapons (Sonic Wave, Mega Bomb), replacement bases/cities, and shields.
 - MIRV and Smart Bombs: Advanced enemy missiles split into multiple warheads at certain altitudes.
+- Shield Bombs: Powerful bombs with 3 protective layers, requiring 9 hits to destroy before they split into 2 MIRVs and 2 Smart Bombs. Worth triple points.
 
 Based *only* on the data below, provide:
 1. A concise summary (2-4 sentences) of the player's likely playstyle or notable patterns.
