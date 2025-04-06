@@ -3634,8 +3634,11 @@
                     // Show "View More" link only if we displayed 10 scores and there might be more
                     if (limit === 10 && scores.length === 10) {
                          leaderboardViewMoreContainer.style.display = 'block';
+                    } else if (limit === 1000) {
+                         // Always hide the "View More" when already showing 1000
+                         leaderboardViewMoreContainer.style.display = 'none';
                     } else {
-                         leaderboardViewMoreContainer.style.display = 'none'; // Hide if showing 50 or less than 10
+                         leaderboardViewMoreContainer.style.display = 'none'; // Hide if showing less than 10
                     }
 
                 } else {

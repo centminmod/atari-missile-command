@@ -8,7 +8,7 @@
 // Key to store the scores array in KV
 const SCORES_KEY = 'topScores';
 // Maximum number of scores to store persistently in the KV store
-const MAX_SCORES_TO_STORE = 50; // Changed from 10 to 50
+const MAX_SCORES_TO_STORE = 1000; // Changed from 10 to 1000
 // Default number of scores to return in a GET request if no limit is specified
 const DEFAULT_SCORES_TO_RETURN = 10; // Added for clarity
 // Maximum number of scores that can be requested via the 'limit' parameter in a GET request
