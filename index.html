@@ -532,21 +532,29 @@
 <body>
 
     <div id="startMenuContainer">
-         <h1 id="mainTitle">MISSILE COMMAND</h1>
-         <div id="difficultySelection">
-             <h3>SELECT DIFFICULTY</h3>
-             <button class="difficulty-button" data-ammo="150" data-multiplier="1.0">Easy (150 Ammo)</button>
-             <button class="difficulty-button" data-ammo="100" data-multiplier="1.25">Normal (100 Ammo)</button>
-             <button class="difficulty-button" data-ammo="75" data-multiplier="1.5">Hard (75 Ammo)</button>
-             <button class="difficulty-button" data-ammo="50" data-multiplier="2.0">Insane (50 Ammo)</button>
-         </div> <button id="actualStartButton" style="display: none;">Start Game</button> <div id="startHighScore">High Score: $0</div> <div id="leaderboardContainer"> <h3>Top Scores</h3>
-             <ol id="leaderboardList">
-                 <li id="leaderboardLoading">Loading...</li>
-             </ol>
-             <div id="leaderboardViewMoreContainer" style="margin-top: 10px; display: none;">
-                  <a href="#" id="leaderboardViewMoreLink" style="color: #00ffff; text-decoration: underline; font-size: clamp(10px, 2.8vw, 12px);">View Top 1000</a>
-             </div>
-         </div> </div>
+        <h1 id="mainTitle">MISSILE COMMAND</h1>
+        <div id="difficultySelection">
+            <h3>SELECT DIFFICULTY</h3>
+            <button class="difficulty-button" data-ammo="150" data-multiplier="1.0">Easy (150 Ammo)</button>
+            <button class="difficulty-button" data-ammo="100" data-multiplier="1.25">Normal (100 Ammo)</button>
+            <button class="difficulty-button" data-ammo="75" data-multiplier="1.5">Hard (75 Ammo)</button>
+            <button class="difficulty-button" data-ammo="50" data-multiplier="2.0">Insane (50 Ammo)</button>
+        </div> 
+        <button id="actualStartButton" style="display: none;">Start Game</button> 
+        <div id="startHighScore">High Score: $0</div> 
+        <div id="leaderboardContainer"> 
+            <h3>Top Scores</h3>
+            <ol id="leaderboardList">
+                <li id="leaderboardLoading">Loading...</li>
+            </ol>
+            <div id="leaderboardViewMoreContainer" style="margin-top: 10px; display: none;">
+                <a href="#" id="leaderboardViewMoreLink" style="color: #00ffff; text-decoration: underline; font-size: clamp(10px, 2.8vw, 12px);">View Top 1000</a>
+            </div>
+        </div>
+        <div id="aboutGameButtonContainer" style="text-align: center; margin-top: 15px; margin-bottom: 10px;">
+            <button id="aboutGameButton" class="difficulty-button" style="background-color: #333; width: auto; max-width: 200px;">About Game</button>
+        </div>
+    </div>
 
     <div id="uiContainer">
         <div id="score">SCORE: $0</div>
@@ -4390,6 +4398,53 @@
             }
         }
 
+        // About Game Modal functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find or create the about game button based on your implementation choice
+            const aboutGameButton = document.getElementById('aboutGameButton') || document.getElementById('aboutGameLink');
+            const aboutGameModal = document.getElementById('aboutGameModal');
+            const closeAboutButton = document.getElementById('closeAboutButton');
+            
+            if (aboutGameButton && aboutGameModal && closeAboutButton) {
+                // Show the modal when clicking the about button
+                aboutGameButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    // Initialize audio context if not done already (to handle browser audio policy)
+                    if (typeof initAudioContext === 'function' && !audioInitialized) {
+                        initAudioContext();
+                        audioInitialized = true;
+                    }
+                    // Check if a game is active and pause it
+                    const wasPlaying = gameHasStarted && !isGameOver && !isPaused;
+                    if (wasPlaying) {
+                        pauseGame();
+                    }
+                    
+                    aboutGameModal.style.display = 'block';
+                    
+                    // Add data attribute to track if game was paused by modal
+                    aboutGameModal.dataset.pausedGame = wasPlaying ? 'true' : 'false';
+                });
+                
+                // Hide the modal when clicking the close button
+                closeAboutButton.addEventListener('click', function() {
+                    aboutGameModal.style.display = 'none';
+                    
+                    // Resume game if it was playing before
+                    if (aboutGameModal.dataset.pausedGame === 'true' && gameHasStarted && !isGameOver) {
+                        resumeGame();
+                    }
+                });
+                
+                // Close modal with Escape key
+                window.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape' && aboutGameModal.style.display === 'block') {
+                        closeAboutButton.click();
+                    }
+                });
+            }
+        });
+
         // --- MODIFIED: window.onload ---
         window.onload = () => {
             // Set canvas dimensions
@@ -4457,5 +4512,55 @@
 
     </script>
 
+    <!-- About Game Modal -->
+    <div id="aboutGameModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; max-height: 85vh; background-color: rgba(0, 20, 0, 0.95); border: 3px solid #00ff00; border-radius: 15px; box-shadow: 0 0 25px #00ff00; padding: clamp(8px, 3vw, 15px); z-index: 20; color: #00ff00; font-size: clamp(10px, 2.5vw, 11.5px); box-sizing: border-box; overflow-y: auto;">
+        <h2 style="font-size: clamp(16px, 5vw, 22px); margin: 0 0 clamp(8px, 3vw, 15px) 0; text-align: center; color: #ffff00;">About Missile Command</h2>
+        
+        <div style="margin-bottom: clamp(10px, 3vw, 20px);">
+            <h3 style="color: #ffff00; margin: 6px 0; font-size: clamp(13px, 4vw, 16px);">Game Overview</h3>
+            <p>A modern HTML5 canvas remake of the classic Atari game from 1980. Defend your cities and missile bases from incoming enemy attacks using your missile launchers.</p>
+        </div>
+        
+        <div style="margin-bottom: clamp(10px, 3vw, 20px);">
+            <h3 style="color: #ffff00; margin: 6px 0; font-size: clamp(13px, 4vw, 16px);">Key Features</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px;">
+                <div>
+                    <h4 style="color: #88ccff; margin: 5px 0; font-size: clamp(11px, 3.5vw, 14px);">Core Gameplay</h4>
+                    <ul style="padding-left: clamp(15px, 5vw, 20px); margin: 5px 0;">
+                        <li>Multiple Difficulty Levels</li>
+                        <li>Wave-based Progression</li>
+                        <li>High Score Tracking</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #88ccff; margin: 5px 0; font-size: clamp(11px, 3.5vw, 14px);">Special Weapons</h4>
+                    <ul style="padding-left: clamp(15px, 5vw, 20px); margin: 5px 0;">
+                        <li>Sonic Waves</li>
+                        <li>Mega Bombs</li>
+                        <li>Satellite Defense System</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: clamp(10px, 3vw, 20px);">
+            <h3 style="color: #ffff00; margin: 6px 0; font-size: clamp(13px, 4vw, 16px);">Controls</h3>
+            <p>Click or tap to fire missiles at target locations. Use special weapons by clicking their icon to arm, then clicking the target area. Press Space Bar to pause/resume the game.</p>
+        </div>
+        
+        <div style="margin-bottom: clamp(10px, 3vw, 20px);">
+            <h3 style="color: #ffff00; margin: 6px 0; font-size: clamp(13px, 4vw, 16px);">Credits & Technical Info</h3>
+            <p><strong>Developer:</strong> George Liu • <a href="https://github.com/centminmod/atari-missile-command" target="_blank" rel="noopener noreferrer" style="color: #00ffff;">GitHub Repository</a></p>
+            <p><strong>AI Assistance:</strong> Developed initially using Google Gemini 2.5 Pro with assist from Claude 3.7 Sonnet</p>
+            <p><strong>Infrastructure:</strong></p>
+            <ul style="padding-left: clamp(15px, 5vw, 20px); margin: 5px 0;">
+                <li>Hosted on Cloudflare Pages</li>
+                <li>Leaderboard powered by Cloudflare KV and Page Functions</li>
+                <li>Game analysis powered by Cloudflare AI Gateway with OpenRouter AI API</li>
+            </ul>
+        </div>
+        
+        <button id="closeAboutButton" style="display: block; margin: 0 auto; font-family: 'Press Start 2P', cursive; background-color: #333; color: #00ff00; border: 2px solid #00ff00; padding: clamp(8px, 3vw, 12px) clamp(15px, 4vw, 20px); font-size: clamp(11px, 3vw, 14px); cursor: pointer; box-shadow: 0 0 8px #00ff00 inset; transition: background-color 0.3s, box-shadow 0.3s; border-radius: 5px; min-height: 44px; min-width: 120px;">Close</button>
+    </div>
 </body>
 </html>
