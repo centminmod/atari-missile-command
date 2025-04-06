@@ -592,7 +592,7 @@
         <h2>Inter-Wave Store</h2>
         <div id="storeScore">Current Score: $0</div>
         <div id="storeItemsContainer">
-            <div class="storeItem">
+            <div class="storeItem" title="Clears all enemy missiles and bombs currently on screen.">
                 <div class="storeItemInfo">
                     <span>Sonic Wave</span>
                     <span class="itemCost">Cost: $1000</span>
@@ -603,7 +603,7 @@
                     <button class="buyButton" id="buySonicWaveButton">BUY</button>
                 </div>
             </div>
-            <div class="storeItem">
+            <div class="storeItem" title="Creates a large, powerful explosion at the clicked location.">
                 <div class="storeItemInfo">
                     <span>Mega Bomb</span>
                     <span class="itemCost">Cost: $500</span>
@@ -614,7 +614,7 @@
                     <button class="buyButton" id="buyBombButton">BUY</button>
                 </div>
             </div>
-            <div class="storeItem">
+            <div class="storeItem" title="Adds an orbital missile base. Fires from a higher altitude. Max 3 active.">
                 <div class="storeItemInfo">
                     <span>Satellite Base (Max 3)</span>
                     <span class="itemCost">Cost: $4000</span>
@@ -622,7 +622,7 @@
                 </div>
                  <div class="storeItemButtons"> <button class="buyButton" id="buySatelliteButton">BUY</button> </div>
             </div>
-            <div class="storeItem">
+            <div class="storeItem" title="Adds a temporary shield to an active satellite base.">
                 <div class="storeItemInfo">
                     <span>Satellite Shield</span>
                     <span class="itemCost">Cost: $250</span>
@@ -630,7 +630,7 @@
                 </div>
                  <div class="storeItemButtons"> <button class="buyButton" id="buySatShieldButton">BUY</button> </div>
             </div>
-            <div class="storeItem">
+            <div class="storeItem" title="Rebuilds one destroyed missile base.">
                 <div class="storeItemInfo">
                     <span>Replacement Base</span>
                     <span class="itemCost">Cost: $1000</span>
@@ -638,7 +638,7 @@
                 </div>
                  <div class="storeItemButtons"> <button class="buyButton" id="buyBaseButton">BUY</button> </div>
             </div>
-            <div class="storeItem">
+            <div class="storeItem" title="Rebuilds one destroyed city.">
                 <div class="storeItemInfo">
                     <span>Replacement City</span>
                     <span class="itemCost">Cost: $2000</span>
@@ -646,7 +646,7 @@
                 </div>
                  <div class="storeItemButtons"> <button class="buyButton" id="buyCityButton">BUY</button> </div>
             </div>
-            <div class="storeItem">
+            <div class="storeItem" title="Adds a temporary shield to an active ground base.">
                 <div class="storeItemInfo">
                     <span>Base Shield</span>
                     <span class="itemCost">Cost: $250</span>
@@ -654,19 +654,19 @@
                 </div>
                  <div class="storeItemButtons"> <button class="buyButton" id="buyShieldButton">BUY</button> </div>
             </div>
-            <div class="storeItem">
+            <div class="storeItem" title="Increases the speed of your missiles.">
                 <div class="storeItemInfo">
-                    <span>Faster Missiles (Max 5)</span>
+                    <span>Faster Missiles (Max 10)</span>
                     <span class="itemCost" id="costFasterMissile">Cost: $1500</span>
-                    <span class="itemLevel" id="levelFasterMissile">Level: 0/5</span>
+                    <span class="itemLevel" id="levelFasterMissile">Level: 0/10</span>
                 </div>
                  <div class="storeItemButtons"> <button class="buyButton" id="buyFasterMissileButton">BUY</button> </div>
             </div>
-            <div class="storeItem">
+            <div class="storeItem" title="Increases the blast radius of your missile explosions.">
                 <div class="storeItemInfo">
-                    <span>Wider Explosions (Max 5)</span>
+                    <span>Wider Explosions (Max 10)</span>
                     <span class="itemCost" id="costWiderExplosion">Cost: $1200</span>
-                    <span class="itemLevel" id="levelWiderExplosion">Level: 0/5</span>
+                    <span class="itemLevel" id="levelWiderExplosion">Level: 0/10</span>
                 </div>
                  <div class="storeItemButtons"> <button class="buyButton" id="buyWiderExplosionButton">BUY</button> </div>
             </div>
@@ -696,9 +696,17 @@
              <a target="_blank" href="https://jam.pieter.com" style="font-family: 'system-ui', sans-serif; position: fixed; bottom: -1px; right: -1px; padding: 7px; font-size: 14px; font-weight: bold; background: #fff; color: #000; text-decoration: none; z-index: 10; border-top-left-radius: 12px; z-index: 10000; border: 1px solid #fff;">🕹️ Vibe Jam 2025</a>
         </div>
         <!-- ADDED: Sound Controls -->
-        <div class="link-group sound-controls" style="margin-left: 15px;">
-            <button id="muteMusicButton" style="padding: 4px 8px; font-size: 10px;">Unmute Music</button>
-            <button id="muteSfxButton" style="padding: 4px 8px; font-size: 10px;">Mute SFX</button>
+        <div class="link-group sound-controls" style="margin-left: 15px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button id="muteMusicButton" style="padding: 4px 8px; font-size: 10px; min-width: 90px;">Unmute Music</button>
+                <label for="musicVolumeSlider" style="font-size: 10px;">Music Vol:</label>
+                <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.3" style="width: 80px; height: 8px; cursor: pointer;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button id="muteSfxButton" style="padding: 4px 8px; font-size: 10px; min-width: 90px;">Mute SFX</button>
+                <label for="sfxVolumeSlider" style="font-size: 10px;">SFX Vol:</label>
+                <input type="range" id="sfxVolumeSlider" min="0" max="1" step="0.05" value="0.8" style="width: 80px; height: 8px; cursor: pointer;">
+            </div>
         </div>
     </footer>
 
@@ -765,6 +773,8 @@
         // --- ADDED: Audio Elements ---
         const muteMusicButton = document.getElementById('muteMusicButton');
         const muteSfxButton = document.getElementById('muteSfxButton');
+        const musicVolumeSlider = document.getElementById('musicVolumeSlider'); // NEW
+        const sfxVolumeSlider = document.getElementById('sfxVolumeSlider');     // NEW
 
         // --- NEW: Leaderboard Elements ---
         const leaderboardContainer = document.getElementById('leaderboardContainer');
@@ -789,8 +799,8 @@
         const SATELLITE_HEIGHT_RATIO = 25 / INTERNAL_HEIGHT;
         const SATELLITE_Y_POS_RATIO = (INTERNAL_HEIGHT * 0.55) / INTERNAL_HEIGHT;
         const MISSILE_SPEED_PLAYER_BASE = 5;
-        const MISSILE_SPEED_ENEMY_BASE = 0.5;
-        const MAX_ENEMY_MISSILE_SPEED = 3.5;
+        const MISSILE_SPEED_ENEMY_BASE = 0.4;
+        const MAX_ENEMY_MISSILE_SPEED = 3.25;
         const EXPLOSION_RADIUS_START = 13;
         const EXPLOSION_RADIUS_MAX_BASE = 65;
         const EXPLOSION_DURATION = 60;
@@ -799,7 +809,7 @@
         const POINTS_PER_AMMO = 5;
         const BONUS_FIRE_SPREAD = 8;
         const BASE_SHIELD_RADIUS_MULTIPLIER = 2.45;
-        const SHIELD_STRENGTH_START = 100;
+        const SHIELD_STRENGTH_START = 120;
         const SHIELD_DAMAGE_PER_HIT = 10;
         const SHIELD_COLOR_FULL = 'rgba(0, 150, 255, 0.6)';
         const SHIELD_COLOR_75 = 'rgba(0, 255, 150, 0.6)';
@@ -818,8 +828,8 @@
         const MULTIPLIER_MAX = 5.0;
         const COST_FASTER_MISSILE_BASE = 1500;
         const COST_WIDER_EXPLOSION_BASE = 1200;
-        const UPGRADE_COST_MULTIPLIER = 1.8;
-        const MAX_UPGRADE_LEVEL = 5;
+        const UPGRADE_COST_MULTIPLIER = 1.25;
+        const MAX_UPGRADE_LEVEL = 10;
         const MISSILE_SPEED_INCREASE_PER_LEVEL = 0.9;
         const EXPLOSION_RADIUS_INCREASE_PER_LEVEL = 8;
         const SMART_BOMB_CHANCE = 0.05;
@@ -833,6 +843,7 @@
         const MIRV_WARHEAD_COUNT = 4;
         const MIRV_WARHEAD_SPEED_FACTOR = 0.9;
         const MIRV_WARHEAD_COLOR = '#ff4444';
+        const COMBO_BONUS_POINTS_PER_EXTRA_KILL = 25; // NEW: Points per extra kill in a combo
         const PLANE_SPEED_INCREASE_PER_WAVE = 0.05;
         const PLANE_VARIANT_CHANCE = 0.2;
         const MAX_ACTIVE_SATELLITES = 3;
@@ -897,6 +908,7 @@
         let playerMissileSpeedLevel = 0;
         let explosionRadiusLevel = 0;
         let accuracyBonusMessageTimer = 0;
+        let comboMessageTimer = 0; // NEW: Timer for combo message display
         let statsMissilesFired = 0;
         let statsEnemyMissilesDestroyed = 0;
         let statsPlaneBombsDestroyed = 0;
@@ -915,6 +927,12 @@
         let waveTimer = 0;
         let waveEnemiesSpawned = 0;
         let waveEnemiesRequired = 0;
+        // NEW: Keyboard control variables
+        let keyboardSelectedBaseIndex = -1; // -1 = none, 0-2 ground, 3-5 satellite
+        let reticleX = INTERNAL_WIDTH / 2;
+        let reticleY = INTERNAL_HEIGHT / 2;
+        let keyboardTargetingActive = false; // Flag to show reticle
+        const RETICLE_SPEED = 8;
         // ADDED: Variables for performance tracking
         let lastFrameTime = 0;
         let frameCount = 0;
@@ -947,6 +965,10 @@
                     masterGainNode = audioContext.createGain();
                     musicGainNode = audioContext.createGain();
                     sfxGainNode = audioContext.createGain();
+
+                    // Set initial volumes from sliders
+                    musicGainNode.gain.value = parseFloat(musicVolumeSlider.value); // NEW
+                    sfxGainNode.gain.value = parseFloat(sfxVolumeSlider.value);     // NEW
 
                     musicGainNode.connect(masterGainNode);
                     sfxGainNode.connect(masterGainNode);
@@ -1044,17 +1066,20 @@
             }
         }
 
-        // Function to toggle music mute
+        // --- MODIFIED: Function to toggle music mute (works with slider) ---
         function toggleMusicMute() {
             if (!audioContext) return;
             isMusicMuted = !isMusicMuted;
             if (isMusicMuted) {
-                musicGainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                musicGainNode.gain.setValueAtTime(0, audioContext.currentTime); // Mute immediately
                 muteMusicButton.textContent = 'Unmute Music';
+                musicVolumeSlider.disabled = true; // Disable slider when muted
                 stopMusic(); // Stop current playback when muting
             } else {
-                musicGainNode.gain.setValueAtTime(1, audioContext.currentTime);
+                // Restore volume to slider value
+                musicGainNode.gain.setValueAtTime(parseFloat(musicVolumeSlider.value), audioContext.currentTime);
                 muteMusicButton.textContent = 'Mute Music';
+                musicVolumeSlider.disabled = false; // Enable slider
                 // Optionally restart music if the game is running
                 if (gameHasStarted && !isGameOver && !isPaused) {
                      playMusic();
@@ -1063,18 +1088,39 @@
             console.log("Music Muted:", isMusicMuted);
         }
 
-        // Function to toggle SFX mute
+        // --- MODIFIED: Function to toggle SFX mute (works with slider) ---
         function toggleSfxMute() {
             if (!audioContext) return;
             isSfxMuted = !isSfxMuted;
             if (isSfxMuted) {
-                sfxGainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                sfxGainNode.gain.setValueAtTime(0, audioContext.currentTime); // Mute immediately
                 muteSfxButton.textContent = 'Unmute SFX';
+                sfxVolumeSlider.disabled = true; // Disable slider when muted
             } else {
-                sfxGainNode.gain.setValueAtTime(1, audioContext.currentTime);
+                // Restore volume to slider value
+                sfxGainNode.gain.setValueAtTime(parseFloat(sfxVolumeSlider.value), audioContext.currentTime);
                 muteSfxButton.textContent = 'Mute SFX';
+                sfxVolumeSlider.disabled = false; // Enable slider
             }
             console.log("SFX Muted:", isSfxMuted);
+        }
+
+        // --- NEW: Function to handle music volume change ---
+        function handleMusicVolumeChange(event) {
+            if (!audioContext || isMusicMuted) return; // Don't change if muted
+            const volume = parseFloat(event.target.value);
+            musicGainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            console.log("Music Volume:", volume);
+        }
+
+        // --- NEW: Function to handle SFX volume change ---
+        function handleSfxVolumeChange(event) {
+            if (!audioContext || isSfxMuted) return; // Don't change if muted
+            const volume = parseFloat(event.target.value);
+            sfxGainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            console.log("SFX Volume:", volume);
+            // Optionally play a test sound
+            // playSfx(launchBuffer);
         }
         // --- END Web Audio API Setup ---
 
@@ -1538,7 +1584,7 @@
             if (typeof color !== 'string' || (!color.startsWith('#') && !color.startsWith('rgba'))) { color = '#888888'; }
             playSfx(explosionBuffer); // ADDED: Play explosion sound
             explosions.push({
-                x: x, y: y, radius: startRadius, maxRadius: effectiveMaxRadius, duration: duration, currentFrame: 0, color: color, alive: true, collidedMissiles: new Set(), collidedBombs: new Set(), collidedPlanes: new Set(), ignoreEnemyObjectsWhenExploding: ignoreEnemyObjectsWhenExploding,
+                x: x, y: y, radius: startRadius, maxRadius: effectiveMaxRadius, duration: duration, currentFrame: 0, color: color, alive: true, collidedMissiles: new Set(), collidedBombs: new Set(), collidedPlanes: new Set(), ignoreEnemyObjectsWhenExploding: ignoreEnemyObjectsWhenExploding, killCount: 0, // NEW: Initialize kill count for combo
                 update() { if (!this.alive) return; this.currentFrame++; const expansionPhase = this.duration * 0.6; if (this.currentFrame <= expansionPhase) { this.radius = startRadius + (this.maxRadius - startRadius) * (this.currentFrame / expansionPhase); } else { this.radius = this.maxRadius - (this.maxRadius * ((this.currentFrame - expansionPhase) / (this.duration - expansionPhase))); } this.radius = Math.max(0, this.radius); if (this.currentFrame >= this.duration) { this.alive = false; } if (this.currentFrame < expansionPhase) { checkExplosionCollisions(this); } },
                 draw() { if (!this.alive) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); const intensity = Math.sin((this.currentFrame / this.duration) * Math.PI); let r = 180, g = 180, b = 180; try { if (this.color.startsWith('#') && this.color.length >= 7) { r = parseInt(this.color.slice(1, 3), 16); g = parseInt(this.color.slice(3, 5), 16); b = parseInt(this.color.slice(5, 7), 16); } else if (this.color.startsWith('rgba')) { const parts = this.color.match(/(\d+),\s*(\d+),\s*(\d+)/); if (parts) { r = parseInt(parts[1]); g = parseInt(parts[2]); b = parseInt(parts[3]); } } } catch (e) { console.warn("Could not parse explosion color:", this.color, e); r = 180; g = 180; b = 180; } ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + intensity * 0.6})`; ctx.fill(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3 * intensity, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.8})`; ctx.fill(); }
             });
@@ -1952,6 +1998,7 @@
                                         const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier);
                                         score += finalPoints;
                                         gameTotalScore += finalPoints;
+                                        if (explosion.color === '#00ff00') explosion.killCount++; // Increment kill count for player explosions
                                         
                                         // Create large explosion
                                         createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START * 2, missile.color, EXPLOSION_RADIUS_MAX_BASE * 2, EXPLOSION_DURATION * 1.5);
@@ -1990,16 +2037,30 @@
                                 }
                             } else {
                                 // Original code for regular missiles
-                                missile.alive = false; explosion.collidedMissiles.add(index); explosionMadeKill = true; statsEnemyMissilesDestroyed++; let pointsToAdd = POINTS_PER_MISSILE; if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { pointsToAdd += ACCURACY_BONUS_POINTS; statsAccuracyBonusHits++; messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; accuracyBonusMessageTimer = 120; } const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color);
+                                missile.alive = false; explosion.collidedMissiles.add(index); explosionMadeKill = true; statsEnemyMissilesDestroyed++; let pointsToAdd = POINTS_PER_MISSILE; if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { pointsToAdd += ACCURACY_BONUS_POINTS; statsAccuracyBonusHits++; messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; accuracyBonusMessageTimer = 120; comboMessageTimer = 0; /* Clear combo message if accuracy bonus occurs */ } const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; if (explosion.color === '#00ff00') explosion.killCount++; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color);
                             }
                         } 
                     } 
                 });
 
-                // Original code for planes and bombs (unchanged)
-                planes.forEach((plane, index) => { if (plane.alive && !explosion.collidedPlanes.has(index)) { if (explosion.x + explosion.radius > plane.x && explosion.x - explosion.radius < plane.x + plane.width && explosion.y + explosion.radius > plane.y && explosion.y - explosion.radius < plane.y + plane.height) { plane.alive = false; explosion.collidedPlanes.add(index); explosionMadeKill = true; statsPlanesDestroyed++; const finalPoints = Math.round(PLANE_BONUS_SCORE * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(plane.x + plane.width / 2, plane.y + plane.height / 2, EXPLOSION_RADIUS_START * 1.5, plane.bodyColor, EXPLOSION_RADIUS_MAX_BASE * 1.2, EXPLOSION_DURATION * 1.2); } } });
-                planeBombs.forEach((bomb, index) => { if (bomb.alive && !explosion.collidedBombs.has(index)) { const dist = distance(explosion.x, explosion.y, bomb.x, bomb.y); if (dist < explosion.radius) { bomb.alive = false; explosion.collidedBombs.add(index); explosionMadeKill = true; statsPlaneBombsDestroyed++; const finalPoints = Math.round(PLANE_BOMB_POINTS * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color); } } });
+                // Original code for planes and bombs (modified to increment killCount)
+                planes.forEach((plane, index) => { if (plane.alive && !explosion.collidedPlanes.has(index)) { if (explosion.x + explosion.radius > plane.x && explosion.x - explosion.radius < plane.x + plane.width && explosion.y + explosion.radius > plane.y && explosion.y - explosion.radius < plane.y + plane.height) { plane.alive = false; explosion.collidedPlanes.add(index); explosionMadeKill = true; statsPlanesDestroyed++; const finalPoints = Math.round(PLANE_BONUS_SCORE * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; if (explosion.color === '#00ff00') explosion.killCount++; createExplosion(plane.x + plane.width / 2, plane.y + plane.height / 2, EXPLOSION_RADIUS_START * 1.5, plane.bodyColor, EXPLOSION_RADIUS_MAX_BASE * 1.2, EXPLOSION_DURATION * 1.2); } } });
+                planeBombs.forEach((bomb, index) => { if (bomb.alive && !explosion.collidedBombs.has(index)) { const dist = distance(explosion.x, explosion.y, bomb.x, bomb.y); if (dist < explosion.radius) { bomb.alive = false; explosion.collidedBombs.add(index); explosionMadeKill = true; statsPlaneBombsDestroyed++; const finalPoints = Math.round(PLANE_BOMB_POINTS * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; if (explosion.color === '#00ff00') explosion.killCount++; createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color); } } });
             }
+
+            // --- NEW: Combo Bonus Logic ---
+            if (explosion.color === '#00ff00' && explosion.killCount > 1) {
+                const comboPoints = (explosion.killCount - 1) * COMBO_BONUS_POINTS_PER_EXTRA_KILL;
+                const finalComboPoints = Math.round(comboPoints * scoreMultiplier * difficultyScoreMultiplier);
+                score += finalComboPoints;
+                gameTotalScore += finalComboPoints;
+                messageBonusText.textContent = `COMBO x${explosion.killCount}! +$${finalComboPoints}!`;
+                comboMessageTimer = 120; // Display for 2 seconds
+                accuracyBonusMessageTimer = 0; // Combo message overrides accuracy bonus message
+                console.log(`Combo x${explosion.killCount}! Bonus: +$${finalComboPoints}`);
+            }
+            // --- END Combo Bonus Logic ---
+
 
             if (explosionMadeKill && explosion.color === '#00ff00') { consecutiveIntercepts++; scoreMultiplier = Math.min(MULTIPLIER_MAX, 1.0 + Math.floor(consecutiveIntercepts / MULTIPLIER_INCREASE_INTERVAL)); updateUI(); }
         }
@@ -2292,7 +2353,12 @@
                 console.log("startGame: Initializing game objects..."); cities = []; const cityWidth = canvas.width * CITY_WIDTH_RATIO; const citySpacingRatio = (INTERNAL_WIDTH - 6 * (INTERNAL_WIDTH * CITY_WIDTH_RATIO)) / (7 * INTERNAL_WIDTH); const cityWidthRatio = CITY_WIDTH_RATIO; for (let i = 0; i < 3; i++) cities.push(createCity(citySpacingRatio * (i + 1) + cityWidthRatio * i)); for (let i = 0; i < 3; i++) cities.push(createCity(citySpacingRatio * (i + 4) + cityWidthRatio * (i + 3))); cities.forEach(c => c.alive = true); bases = []; const basePositionsRatios = [0.15, 0.5, 0.85]; bases.push(createBase(basePositionsRatios[0])); bases.push(createBase(basePositionsRatios[1])); bases.push(createBase(basePositionsRatios[2])); bases.forEach(b => b.alive = true); console.log("startGame: Game objects initialized");
                 console.log("startGame: Calling initWave(0)..."); initWave(0); console.log("startGame: initWave(0) complete");
                 restartButton.style.display = 'inline-block'; pauseButton.style.display = 'inline-block'; pauseButton.textContent = 'Pause'; pauseButton.disabled = false;
-                if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } console.log("startGame: Calling gameLoop()..."); 
+                if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; } console.log("startGame: Calling gameLoop()...");
+                // Reset keyboard controls
+                keyboardSelectedBaseIndex = -1;
+                reticleX = canvas.width / 2;
+                reticleY = canvas.height / 2;
+                keyboardTargetingActive = false;
                 // Update to use new startGameLoop function
                 startGameLoop();
                 // playMusic(); // REMOVED: Don't autoplay music
@@ -3070,7 +3136,15 @@
             planeBombs = planeBombs.filter(bomb => bomb.alive);
             if (accuracyBonusMessageTimer > 0) {
                  accuracyBonusMessageTimer--;
-                 if (accuracyBonusMessageTimer === 0) { messageBonusText.textContent = ""; }
+                 if (accuracyBonusMessageTimer === 0 && comboMessageTimer === 0) { // Only clear if combo message is also done
+                     messageBonusText.textContent = ""; 
+                 }
+            }
+            if (comboMessageTimer > 0) { // NEW: Handle combo message timer
+                 comboMessageTimer--;
+                 if (comboMessageTimer === 0 && accuracyBonusMessageTimer === 0) { // Only clear if accuracy message is also done
+                     messageBonusText.textContent = "";
+                 }
             }
         }
         function updateUI() {
@@ -3846,6 +3920,13 @@
         // --- MODIFIED: restartButton Event Listener (handles both restart buttons) ---
         document.querySelectorAll('#restartButton').forEach(button => {
             button.addEventListener('click', () => {
+                // Check if the game is currently running and needs confirmation
+                const gameIsActive = gameHasStarted && !isGameOver && !isPaused && !transitioningWave;
+                if (gameIsActive && !confirm("Are you sure you want to restart the current game?")) {
+                    return; // User cancelled the restart
+                }
+
+                // Proceed with restart logic
                 if (gameLoopId) { cancelAnimationFrame(gameLoopId); gameLoopId = null; }
                 stopMusic(); // ADDED: Stop music on restart
                 isGameOver = true; gameHasStarted = false; isPaused = false; transitioningWave = false; difficultySelected = false;
@@ -3929,9 +4010,11 @@
         bombControl.addEventListener('click', () => { if (!bombControl.classList.contains('disabled')) { armBomb(); } });
         window.addEventListener('keydown', (event) => { if (event.code === 'Space' && !isGameOver && !transitioningWave && gameHasStarted && storeModal.style.display === 'none' && messageBox.style.display === 'none' ) { event.preventDefault(); togglePause(); } });
 
-        // --- ADDED: Mute Button Listeners ---
+        // --- ADDED: Mute Button and Volume Slider Listeners ---
         muteMusicButton.addEventListener('click', toggleMusicMute);
         muteSfxButton.addEventListener('click', toggleSfxMute);
+        musicVolumeSlider.addEventListener('input', handleMusicVolumeChange); // NEW
+        sfxVolumeSlider.addEventListener('input', handleSfxVolumeChange);     // NEW
 
         // --- NEW: Event Listener for Score Submission ---
         submitScoreButton.addEventListener('click', submitHighScore);
@@ -3982,7 +4065,7 @@
             startHighScoreDisplay.textContent = `High Score: $${highScore}`;
             highScoreDisplay.textContent = `HI: $${highScore}`; // Also update in-game UI
 
-            // Set initial UI visibility
+            // Set initial UI visibility and slider states
             startMenuContainer.style.display = 'flex';
             canvasContainer.style.display = 'none'; canvas.style.display = 'none';
             uiContainer.style.display = 'none'; controlsContainer.style.display = 'none'; specialWeaponsUIDiv.style.display = 'none';
@@ -3993,6 +4076,13 @@
             pauseButton.style.display = 'none'; screenshotButton.style.display = 'none';
             bonusIndicator.style.display = 'none'; statsContainer.style.display = 'none';
             scoreSubmissionDiv.style.display = 'none'; // Ensure submission form is hidden initially
+            // Set initial slider disabled state based on mute state
+            musicVolumeSlider.disabled = isMusicMuted;
+            sfxVolumeSlider.disabled = isSfxMuted;
+            // Set initial mute button text
+            muteMusicButton.textContent = isMusicMuted ? 'Unmute Music' : 'Mute Music';
+            muteSfxButton.textContent = isSfxMuted ? 'Unmute SFX' : 'Mute SFX';
+
 
             // Fetch leaderboard on load
             fetchAndDisplayLeaderboard(10);
