@@ -3629,9 +3629,10 @@
 
             // Format Date
             let formattedDate = 'Date Unknown';
-            if (playerData.timestamp) {
+            // Use the correct field name 'submittedAt' from the backend
+            if (playerData.submittedAt) {
                 try {
-                    const date = new Date(playerData.timestamp);
+                    const date = new Date(playerData.submittedAt);
                     formattedDate = date.toLocaleString('en-US', {
                         weekday: 'short',
                         year: 'numeric',
