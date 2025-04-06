@@ -139,11 +139,18 @@
             #storeContinueButton { display: block; margin: 20px auto 0 auto; }
 
             /* --- Footer --- */
-            footer { width: 100%; max-width: 800px; margin-top: 20px; padding: 10px 0; border-top: 1px solid #005500; font-size: clamp(10px, 2.5vw, 12px); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; }
+            footer { width: 100%; max-width: 800px; margin-top: 20px; padding: 10px 0; border-top: 1px solid #005500; font-size: clamp(10px, 2.5vw, 12px); display: flex; flex-direction: column; /* Stack items vertically */ align-items: center; /* Center items horizontally */ gap: 15px; /* Increased gap */ }
+            .footer-links { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; /* Center links within their container */ }
+            .footer-links .link-group { margin-right: 10px; } /* Spacing between link groups */
             footer a { color: #00ff00; text-decoration: none; transition: color 0.3s, text-shadow 0.3s; display: inline-block; vertical-align: middle; line-height: 1; margin: 0 5px; }
             footer a:hover, footer a:focus { color: #ffff00; text-shadow: 0 0 5px #ffff00; outline: none; }
             footer a img { vertical-align: middle; margin: 0 3px; height: 20px; width: auto; }
-            footer .link-group { }
+            /* --- Sound Controls Styling (Moved from inline) --- */
+            .sound-controls { display: flex; flex-direction: row; /* Default: side-by-side */ flex-wrap: wrap; /* Allow wrapping if needed */ justify-content: center; /* Center items if they wrap */ align-items: center; gap: 15px; /* Gap between music/sfx groups */ }
+            .sound-controls > div { display: flex; align-items: center; gap: 8px; } /* Keep inner items aligned */
+            .sound-controls button { padding: 4px 8px; font-size: 10px; min-width: 90px; }
+            .sound-controls label { font-size: 10px; }
+            .sound-controls input[type="range"] { width: 80px; height: 8px; cursor: pointer; vertical-align: middle; /* Align slider better */ }
 
             /* --- Leaderboard Styles --- */
             #leaderboardContainer { margin-top: 20px; padding: 15px; border: 2px solid #00ffff; border-radius: 10px; background-color: rgba(0, 30, 30, 0.5); width: 100%; max-width: 550px; box-sizing: border-box; color: #00ffff; display: none; text-align: center; }
@@ -243,10 +250,13 @@
                 .buyButton { padding: 4px 8px; font-size: 10px; }
                 .buyMultipleButton { padding: 4px 6px; font-size: 9px; }
                 #pauseOverlay { font-size: 24px; }
-                footer { margin-top: 10px; font-size: 9px; padding: 8px 0; display: block; text-align: center; }
-                footer .link-group { display: block; margin-bottom: 5px; text-align: center; }
-                footer .link-group a { display: inline-block; margin: 2px 5px; vertical-align: middle; }
-                footer .link-group a img { margin: 0 2px; height: 16px; }
+                /* Footer styles for small screens */
+                footer { margin-top: 10px; font-size: 9px; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+                .footer-links { justify-content: center; }
+                .footer-links .link-group { margin-right: 0; margin-bottom: 5px; }
+                .sound-controls { flex-direction: column; /* Stack sound controls vertically */ align-items: center; gap: 8px; /* Adjust gap for stacked layout */ }
+                .sound-controls input[type="range"] { width: 100px; } /* Slightly wider slider */
+                footer a img { height: 16px; }
 
                 /* Leaderboard specific adjustments for small screens */
                  #leaderboardContainer { max-width: 98%; }
@@ -675,37 +685,39 @@
     </div>
 
     <footer>
-        <div class="link-group social-links">
-            <a href="https://x.com/George_SLiu" target="_blank" rel="noopener noreferrer">Twitter</a>
-            <a href="https://www.threads.net/@george_sl_liu" target="_blank" rel="noopener noreferrer">Threads</a>
-            <a href="https://bsky.app/profile/georgesl.bsky.social" target="_blank" rel="noopener noreferrer">BlueSky</a>
-        </div>
-        <div class="link-group github-links">
-            <a href="https://github.com/sponsors/centminmod" target="_blank" rel="noopener noreferrer">
-                <img src="https://img.shields.io/github/sponsors/centminmod" alt="GitHub Sponsors" loading="lazy">
-            </a>
-            <a href="https://github.com/centminmod/atari-missile-command/stargazers" target="_blank" rel="noopener noreferrer">
-                <img src="https://img.shields.io/github/stars/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub stars" loading="lazy">
-            </a>
-            <a href="https://github.com/centminmod/atari-missile-command/network" target="_blank" rel="noopener noreferrer">
-                <img src="https://img.shields.io/github/forks/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub forks" loading="lazy">
-            </a>
-            <a href="https://github.com/centminmod/atari-missile-command/issues" target="_blank" rel="noopener noreferrer">
-                <img src="https://img.shields.io/github/issues/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub issues" loading="lazy">
-            </a>
-             <a target="_blank" href="https://jam.pieter.com" style="font-family: 'system-ui', sans-serif; position: fixed; bottom: -1px; right: -1px; padding: 7px; font-size: 14px; font-weight: bold; background: #fff; color: #000; text-decoration: none; z-index: 10; border-top-left-radius: 12px; z-index: 10000; border: 1px solid #fff;">🕹️ Vibe Jam 2025</a>
-        </div>
-        <!-- ADDED: Sound Controls -->
-        <div class="link-group sound-controls" style="margin-left: 15px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <button id="muteMusicButton" style="padding: 4px 8px; font-size: 10px; min-width: 90px;">Unmute Music</button>
-                <label for="musicVolumeSlider" style="font-size: 10px;">Music Vol:</label>
-                <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.2" style="width: 80px; height: 8px; cursor: pointer;">
+        <div class="footer-links"> <!-- Added wrapper -->
+            <div class="link-group social-links">
+                <a href="https://x.com/George_SLiu" target="_blank" rel="noopener noreferrer">Twitter</a>
+                <a href="https://www.threads.net/@george_sl_liu" target="_blank" rel="noopener noreferrer">Threads</a>
+                <a href="https://bsky.app/profile/georgesl.bsky.social" target="_blank" rel="noopener noreferrer">BlueSky</a>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <button id="muteSfxButton" style="padding: 4px 8px; font-size: 10px; min-width: 90px;">Mute SFX</button>
-                <label for="sfxVolumeSlider" style="font-size: 10px;">SFX Vol:</label>
-                <input type="range" id="sfxVolumeSlider" min="0" max="1" step="0.05" value="0.5" style="width: 80px; height: 8px; cursor: pointer;">
+            <div class="link-group github-links">
+                <a href="https://github.com/sponsors/centminmod" target="_blank" rel="noopener noreferrer">
+                    <img src="https://img.shields.io/github/sponsors/centminmod" alt="GitHub Sponsors" loading="lazy">
+                </a>
+                <a href="https://github.com/centminmod/atari-missile-command/stargazers" target="_blank" rel="noopener noreferrer">
+                    <img src="https://img.shields.io/github/stars/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub stars" loading="lazy">
+                </a>
+                <a href="https://github.com/centminmod/atari-missile-command/network" target="_blank" rel="noopener noreferrer">
+                    <img src="https://img.shields.io/github/forks/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub forks" loading="lazy">
+                </a>
+                <a href="https://github.com/centminmod/atari-missile-command/issues" target="_blank" rel="noopener noreferrer">
+                    <img src="https://img.shields.io/github/issues/centminmod/atari-missile-command.svg?style=flat-square" alt="Centmin Mod GitHub issues" loading="lazy">
+                </a>
+                 <a target="_blank" href="https://jam.pieter.com" style="font-family: 'system-ui', sans-serif; position: fixed; bottom: -1px; right: -1px; padding: 7px; font-size: 14px; font-weight: bold; background: #fff; color: #000; text-decoration: none; z-index: 10; border-top-left-radius: 12px; z-index: 10000; border: 1px solid #fff;">🕹️ Vibe Jam 2025</a>
+            </div>
+        </div>
+        <!-- Sound Controls (Removed inline styles) -->
+        <div class="sound-controls">
+            <div>
+                <button id="muteMusicButton">Unmute Music</button>
+                <label for="musicVolumeSlider">Music Vol:</label>
+                <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.2">
+            </div>
+            <div>
+                <button id="muteSfxButton">Mute SFX</button>
+                <label for="sfxVolumeSlider">SFX Vol:</label>
+                <input type="range" id="sfxVolumeSlider" min="0" max="1" step="0.05" value="0.5">
             </div>
         </div>
     </footer>

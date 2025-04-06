@@ -44,7 +44,7 @@ export default {
       }
 
       // 4. Input Token Limit Handling (Pre-check & Summarization)
-      const MAX_RAW_CLICKS_TO_INCLUDE = 500;
+      const MAX_RAW_CLICKS_TO_INCLUDE = 5000;
       const ABSOLUTE_CLICK_LIMIT = 10000;
 
       if (gameData.clicks.length > ABSOLUTE_CLICK_LIMIT) {
