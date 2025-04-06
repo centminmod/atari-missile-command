@@ -2466,7 +2466,6 @@
                 localStorage.removeItem(fixedStorageKey);
                 console.log("No click data recorded for this game. Cleared any old saved data.");
             }
-            // --- END NEW SAVE ---
 
             // High score check (using gameTotalScore)
             let newHighScore = false;
@@ -2475,6 +2474,41 @@
                 localStorage.setItem('missileCommandHighScore', highScore.toString());
                 newHighScore = true;
             }
+
+            // --- [NEW] Store Score Locally if Offline ---
+            if (!navigator.onLine && gameTotalScore > 0) {
+                console.log("Offline: Storing score locally.");
+                try {
+                    const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
+                    // Store score along with name and stats for submission later
+                    const scoreData = {
+                        name: 'TEMP_OFFLINE', // Placeholder name, user enters later if needed
+                        score: gameTotalScore,
+                        wave: currentWave + 1,
+                        stats: {
+                            missilesFired: statsMissilesFired,
+                            enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
+                            planeBombsDestroyed: statsPlaneBombsDestroyed,
+                            planesDestroyed: statsPlanesDestroyed,
+                            citiesLost: statsCitiesLost,
+                            basesLost: statsBasesLost,
+                            accuracyBonusHits: statsAccuracyBonusHits,
+                            shieldBombsDestroyed: statsShieldBombsDestroyed,
+                            difficulty: selectedDifficultyName,
+                            missileSpeedLevel: playerMissileSpeedLevel,
+                            explosionRadiusLevel: explosionRadiusLevel,
+                            accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0")
+                        },
+                        timestamp: Date.now() // Add a timestamp for potential sorting/debugging
+                    };
+                    storedScores.push(scoreData);
+                    localStorage.setItem('storedScores', JSON.stringify(storedScores));
+                    console.log(`Score of ${gameTotalScore} stored locally. Total stored: ${storedScores.length}`);
+                } catch (e) {
+                    console.error("Error saving score to localStorage:", e);
+                }
+            }
+            // --- [END NEW] ---
 
             // Determine game over reason
             const basesRemaining = bases.filter(b => b.alive).length;
@@ -2540,21 +2574,29 @@
                 
                 // Ensure text and state are correct (in case it was left in 'Analyzing...' state)
                 summaryLink.textContent = 'View Game Summary';
-                summaryLink.disabled = false;
+                summaryLink.disabled = !navigator.onLine; // Disable if offline
             } else {
                 // No data saved, ensure link is removed if it exists
                 if (summaryLink) {
                     summaryLink.remove();
                 }
             }
-            // --- END LINK MANAGEMENT ---
 
-            // Show/Hide Score Submission Form
+            // Show/Hide Score Submission Form - MODIFIED for offline support
             if (gameTotalScore > 0) {
                 scoreSubmissionDiv.style.display = 'flex';
-                playerNameInput.value = 'ACE';
-                submissionStatus.textContent = '';
-                submitScoreButton.disabled = false;
+                playerNameInput.value = localStorage.getItem('missileCommandPlayerName') || 'ACE'; // Load last used name
+                
+                if (navigator.onLine) {
+                    submissionStatus.textContent = '';
+                    submitScoreButton.disabled = false;
+                    scoreSubmitted = false; // Reset submission status for new game over
+                } else {
+                    submissionStatus.textContent = "Offline. Score saved locally.";
+                    submissionStatus.style.color = "#ffff00";
+                    submitScoreButton.disabled = true; // Disable submission button when offline
+                    scoreSubmitted = false;
+                }
             } else {
                 scoreSubmissionDiv.style.display = 'none';
             }
@@ -3890,50 +3932,25 @@
             }
         }
 
-        // --- NEW: Function to Submit Score ---
-        async function submitHighScore() {
-            const name = playerNameInput.value.trim().toUpperCase();
-            // Use gameTotalScore for the final submission
-            const finalScore = gameTotalScore; 
-            const waveReached = currentWave + 1; // Get the wave number (currentWave is 0-indexed)
+        // --- [NEW/MODIFIED] Function to Submit Score ---
+        async function submitScoreData(scoreData) {
+            // Takes a scoreData object (like the one stored locally)
+            const name = scoreData.name;
+            const finalScore = scoreData.score;
+            const waveReached = scoreData.wave;
+            const gameStats = scoreData.stats;
 
-            if (!name || name.length === 0 || name.length > 18) {
-                submissionStatus.textContent = "Enter 1-18 characters."; // Error message
-                submissionStatus.style.color = "#ff0000";
-                return; // Stop the submission if invalid
+            if (!name || name === 'TEMP_OFFLINE' || name.length === 0 || name.length > 18) {
+                console.error("Cannot submit score with invalid name:", name);
+                return { success: false, error: "Invalid name" };
             }
+            
             if (finalScore <= 0) {
-                submissionStatus.textContent = "No score to submit.";
-                submissionStatus.style.color = "#ffff00";
-                submitScoreButton.disabled = true;
-                return;
+                console.warn("Attempted to submit zero score.");
+                return { success: false, error: "Zero score" };
             }
 
-            // Collect all game stats
-            const gameStats = {
-                missilesFired: statsMissilesFired,
-                enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
-                planeBombsDestroyed: statsPlaneBombsDestroyed,
-                planesDestroyed: statsPlanesDestroyed,
-                citiesLost: statsCitiesLost,
-                basesLost: statsBasesLost,
-                accuracyBonusHits: statsAccuracyBonusHits,
-                shieldBombsDestroyed: statsShieldBombsDestroyed,
-                difficulty: selectedDifficultyName,
-                missileSpeedLevel: playerMissileSpeedLevel,
-                explosionRadiusLevel: explosionRadiusLevel
-            };
-
-            // Calculate accuracy percentage
-            const accuracy = statsMissilesFired > 0 
-                ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) 
-                : "0.0";
-            gameStats.accuracy = parseFloat(accuracy);
-
-            console.log(`Submitting score with stats: Name=${name}, Score=${finalScore}, Wave=${waveReached}`);
-            submitScoreButton.disabled = true;
-            submissionStatus.textContent = "Submitting...";
-            submissionStatus.style.color = "#00ff00";
+            console.log(`Submitting score: Name=${name}, Score=${finalScore}, Wave=${waveReached}`);
 
             try {
                 const response = await fetch('/scores', {
@@ -3945,32 +3962,209 @@
                         name: name, 
                         score: finalScore, 
                         wave: waveReached,
-                        stats: gameStats
+                        stats: gameStats // Submit the stats object
                     }),
                 });
 
                 if (!response.ok) {
-                     const errorText = await response.text();
-                     throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
                 }
 
                 const result = await response.json();
                 console.log("Submission response:", result);
-                submissionStatus.textContent = "Score Submitted!";
-                submissionStatus.style.color = "#00ff00";
-                submitScoreButton.disabled = true;
-                
-                // Set the flag to prevent resubmission
-                scoreSubmitted = true;
-                // Optionally, refresh the leaderboard display after submission
-                // fetchAndDisplayLeaderboard(); // Might be better to wait until restart
+                // Save the successfully submitted name for next time
+                localStorage.setItem('missileCommandPlayerName', name);
+                return { success: true };
 
             } catch (error) {
-                console.error('Error submitting score:', error);
-                submissionStatus.textContent = "Submission Failed.";
-                submissionStatus.style.color = "#ff0000";
-                submitScoreButton.disabled = false; // Re-enable on failure
+                console.error('Error submitting score data:', error);
+                return { success: false, error: error.message };
             }
+        }
+
+        // --- [MODIFIED] Function to Submit High Score ---
+        async function submitHighScore() {
+            // This function now primarily handles the UI for *immediate* submission when online
+            const name = playerNameInput.value.trim().toUpperCase();
+            const finalScore = gameTotalScore; // Use the current game's score
+            const waveReached = currentWave + 1;
+
+            if (!name || name.length === 0 || name.length > 18) {
+                submissionStatus.textContent = "Enter 1-18 characters.";
+                submissionStatus.style.color = "#ff0000";
+                return;
+            }
+            if (finalScore <= 0) {
+                submissionStatus.textContent = "No score to submit.";
+                submissionStatus.style.color = "#ffff00";
+                submitScoreButton.disabled = true;
+                return;
+            }
+
+            // Collect stats for immediate submission
+            const gameStats = {
+                missilesFired: statsMissilesFired,
+                enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
+                planeBombsDestroyed: statsPlaneBombsDestroyed,
+                planesDestroyed: statsPlanesDestroyed,
+                citiesLost: statsCitiesLost,
+                basesLost: statsBasesLost,
+                accuracyBonusHits: statsAccuracyBonusHits,
+                shieldBombsDestroyed: statsShieldBombsDestroyed,
+                difficulty: selectedDifficultyName,
+                missileSpeedLevel: playerMissileSpeedLevel,
+                explosionRadiusLevel: explosionRadiusLevel,
+                accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0")
+            };
+
+            submitScoreButton.disabled = true;
+            submissionStatus.textContent = "Submitting...";
+            submissionStatus.style.color = "#00ff00";
+
+            const scoreDataToSubmit = {
+                name: name,
+                score: finalScore,
+                wave: waveReached,
+                stats: gameStats
+            };
+
+            const result = await submitScoreData(scoreDataToSubmit);
+
+            if (result.success) {
+                submissionStatus.textContent = "Score Submitted!";
+                submissionStatus.style.color = "#00ff00";
+                scoreSubmitted = true; // Mark as submitted for this game instance
+                // Save the player name for future use
+                localStorage.setItem('missileCommandPlayerName', name);
+            } else {
+                // If submission failed but we're online, store it locally to try again later
+                if (navigator.onLine) {
+                    submissionStatus.textContent = `Submission Failed: ${result.error || 'Unknown error'}`;
+                    submissionStatus.style.color = "#ff0000";
+                    submitScoreButton.disabled = false; // Re-enable on failure
+                    
+                    // Store the failed submission attempt locally to retry later
+                    try {
+                        const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
+                        scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
+                        storedScores.push(scoreDataToSubmit);
+                        localStorage.setItem('storedScores', JSON.stringify(storedScores));
+                        console.log(`Failed score submission stored locally for later retry.`);
+                    } catch (e) {
+                        console.error("Error storing failed submission:", e);
+                    }
+                } else {
+                    // We're offline now, so store the score for later
+                    submissionStatus.textContent = "Offline. Score saved locally.";
+                    submissionStatus.style.color = "#ffff00";
+                    
+                    try {
+                        const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
+                        scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
+                        storedScores.push(scoreDataToSubmit);
+                        localStorage.setItem('storedScores', JSON.stringify(storedScores));
+                        console.log(`Score stored locally due to going offline.`);
+                    } catch (e) {
+                        console.error("Error storing offline submission:", e);
+                    }
+                }
+            }
+        }
+
+        // --- [NEW] Function to Sync Stored Scores ---
+        async function syncStoredScores() {
+            const storedScoresString = localStorage.getItem('storedScores');
+            if (!storedScoresString) {
+                console.log("No scores stored locally to sync.");
+                return { synced: 0, failed: 0 };
+            }
+
+            let storedScores = [];
+            try {
+                storedScores = JSON.parse(storedScoresString);
+            } catch (e) {
+                console.error("Error parsing stored scores:", e);
+                localStorage.removeItem('storedScores'); // Clear corrupted data
+                return { synced: 0, failed: 0, error: 'Parse error' };
+            }
+
+            if (storedScores.length === 0) {
+                console.log("Stored scores array is empty.");
+                return { synced: 0, failed: 0 };
+            }
+
+            console.log(`Attempting to sync ${storedScores.length} stored score(s)...`);
+            // Use the last entered name if available, otherwise prompt or use default
+            const defaultName = (localStorage.getItem('missileCommandPlayerName') || 'OFFLINE_ACE').toUpperCase();
+
+            // We'll keep track of scores that succeeded and failed
+            const remainingScores = [];
+            let syncedCount = 0;
+            let failedCount = 0;
+
+            for (const scoreData of storedScores) {
+                // If the stored score doesn't have a valid name, use the default/last used one
+                if (!scoreData.name || scoreData.name === 'TEMP_OFFLINE') {
+                    scoreData.name = defaultName;
+                    if (scoreData.name === 'OFFLINE_ACE') {
+                        console.warn(`Submitting offline score for ${scoreData.score} with default name 'OFFLINE_ACE'.`);
+                    }
+                }
+
+                console.log(`Syncing score: Name=${scoreData.name}, Score=${scoreData.score}`);
+                const result = await submitScoreData(scoreData); // Use the refactored submission function
+
+                if (!result.success) {
+                    console.warn(`Failed to sync score (Score: ${scoreData.score}, Name: ${scoreData.name}): ${result.error}`);
+                    remainingScores.push(scoreData); // Keep failed scores to try again later
+                    failedCount++;
+                } else {
+                    console.log(`Successfully synced score (Score: ${scoreData.score}, Name: ${scoreData.name})`);
+                    syncedCount++;
+                }
+                // Small delay between submissions to avoid overwhelming the server
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Update the localStorage with only the failed scores
+            if (remainingScores.length > 0) {
+                console.warn(`${remainingScores.length} score(s) failed to sync. Saving remaining scores.`);
+                localStorage.setItem('storedScores', JSON.stringify(remainingScores));
+            } else {
+                console.log("All stored scores synced successfully.");
+                localStorage.removeItem('storedScores');
+            }
+            
+            // Return information about the sync operation
+            return { 
+                synced: syncedCount, 
+                failed: failedCount,
+                remaining: remainingScores.length
+            };
+        }
+
+        // --- [NEW] Update UI function for sync status ---
+        function updateSyncStatusUI(syncResult) {
+            // If we're on the game over screen with a submission status display
+            if (isGameOver && messageBox.style.display === 'block' && submissionStatus) {
+                if (syncResult.synced > 0 && syncResult.failed === 0) {
+                    submissionStatus.textContent = `${syncResult.synced} offline score(s) synced!`;
+                    submissionStatus.style.color = "#00ff00";
+                    submitScoreButton.disabled = scoreSubmitted; // Enable if not already submitted
+                } else if (syncResult.synced > 0 && syncResult.failed > 0) {
+                    submissionStatus.textContent = `Synced ${syncResult.synced}, failed to sync ${syncResult.failed} score(s).`;
+                    submissionStatus.style.color = "#ffaa00";
+                    submitScoreButton.disabled = false; // Re-enable button
+                } else if (syncResult.synced === 0 && syncResult.failed > 0) {
+                    submissionStatus.textContent = `Failed to sync ${syncResult.failed} score(s).`;
+                    submissionStatus.style.color = "#ff0000";
+                    submitScoreButton.disabled = false; // Re-enable button
+                }
+            }
+            
+            // Optionally add UI notifications elsewhere in the game about synced scores
+            // For example, a small notification banner at the top or a toast message
         }
 
         // --- Event Listeners ---
@@ -4148,6 +4342,51 @@
             setTimeout(debugDeviceInfo, 100);
         });
 
+        // --- [NEW] Event Listeners for Online/Offline Status ---
+        window.addEventListener('online', async () => {
+            console.log("Browser detected online status.");
+            // Attempt to sync any scores stored while offline
+            const syncResult = await syncStoredScores();
+            
+            // Update UI based on sync results
+            updateSyncStatusUI(syncResult);
+
+            // Maybe sync done if needed
+            maybeRefreshLeaderboard();
+
+            // Update AI analysis button if present
+            const summaryLink = document.getElementById('viewGameSummaryLink');
+            if (summaryLink) {
+                summaryLink.disabled = false;
+            }
+        });
+
+        window.addEventListener('offline', () => {
+            console.log("Browser detected offline status.");
+            // If the game over screen is visible and submission was possible, update UI
+            if (isGameOver && messageBox.style.display === 'block' && !submitScoreButton.disabled) {
+                submissionStatus.textContent = "Offline. Score saved locally.";
+                submissionStatus.style.color = "#ffff00";
+                submitScoreButton.disabled = true;
+            }
+            
+            // Disable AI analysis button if present
+            const summaryLink = document.getElementById('viewGameSummaryLink');
+            if (summaryLink) {
+                summaryLink.disabled = true;
+            }
+        });
+
+        // --- [HELPER] Conditional leaderboard refresh ---
+        function maybeRefreshLeaderboard() {
+            // Only refresh if the leaderboard is currently displayed
+            if (typeof fetchAndDisplayLeaderboard === 'function' && 
+                leaderboardContainer && 
+                leaderboardContainer.style.display !== 'none') {
+                fetchAndDisplayLeaderboard();
+            }
+        }
+
         // --- MODIFIED: window.onload ---
         window.onload = () => {
             // Set canvas dimensions
@@ -4179,7 +4418,6 @@
             muteMusicButton.textContent = isMusicMuted ? 'Unmute Music' : 'Mute Music';
             muteSfxButton.textContent = isSfxMuted ? 'Unmute SFX' : 'Mute SFX';
 
-
             // Fetch leaderboard on load
             fetchAndDisplayLeaderboard(10);
 
@@ -4193,6 +4431,25 @@
             } else {
                 console.log('[Service Worker] not supported.');
             }
+            
+            // --- [NEW] Initial check for stored offline scores on load ---
+            // Slight delay to ensure page is fully interactive
+            setTimeout(async () => {
+                if (navigator.onLine) {
+                    const syncResult = await syncStoredScores();
+                    if (syncResult.synced > 0) {
+                        console.log(`Synced ${syncResult.synced} previously stored scores on startup.`);
+                        // Optional: Show a notification to the user
+                        fetchAndDisplayLeaderboard(); // Refresh leaderboard
+                    }
+                } else {
+                    const storedScores = localStorage.getItem('storedScores');
+                    if (storedScores && JSON.parse(storedScores).length > 0) {
+                        console.log("Offline on load, locally stored scores detected.");
+                        // Optional: Notify user they have scores waiting to sync
+                    }
+                }
+            }, 1000); // 1 second delay
         }; // End of window.onload
 
     </script>

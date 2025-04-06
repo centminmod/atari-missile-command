@@ -1,73 +1,57 @@
 // sw.js - Service Worker for Missile Command PWA
 
 // --- Configuration ---
-// Increment this version number when you update any assets in urlsToCache
-const APP_VERSION = 'v89';
+// Increment this version number when you update assets or caching logic
+const APP_VERSION = 'v86'; // Incremented version
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
+const DATA_CACHE_NAME = `missile-command-data-cache-${APP_VERSION}`; // Separate cache for dynamic data
 
-// List of assets to cache on installation
-const urlsToCache = [
-  '/', // Cache the root directory (often serves index.html)
+// List of core static assets to cache on installation
+const CORE_ASSETS_TO_CACHE = [
+  '/', // Cache the root directory
   '/index.html', // Explicitly cache index.html
   '/manifest.json', // Cache the manifest file
-  // Add other core assets like icons, main CSS, main JS if needed
+  // Icons
   '/icons/android-launchericon-512-512.png',
   '/icons/android-launchericon-192-192.png',
   '/icons/android-launchericon-144-144.png',
   '/icons/android-launchericon-96-96.png',
   '/icons/android-launchericon-72-72.png',
   '/icons/android-launchericon-48-48.png',
+  // CSS & Fonts
   '/css/fonts.css',
   '/fonts/press-start-2p-v15-latin-regular.woff2',
   '/fonts/press-start-2p-v15-latin-regular.ttf',
+  // Audio
   '/audio/explosion.mp3',
   '/audio/launch.mp3',
   '/audio/music-lowest.mp3'
+  // Add any other critical static assets here
 ];
 
 // --- Installation Event ---
-// Fired when the service worker is first installed or updated
 self.addEventListener('install', (event) => {
   console.log(`[Service Worker] Install event - ${APP_VERSION}`);
-  // Perform install steps: Caching core assets
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log(`[Service Worker] Opened cache: ${CACHE_NAME}`);
-        // Map URLs to Promises for caching
-        const cachePromises = urlsToCache.map(urlToCache => {
-          let request = new Request(urlToCache);
-          // Use 'no-cors' for cross-origin requests like Google Fonts
-          // This allows caching but treats the response as opaque (cannot read content)
-          if (urlToCache.startsWith('https://')) {
-            request = new Request(urlToCache, { mode: 'no-cors' });
-          }
-          // Add the request to the cache
-          return cache.add(request).catch(err => {
-            // Log caching errors for individual files but don't fail the whole install
-            console.warn(`[Service Worker] Failed to cache ${urlToCache}:`, err);
-          });
-        });
-        // Wait for all caching operations to complete
-        return Promise.all(cachePromises);
+        console.log(`[Service Worker] Caching core assets in: ${CACHE_NAME}`);
+        // Use addAll for simpler bulk caching of core assets
+        return cache.addAll(CORE_ASSETS_TO_CACHE);
       })
       .then(() => {
-        console.log('[Service Worker] All specified URLs attempted to cache.');
-        // Force the waiting service worker to become the active service worker immediately.
-        // This ensures updates are applied faster, but requires careful handling
-        // if the page relies on specific resources from the *old* service worker.
+        console.log('[Service Worker] Core assets cached successfully.');
+        // Force the waiting service worker to become the active service worker
         return self.skipWaiting();
       })
       .catch((error) => {
-        // If any critical caching fails (Promise.all rejects), the install fails.
-        console.error('[Service Worker] Caching failed during install:', error);
+        console.error('[Service Worker] Core asset caching failed during install:', error);
+        // Optional: Decide if install should fail if core assets don't cache
       })
   );
 });
 
 // --- Activation Event ---
-// Fired after installation & when the service worker takes control.
-// Used to clean up old caches.
 self.addEventListener('activate', (event) => {
   console.log(`[Service Worker] Activate event - ${APP_VERSION}`);
   // Clean up old caches
@@ -75,8 +59,8 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          // Delete caches that belong to this app but are not the current version
-          if (cacheName.startsWith('missile-command-cache-') && cacheName !== CACHE_NAME) {
+          // Delete caches that are not the current static or data cache
+          if (cacheName !== CACHE_NAME && cacheName !== DATA_CACHE_NAME && cacheName.startsWith('missile-command-')) {
             console.log('[Service Worker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -84,8 +68,7 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log('[Service Worker] Claiming clients');
-      // Take control of any currently open pages that match the service worker's scope
-      // This is necessary when using skipWaiting() to ensure the new worker controls existing tabs.
+      // Take control of any currently open pages
       return self.clients.claim();
     }).catch((error) => {
       console.error('[Service Worker] Cache cleanup or claiming clients failed during activate:', error);
@@ -94,36 +77,63 @@ self.addEventListener('activate', (event) => {
 });
 
 // --- Fetch Event ---
-// Fired whenever the app requests a resource (HTML, CSS, JS, images, API calls, etc.)
 self.addEventListener('fetch', (event) => {
-  // Using a Cache-First strategy:
-  // 1. Check the cache for a matching request.
-  // 2. If found, return the cached response.
-  // 3. If not found, fetch from the network.
-  // Note: This strategy doesn't automatically update cached files from the network
-  // unless the service worker itself is updated (triggering install/activate).
-  event.respondWith(
-    caches.match(event.request) // Check the cache defined by CACHE_NAME
-      .then((response) => {
-        // Return cached response if found
-        if (response) {
-          // console.log('[Service Worker] Found in cache:', event.request.url);
-          return response;
-        }
-        // Fetch from network if not in cache
-        // console.log('[Service Worker] Not in cache, fetching from network:', event.request.url);
-        // Important: This basic version doesn't dynamically cache network responses.
-        // If you wanted to cache *new* resources encountered during runtime,
-        // you would need to clone the fetch response and put it into the cache here.
-        return fetch(event.request);
+  const requestUrl = new URL(event.request.url);
+
+  // Strategy for API calls (e.g., leaderboard) - Network First, fallback to Cache
+  if (requestUrl.pathname.startsWith('/scores')) {
+    // console.log('[Service Worker] Handling API request (Network First):', event.request.url);
+    event.respondWith(
+      caches.open(DATA_CACHE_NAME).then((cache) => {
+        return fetch(event.request)
+          .then((networkResponse) => {
+            // If fetch is successful, cache the response and return it
+            // console.log('[Service Worker] API fetched from network, caching:', event.request.url);
+            // Need to clone the response stream as it can only be consumed once
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          })
+          .catch((error) => {
+            // If network fetch fails (e.g., offline), try to get from cache
+            console.warn('[Service Worker] Network fetch failed for API, trying cache:', event.request.url, error);
+            return cache.match(event.request).then(response => {
+              if (response) {
+                // console.log('[Service Worker] Serving API from cache:', event.request.url);
+                return response;
+              }
+              // Optional: Return a custom offline response for the API if not in cache
+              console.error('[Service Worker] API not in cache and network failed:', event.request.url);
+              // Example: return new Response(JSON.stringify({ error: "Offline and data not cached" }), { headers: { 'Content-Type': 'application/json' }});
+              // For now, just let the fetch error propagate if not in cache
+              return undefined; // Or throw error
+            });
+          });
       })
-      .catch((error) => {
-        console.error('[Service Worker] Fetch failed:', error);
-        // Optional: Provide a fallback page for navigation requests if offline
-        // if (event.request.mode === 'navigate') {
-        //   return caches.match('/offline.html'); // Make sure '/offline.html' is cached during install
-        // }
-        // For other types of requests, just let the error propagate
-      })
-  );
+    );
+  }
+  // Strategy for Static Assets (Core assets cached during install) - Cache First
+  else {
+    // console.log('[Service Worker] Handling static asset request (Cache First):', event.request.url);
+    event.respondWith(
+      caches.match(event.request, { cacheName: CACHE_NAME }) // Look only in the static asset cache
+        .then((response) => {
+          // Return cached response if found
+          if (response) {
+            // console.log('[Service Worker] Found static asset in cache:', event.request.url);
+            return response;
+          }
+
+          // Fetch from network if not in cache (e.g., for assets not listed in CORE_ASSETS_TO_CACHE)
+          // console.log('[Service Worker] Static asset not in cache, fetching from network:', event.request.url);
+          // Note: This part doesn't dynamically cache *new* static assets found.
+          // If you add new images/css/js later, you need to update APP_VERSION
+          // and add them to CORE_ASSETS_TO_CACHE for them to be cached reliably.
+          return fetch(event.request);
+        })
+        .catch((error) => {
+          console.error('[Service Worker] Fetch failed for static asset:', error, event.request.url);
+          // Optional: Provide a fallback for core assets if needed
+        })
+    );
+  }
 });
