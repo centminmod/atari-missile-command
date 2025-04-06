@@ -544,7 +544,7 @@
                  <li id="leaderboardLoading">Loading...</li>
              </ol>
              <div id="leaderboardViewMoreContainer" style="margin-top: 10px; display: none;">
-                  <a href="#" id="leaderboardViewMoreLink" style="color: #00ffff; text-decoration: underline; font-size: clamp(10px, 2.8vw, 12px);">View Top 50</a>
+                  <a href="#" id="leaderboardViewMoreLink" style="color: #00ffff; text-decoration: underline; font-size: clamp(10px, 2.8vw, 12px);">View Top 1000</a>
              </div>
          </div> </div>
 
@@ -4195,8 +4195,8 @@
         // --- [ADDED] Event Listener for View More Leaderboard ---
         leaderboardViewMoreLink.addEventListener('click', (event) => {
             event.preventDefault(); // Prevent default link behavior
-            console.log("View More clicked, fetching top 50...");
-            fetchAndDisplayLeaderboard(50); // Fetch and display top 50
+            console.log("View More clicked, fetching top 1000...");
+            fetchAndDisplayLeaderboard(1000); // Fetch and display top 1000
         });
 
         // --- MODIFIED: restartButton Event Listener (handles both restart buttons) ---

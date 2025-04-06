@@ -12,7 +12,7 @@ const MAX_SCORES_TO_STORE = 50; // Changed from 10 to 50
 // Default number of scores to return in a GET request if no limit is specified
 const DEFAULT_SCORES_TO_RETURN = 10; // Added for clarity
 // Maximum number of scores that can be requested via the 'limit' parameter in a GET request
-const MAX_SCORES_TO_RETURN = 50; // Added limit for GET requests
+const MAX_SCORES_TO_RETURN = 1000; // Added limit for GET requests
 
 export async function onRequest(context) {
   // Environment variable is available on context.env
