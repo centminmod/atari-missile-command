@@ -2,7 +2,7 @@
 
 // --- Configuration ---
 // Increment this version number when you update assets or caching logic
-const APP_VERSION = 'v88'; // Incremented version
+const APP_VERSION = 'v89'; // Incremented version
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
 const DATA_CACHE_NAME = `missile-command-data-cache-${APP_VERSION}`; // Separate cache for dynamic data
 
@@ -83,15 +83,15 @@ self.addEventListener('fetch', (event) => {
 
   // Strategy for API calls (e.g., leaderboard) - Network First, fallback to Cache
   if (requestUrl.pathname.startsWith('/scores')) {
-    // console.log('[Service Worker] Handling API request (Network First):', event.request.url);
     event.respondWith(
       caches.open(DATA_CACHE_NAME).then((cache) => {
         return fetch(event.request)
           .then((networkResponse) => {
-            // If fetch is successful, cache the response and return it
-            // console.log('[Service Worker] API fetched from network, caching:', event.request.url);
-            // Need to clone the response stream as it can only be consumed once
-            cache.put(event.request, networkResponse.clone());
+            // Only cache GET requests, not POST requests
+            if (event.request.method === 'GET') {
+              // Need to clone the response stream as it can only be consumed once
+              cache.put(event.request, networkResponse.clone());
+            }
             return networkResponse;
           })
           .catch((error) => {
@@ -104,7 +104,6 @@ self.addEventListener('fetch', (event) => {
               }
               // Optional: Return a custom offline response for the API if not in cache
               console.error('[Service Worker] API not in cache and network failed:', event.request.url);
-              // Example: return new Response(JSON.stringify({ error: "Offline and data not cached" }), { headers: { 'Content-Type': 'application/json' }});
               // For now, just let the fetch error propagate if not in cache
               return undefined; // Or throw error
             });
