@@ -700,12 +700,12 @@
             <div style="display: flex; align-items: center; gap: 8px;">
                 <button id="muteMusicButton" style="padding: 4px 8px; font-size: 10px; min-width: 90px;">Unmute Music</button>
                 <label for="musicVolumeSlider" style="font-size: 10px;">Music Vol:</label>
-                <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.3" style="width: 80px; height: 8px; cursor: pointer;">
+                <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.2" style="width: 80px; height: 8px; cursor: pointer;">
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
                 <button id="muteSfxButton" style="padding: 4px 8px; font-size: 10px; min-width: 90px;">Mute SFX</button>
                 <label for="sfxVolumeSlider" style="font-size: 10px;">SFX Vol:</label>
-                <input type="range" id="sfxVolumeSlider" min="0" max="1" step="0.05" value="0.8" style="width: 80px; height: 8px; cursor: pointer;">
+                <input type="range" id="sfxVolumeSlider" min="0" max="1" step="0.05" value="0.5" style="width: 80px; height: 8px; cursor: pointer;">
             </div>
         </div>
     </footer>
@@ -3451,6 +3451,59 @@
             }
         }
 
+        // --- NEW: Keyboard Input Handler ---
+        function handleKeyDown(event) {
+            if (isGameOver || isPaused || transitioningWave || !gameHasStarted) return;
+
+            // Prevent default for keys we handle (will add more later)
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '1', '2', '3', '4', '5', '6', 'f', 'q', 'w'].includes(event.key)) {
+                event.preventDefault();
+            }
+
+            // --- Base Selection (Task 2) ---
+            if (['1', '2', '3'].includes(event.key)) {
+                const baseIndex = parseInt(event.key) - 1;
+                if (bases[baseIndex] && bases[baseIndex].alive) {
+                    keyboardSelectedBaseIndex = baseIndex;
+                    keyboardTargetingActive = true;
+                    console.log(`Keyboard selected ground base: ${keyboardSelectedBaseIndex}`);
+                }
+            } else if (['4', '5', '6'].includes(event.key)) {
+                const satIndex = parseInt(event.key) - 4;
+                if (satelliteBases[satIndex] && satelliteBases[satIndex].alive) {
+                    keyboardSelectedBaseIndex = satIndex + 3; // 3, 4, or 5
+                    keyboardTargetingActive = true;
+                    console.log(`Keyboard selected satellite base: ${keyboardSelectedBaseIndex}`);
+                }
+            }
+
+            // --- Reticle Movement (Task 3) ---
+            const groundLevelY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
+            if (event.key === 'ArrowUp') {
+                keyboardTargetingActive = true;
+                reticleY -= RETICLE_SPEED;
+            } else if (event.key === 'ArrowDown') {
+                keyboardTargetingActive = true;
+                reticleY += RETICLE_SPEED;
+            } else if (event.key === 'ArrowLeft') {
+                keyboardTargetingActive = true;
+                reticleX -= RETICLE_SPEED;
+            } else if (event.key === 'ArrowRight') {
+                keyboardTargetingActive = true;
+                reticleX += RETICLE_SPEED;
+            }
+
+            // Clamp reticle coordinates
+            reticleX = Math.max(0, Math.min(canvas.width, reticleX));
+            reticleY = Math.max(0, Math.min(groundLevelY, reticleY));
+
+
+            // --- Firing (Task 4) ---
+            // ... to be added ...
+
+            // --- Special Weapons (Task 6) ---
+            // ... to be added ...
+        }
 
         // --- NEW: Function to Record Game Click ---
         function recordGameClick(clickX, clickY, armedWeapon) {
@@ -4008,7 +4061,15 @@
         });
         sonicWaveControl.addEventListener('click', () => { if (!sonicWaveControl.classList.contains('disabled')) { triggerSonicWave(); } });
         bombControl.addEventListener('click', () => { if (!bombControl.classList.contains('disabled')) { armBomb(); } });
-        window.addEventListener('keydown', (event) => { if (event.code === 'Space' && !isGameOver && !transitioningWave && gameHasStarted && storeModal.style.display === 'none' && messageBox.style.display === 'none' ) { event.preventDefault(); togglePause(); } });
+        window.addEventListener('keydown', (event) => {
+            // Existing Spacebar pause toggle
+            if (event.code === 'Space' && !isGameOver && !transitioningWave && gameHasStarted && storeModal.style.display === 'none' && messageBox.style.display === 'none' ) {
+                event.preventDefault();
+                togglePause();
+            }
+            // Call the main handler for other keys
+            handleKeyDown(event);
+        });
 
         // --- ADDED: Mute Button and Volume Slider Listeners ---
         muteMusicButton.addEventListener('click', toggleMusicMute);
