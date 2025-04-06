@@ -92,10 +92,67 @@ export async function onRequest(context) {
                       : undefined; // Store as undefined if not valid or not present
 
       // Prepare the final data object to add to the leaderboard
-      const scoreDataToAdd = { name, score };
+      const scoreDataToAdd = { 
+        name, 
+        score,
+        submittedAt: new Date().toISOString() 
+      };
+      
       // Only include the 'wave' property if it's valid
       if (wave !== undefined) {
         scoreDataToAdd.wave = wave;
+      }
+      
+      // Process game stats if provided
+      if (newScoreEntry.stats && typeof newScoreEntry.stats === 'object') {
+        // Sanitize and validate each stat field
+        const sanitizedStats = {};
+        
+        // Define valid stat fields and their expected types
+        const validStatFields = {
+          missilesFired: 'number',
+          enemyMissilesDestroyed: 'number',
+          planeBombsDestroyed: 'number',
+          planesDestroyed: 'number',
+          citiesLost: 'number',
+          basesLost: 'number',
+          accuracyBonusHits: 'number',
+          shieldBombsDestroyed: 'number',
+          accuracy: 'number',
+          difficulty: 'string',
+          missileSpeedLevel: 'number',
+          explosionRadiusLevel: 'number'
+        };
+        
+        // Process each field if it matches expected type
+        Object.entries(validStatFields).forEach(([field, expectedType]) => {
+          if (field in newScoreEntry.stats && typeof newScoreEntry.stats[field] === expectedType) {
+            if (expectedType === 'number') {
+              // Ensure numbers are non-negative and reasonable
+              sanitizedStats[field] = Math.max(0, 
+                field === 'accuracy' ? 
+                  parseFloat(newScoreEntry.stats[field].toFixed(1)) : 
+                  Math.floor(newScoreEntry.stats[field])
+              );
+            } else if (expectedType === 'string') {
+              // Sanitize strings
+              sanitizedStats[field] = newScoreEntry.stats[field].substring(0, 30).replace(/[<>]/g, '');
+            }
+          }
+        });
+
+        // Perform basic consistency check between stats and score
+        const isConsistent = validateScoreConsistency(score, sanitizedStats);
+        if (!isConsistent) {
+          console.warn('Score consistency check failed for entry:', JSON.stringify({
+            score,
+            stats: sanitizedStats
+          }));
+          // Optionally flag suspicious entries but still accept them
+          sanitizedStats.flagged = true;
+        }
+        
+        scoreDataToAdd.stats = sanitizedStats;
       }
 
       // Check if the name is valid after sanitization
@@ -144,4 +201,70 @@ export async function onRequest(context) {
     console.error(`Error processing request (${request.method}):`, error);
     return new Response('An internal server error occurred.', { status: 500 });
   }
+}
+
+/**
+ * Validates the consistency between a submitted score and the player's game stats.
+ * Returns true if the score is reasonably consistent with the provided stats.
+ * 
+ * @param {number} score - The submitted score
+ * @param {object} stats - The game statistics object
+ * @returns {boolean} - Whether the score seems consistent with the stats
+ */
+function validateScoreConsistency(score, stats) {
+  // If stats are missing, we can't validate
+  if (!stats) return true;
+
+  // Calculate expected score components
+  const POINTS_PER_MISSILE = 35;
+  const POINTS_PER_PLANE_BOMB = 20;
+  const POINTS_PER_PLANE = 1000;
+  const POINTS_PER_ACCURACY_BONUS = 50;
+  const SHIELD_BOMB_MULTIPLIER = 3;
+
+  // Calculate base points from enemy kills (without multipliers)
+  const missilePoints = (stats.enemyMissilesDestroyed || 0) * POINTS_PER_MISSILE;
+  // Apply special multiplier for shield bombs
+  const shieldBombPoints = (stats.shieldBombsDestroyed || 0) * POINTS_PER_MISSILE * SHIELD_BOMB_MULTIPLIER;
+  const planeBombPoints = (stats.planeBombsDestroyed || 0) * POINTS_PER_PLANE_BOMB;
+  const planePoints = (stats.planesDestroyed || 0) * POINTS_PER_PLANE;
+  const accuracyBonusPoints = (stats.accuracyBonusHits || 0) * POINTS_PER_ACCURACY_BONUS;
+
+  // Sum the base points
+  const basePoints = missilePoints + shieldBombPoints + planeBombPoints + planePoints + accuracyBonusPoints;
+
+  // Get difficulty multiplier if available (default to 1.0)
+  let difficultyMultiplier = 1.0;
+  if (stats.difficulty) {
+    if (stats.difficulty.includes("Easy")) difficultyMultiplier = 1.0;
+    else if (stats.difficulty.includes("Normal")) difficultyMultiplier = 1.25;
+    else if (stats.difficulty.includes("Hard")) difficultyMultiplier = 1.5;
+    else if (stats.difficulty.includes("Insane")) difficultyMultiplier = 2.0;
+  }
+
+  // Estimate a reasonable score range
+  // Note: We can't know the exact score because of wave bonuses, score multipliers during play,
+  // and other factors, so we use a generous tolerance range
+  const minExpectedScore = basePoints * difficultyMultiplier * 0.5; // 50% of base estimate
+  const maxExpectedScore = basePoints * difficultyMultiplier * 5.0; // Up to 5x multiplier
+
+  // Add a minimum floor for very low scores to avoid false positives
+  const absoluteMinScore = 100; 
+
+  // Check if score is within reasonable bounds
+  const isReasonable = (score >= Math.min(minExpectedScore, absoluteMinScore) && score <= maxExpectedScore);
+
+  // If score seems inconsistent, log details for debugging
+  if (!isReasonable) {
+    console.warn('Score consistency check failed:', {
+      submittedScore: score,
+      estimatedBasePoints: basePoints,
+      difficultyMultiplier,
+      minExpectedScore,
+      maxExpectedScore,
+      stats
+    });
+  }
+
+  return isReasonable;
 }

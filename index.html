@@ -407,6 +407,109 @@
                     padding: 4px 8px;
                 }
             }
+
+            /* Player Stats Modal */
+            #playerStatsModal h3 {
+                margin: 0 0 10px 0;
+                font-size: clamp(14px, 4vw, 16px);
+            }
+
+            #playerStatsModal p {
+                margin: 5px 0;
+                font-size: clamp(9px, 2.5vw, 11px);
+                line-height: 1.4;
+            }
+
+            #closeStatsButton {
+                font-family: 'Press Start 2P', cursive;
+                background-color: #333;
+                color: #00ff00;
+                border: 2px solid #00ff00;
+                padding: 8px 15px;
+                font-size: clamp(10px, 3vw, 12px);
+                cursor: pointer;
+                box-shadow: 0 0 8px #00ff00 inset;
+                transition: background-color 0.3s, box-shadow 0.3s;
+                border-radius: 5px;
+                min-height: 34px; /* Match other button heights for mobile */
+            }
+
+            #closeStatsButton:hover {
+                background-color: #444;
+                box-shadow: 0 0 12px #00ff00 inset;
+            }
+
+            /* Leaderboard item hover effect */
+            #leaderboardList li {
+                transition: background-color 0.2s;
+            }
+
+            #leaderboardList li:hover {
+                background-color: rgba(0, 255, 255, 0.1);
+            }
+
+            /* Media queries for player stats modal */
+            @media (max-width: 768px) {
+                #playerStatsModal {
+                    padding: 12px;
+                    width: 95%;
+                }
+                
+                #playerStatsModal h2 {
+                    font-size: clamp(16px, 5vw, 20px);
+                }
+                
+                /* Make grid single column on smaller tablets */
+                #playerStatsModal .grid-cols-2 {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            @media (max-width: 480px) {
+                #playerStatsModal {
+                    padding: 10px;
+                    max-height: 85vh;
+                }
+                
+                #playerStatsModal h2 {
+                    font-size: 16px;
+                    margin-bottom: 10px;
+                }
+                
+                #playerStatsModal h3 {
+                    font-size: 12px;
+                }
+                
+                #playerStatsModal p {
+                    font-size: 9px;
+                    margin: 3px 0;
+                }
+                
+                #closeStatsButton {
+                    padding: 6px 12px;
+                    font-size: 10px;
+                    margin-top: 15px;
+                }
+            }
+
+            /* Landscape mode optimizations */
+            @media (orientation: landscape) and (max-height: 500px) {
+                #playerStatsModal {
+                    top: 50%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                }
+                
+                #playerStatsModal > div {
+                    margin-top: 5px;
+                    margin-bottom: 5px;
+                }
+                
+                /* Adjust padding to use space more efficiently */
+                #playerStatsModal > div > div {
+                    padding: 6px;
+                }
+            }
         </style>
         <script>
             !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -3337,6 +3440,13 @@
                         li.appendChild(nameSpan);
                         li.appendChild(waveSpan);
                         li.appendChild(scoreSpan);
+
+                        // Add click handler to show player stats
+                        li.style.cursor = 'pointer';
+                        li.addEventListener('click', () => {
+                            displayPlayerStats(entry);
+                        });
+
                         leaderboardList.appendChild(li);
                     });
 
@@ -3360,6 +3470,101 @@
                 leaderboardLoading.style.display = 'list-item'; // Show error
                 leaderboardViewMoreContainer.style.display = 'none'; // Hide view more on error
             }
+        }
+
+        // --- NEW: Function to Display Player Stats Modal ---
+        function displayPlayerStats(playerData) {
+            // Create or update modal
+            let statsModal = document.getElementById('playerStatsModal');
+            if (!statsModal) {
+                statsModal = document.createElement('div');
+                statsModal.id = 'playerStatsModal';
+                statsModal.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background-color: rgba(0, 20, 0, 0.95);
+                    border: 3px solid #00ff00;
+                    border-radius: 15px;
+                    box-shadow: 0 0 25px #00ff00;
+                    padding: 15px;
+                    z-index: 25;
+                    color: #00ff00;
+                    font-size: 12px;
+                    max-width: 600px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                `;
+                document.body.appendChild(statsModal);
+            }
+            
+            // No stats data available
+            if (!playerData.stats) {
+                statsModal.innerHTML = `
+                    <h2 style="color: #ffff00; text-align: center; margin-bottom: 15px;">Player: ${playerData.name}</h2>
+                    <p style="text-align: center;">Score: $${playerData.score} | Wave: ${playerData.wave || '?'}</p>
+                    <p style="text-align: center; color: #aaaaaa;">No detailed stats available for this player.</p>
+                    <button id="closeStatsButton" style="display: block; margin: 20px auto 0;">Close</button>
+                `;
+                document.getElementById('closeStatsButton').addEventListener('click', () => {
+                    statsModal.style.display = 'none';
+                });
+                statsModal.style.display = 'block';
+                return;
+            }
+            
+            // Build stats display
+            const stats = playerData.stats;
+            const accuracy = stats.accuracy || (stats.missilesFired > 0 ? 
+                ((stats.enemyMissilesDestroyed + stats.planeBombsDestroyed) / stats.missilesFired * 100).toFixed(1) : 
+                "N/A");
+                
+            statsModal.innerHTML = `
+                <h2 style="color: #ffff00; text-align: center; margin-bottom: 15px;">Player: ${playerData.name}</h2>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <span style="color: #ffffff; font-size: 16px;">Score: $${playerData.score}</span> | 
+                    <span>Wave: ${playerData.wave || '?'}</span> | 
+                    <span>Difficulty: ${stats.difficulty || 'Unknown'}</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px;">
+                        <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Offensive Stats</h3>
+                        <p>Missiles Fired: ${stats.missilesFired || 0}</p>
+                        <p>Accuracy: ${accuracy}%</p>
+                        <p>Accuracy Bonuses: ${stats.accuracyBonusHits || 0}</p>
+                        <p>Missile Speed Level: ${stats.missileSpeedLevel || 0}/5</p>
+                        <p>Explosion Radius Level: ${stats.explosionRadiusLevel || 0}/5</p>
+                    </div>
+                    
+                    <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px;">
+                        <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Defensive Stats</h3>
+                        <p>Cities Lost: ${stats.citiesLost || 0}</p>
+                        <p>Bases Lost: ${stats.basesLost || 0}</p>
+                    </div>
+                    
+                    <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px; grid-column: 1 / -1;">
+                        <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Enemy Kills</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <p>Enemy Missiles: ${stats.enemyMissilesDestroyed || 0}</p>
+                            <p>Shield Bombs: ${stats.shieldBombsDestroyed || 0}</p>
+                            <p>Plane Bombs: ${stats.planeBombsDestroyed || 0}</p>
+                            <p>Planes: ${stats.planesDestroyed || 0}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="closeStatsButton" style="display: block; margin: 20px auto 0;">Close</button>
+            `;
+            
+            document.getElementById('closeStatsButton').addEventListener('click', () => {
+                statsModal.style.display = 'none';
+            });
+            
+            // Display the modal
+            statsModal.style.display = 'block';
         }
 
         // --- Function to Handle AI Summary Request ---
@@ -3527,7 +3732,7 @@
         async function submitHighScore() {
             const name = playerNameInput.value.trim().toUpperCase();
             // Use gameTotalScore for the final submission
-            const finalScore = gameTotalScore; // Make sure gameTotalScore is correctly updated
+            const finalScore = gameTotalScore; 
             const waveReached = currentWave + 1; // Get the wave number (currentWave is 0-indexed)
 
             if (!name || name.length === 0 || name.length > 18) {
@@ -3536,18 +3741,37 @@
                 return; // Stop the submission if invalid
             }
             if (finalScore <= 0) {
-                 submissionStatus.textContent = "No score to submit.";
-                 submissionStatus.style.color = "#ffff00";
-                 submitScoreButton.disabled = true;
-                 return;
+                submissionStatus.textContent = "No score to submit.";
+                submissionStatus.style.color = "#ffff00";
+                submitScoreButton.disabled = true;
+                return;
             }
 
-            console.log(`Submitting score: Name=${name}, Score=${finalScore}, Wave=${waveReached}`);
+            // Collect all game stats
+            const gameStats = {
+                missilesFired: statsMissilesFired,
+                enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
+                planeBombsDestroyed: statsPlaneBombsDestroyed,
+                planesDestroyed: statsPlanesDestroyed,
+                citiesLost: statsCitiesLost,
+                basesLost: statsBasesLost,
+                accuracyBonusHits: statsAccuracyBonusHits,
+                shieldBombsDestroyed: statsShieldBombsDestroyed,
+                difficulty: selectedDifficultyName,
+                missileSpeedLevel: playerMissileSpeedLevel,
+                explosionRadiusLevel: explosionRadiusLevel
+            };
+
+            // Calculate accuracy percentage
+            const accuracy = statsMissilesFired > 0 
+                ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) 
+                : "0.0";
+            gameStats.accuracy = parseFloat(accuracy);
+
+            console.log(`Submitting score with stats: Name=${name}, Score=${finalScore}, Wave=${waveReached}`);
             submitScoreButton.disabled = true;
             submissionStatus.textContent = "Submitting...";
             submissionStatus.style.color = "#00ff00";
-            // Store name locally for pre-filling next time
-            // localStorage.setItem('lastPlayerName', name); // Stop saving the name
 
             try {
                 const response = await fetch('/scores', {
@@ -3555,7 +3779,12 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name: name, score: finalScore, wave: waveReached }),
+                    body: JSON.stringify({ 
+                        name: name, 
+                        score: finalScore, 
+                        wave: waveReached,
+                        stats: gameStats
+                    }),
                 });
 
                 if (!response.ok) {
