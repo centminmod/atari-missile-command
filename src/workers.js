@@ -151,19 +151,20 @@ Focus on clear, helpful analysis based *solely* on the provided data. Do not inv
       const gatewayBaseUrl = `https://gateway.ai.cloudflare.com/v1/${env.ACCOUNT_ID}/${env.GATEWAY_ID}/openrouter`;
       const openRouterEndpoint = `${gatewayBaseUrl}/v1/chat/completions`;
 
-      // Use the model name you specified
-      // const targetModel = "google/gemini-2.0-flash-exp:free";
-      const targetModel = "meta-llama/llama-4-scout:free";
-      // const targetModel = "meta-llama/llama-4-maverick:free";
+      // Define primary and fallback models
+      const primaryModel = "google/gemini-2.0-flash-exp:free";
+      // const primaryModel = "meta-llama/llama-4-scout:free";
+      // const primaryModel = "meta-llama/llama-4-maverick:free";
+      const fallbackModel = "meta-llama/llama-3.2-1b-instruct:free";
 
       const requestBody = {
-        model: targetModel,
+        models: [primaryModel, fallbackModel],
         messages: [{ role: "user", content: prompt }],
         max_tokens: 800
       };
 
       // 7. Execute Fetch Request to AI Gateway
-      console.log(`Sending fetch request to AI Gateway for model ${targetModel}: ${openRouterEndpoint}`);
+      console.log(`Sending fetch request to AI Gateway for models [${primaryModel}, ${fallbackModel}]: ${openRouterEndpoint}`);
       let aiResponse;
       try {
          aiResponse = await fetch(openRouterEndpoint, {
