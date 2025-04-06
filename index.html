@@ -3626,13 +3626,38 @@
                 `;
                 document.body.appendChild(statsModal);
             }
-            
-            // No stats data available
+
+            // Format Date
+            let formattedDate = 'Date Unknown';
+            if (playerData.timestamp) {
+                try {
+                    const date = new Date(playerData.timestamp);
+                    formattedDate = date.toLocaleString('en-US', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        timeZone: 'UTC',
+                        timeZoneName: 'short'
+                    }).replace(' GMT', ' UTC'); // Ensure UTC is appended correctly
+                } catch (e) {
+                    console.error("Error formatting date:", e);
+                    formattedDate = 'Invalid Date';
+                }
+            }
+
+            // No stats data available - show basic info + date
             if (!playerData.stats) {
                 statsModal.innerHTML = `
-                    <h2 style="color: #ffff00; text-align: center; margin-bottom: 15px;">Player: ${playerData.name}</h2>
-                    <p style="text-align: center;">Score: $${playerData.score} | Wave: ${playerData.wave || '?'}</p>
-                    <p style="text-align: center; color: #aaaaaa;">No detailed stats available for this player.</p>
+                    <h2 style="color: #ffff00; text-align: center; margin-bottom: 10px;">Player: ${playerData.name}</h2>
+                    <div style="text-align: center; margin-bottom: 15px; line-height: 1.5;">
+                        <p style="margin: 0; color: #ffffff; font-size: 14px;">Score: $${playerData.score}</p>
+                        <p style="margin: 0;">Wave: ${playerData.wave || '?'} | Difficulty: Unknown</p>
+                        <p style="margin: 0; font-size: 10px; color: #aaaaaa;">${formattedDate}</p>
+                    </div>
+                    <p style="text-align: center; color: #aaaaaa; margin-top: 20px;">No detailed stats available for this player.</p>
                     <button id="closeStatsButton" style="display: block; margin: 20px auto 0;">Close</button>
                 `;
                 document.getElementById('closeStatsButton').addEventListener('click', () => {
@@ -3641,55 +3666,52 @@
                 statsModal.style.display = 'block';
                 return;
             }
-            
-            // Build stats display
+
+            // Build stats display with new format
             const stats = playerData.stats;
-            const accuracy = stats.accuracy || (stats.missilesFired > 0 ? 
-                ((stats.enemyMissilesDestroyed + stats.planeBombsDestroyed) / stats.missilesFired * 100).toFixed(1) : 
+            const accuracy = stats.accuracy || (stats.missilesFired > 0 ?
+                ((stats.enemyMissilesDestroyed + stats.planeBombsDestroyed) / stats.missilesFired * 100).toFixed(1) :
                 "N/A");
-                
+
             statsModal.innerHTML = `
-                <h2 style="color: #ffff00; text-align: center; margin-bottom: 15px;">Player: ${playerData.name}</h2>
-                <div style="text-align: center; margin-bottom: 15px;">
-                    <span style="color: #ffffff; font-size: 16px;">Score: $${playerData.score}</span> | 
-                    <span>Wave: ${playerData.wave || '?'}</span> | 
-                    <span>Difficulty: ${stats.difficulty || 'Unknown'}</span>
+                <h2 style="color: #ffff00; text-align: center; margin-bottom: 10px;">Player: ${playerData.name}</h2>
+                <div style="text-align: center; margin-bottom: 15px; line-height: 1.5;">
+                    <p style="margin: 0; color: #ffffff; font-size: 14px;">Score: $${playerData.score}</p>
+                    <p style="margin: 0;">Wave: ${playerData.wave || '?'} | Difficulty: ${stats.difficulty || 'Unknown'}</p>
+                    <p style="margin: 0; font-size: 10px; color: #aaaaaa;">${formattedDate}</p>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
                     <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px;">
                         <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Offensive Stats</h3>
                         <p>Missiles Fired: ${stats.missilesFired || 0}</p>
                         <p>Accuracy: ${accuracy}%</p>
                         <p>Accuracy Bonuses: ${stats.accuracyBonusHits || 0}</p>
-                        <p>Missile Speed Level: ${stats.missileSpeedLevel || 0}/5</p>
-                        <p>Explosion Radius Level: ${stats.explosionRadiusLevel || 0}/5</p>
+                        <p>Missile Speed Level: ${stats.missileSpeedLevel || 0}/10</p> <!-- Updated max level -->
+                        <p>Explosion Radius Level: ${stats.explosionRadiusLevel || 0}/10</p> <!-- Updated max level -->
                     </div>
-                    
+
                     <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px;">
                         <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Defensive Stats</h3>
                         <p>Cities Lost: ${stats.citiesLost || 0}</p>
                         <p>Bases Lost: ${stats.basesLost || 0}</p>
                     </div>
-                    
+
                     <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px; grid-column: 1 / -1;">
                         <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Enemy Kills</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <p>Enemy Missiles: ${stats.enemyMissilesDestroyed || 0}</p>
-                            <p>Shield Bombs: ${stats.shieldBombsDestroyed || 0}</p>
-                            <p>Plane Bombs: ${stats.planeBombsDestroyed || 0}</p>
-                            <p>Planes: ${stats.planesDestroyed || 0}</p>
-                        </div>
+                        <!-- Removed inner grid, using paragraphs with line breaks -->
+                        <p style="margin: 0;">Enemy Missiles: ${stats.enemyMissilesDestroyed || 0} | Shield Bombs: ${stats.shieldBombsDestroyed || 0}</p>
+                        <p style="margin: 0;">Plane Bombs: ${stats.planeBombsDestroyed || 0} | Planes: ${stats.planesDestroyed || 0}</p>
                     </div>
                 </div>
-                
+
                 <button id="closeStatsButton" style="display: block; margin: 20px auto 0;">Close</button>
             `;
-            
+
             document.getElementById('closeStatsButton').addEventListener('click', () => {
                 statsModal.style.display = 'none';
             });
-            
+
             // Display the modal
             statsModal.style.display = 'block';
         }
