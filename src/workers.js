@@ -152,7 +152,9 @@ Focus on clear, helpful analysis based *solely* on the provided data. Do not inv
       const openRouterEndpoint = `${gatewayBaseUrl}/v1/chat/completions`;
 
       // Use the model name you specified
-      const targetModel = "google/gemini-2.0-flash-exp:free"; // Or another model string
+      // const targetModel = "google/gemini-2.0-flash-exp:free";
+      const targetModel = "meta-llama/llama-4-scout:free";
+      // const targetModel = "meta-llama/llama-4-maverick:free";
 
       const requestBody = {
         model: targetModel,

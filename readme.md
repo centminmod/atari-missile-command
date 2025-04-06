@@ -17,7 +17,7 @@ In Missile Command, you defend your cities and missile bases from incoming enemy
 ### Core Gameplay
 - **Multiple Difficulty Levels**: Easy (150 ammo), Normal (100 ammo), Hard (75 ammo), and Insane (50 ammo) with corresponding score multipliers
 - **Wave-based Progression**: Waves with increasing difficulty and procedural generation for infinite gameplay
-- **High Score Tracking**: Local storage and online leaderboards with player names and wave details
+- **High Score Tracking**: Local storage and online leaderboards with player names and wave details and [player stats](#player-stats)
 - **Responsive Design**: Fully playable on mobile and desktop with adaptive UI scaling
 - **Sound & Music**: experimental sound and music via royalty free sounds at https://pixabay.com/sound-effects/search/missile/.
   - explosion https://pixabay.com/sound-effects/missile-explosion-168600/
@@ -96,6 +96,14 @@ The game runs entirely in your browser - no installation required!
 - **Special Weapons**: Click weapon icon to arm, then click target area
 - **Space Bar**: Pause/resume game
 - **Between Waves**: Purchase upgrades from the store interface
+
+### Screenshots
+
+#### Player Stats
+
+![Player Stats](screenshots/gemini-2.5-pro-atari-missile-command-leaderboard-playerstats-2.png)
+
+![Player Stats](screenshots/gemini-2.5-pro-atari-missile-command-leaderboard-playerstats-3.png)
 
 ---
 
