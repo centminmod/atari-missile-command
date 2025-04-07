@@ -4106,8 +4106,8 @@
             return { synced: 0, failed: 0 };
           }
 
-          // Rest of your existing function...
-          
+          const storedScores = JSON.parse(storedScoresString); // Added line
+
           // Try to get the secret key
           const secretKey = await getGameSecret();
           
