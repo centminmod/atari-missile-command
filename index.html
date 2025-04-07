@@ -50,6 +50,72 @@
                 -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
             }
 
+            .pwa-install-instructions {
+              display: none; /* Hidden by default */
+              position: fixed; /* Or absolute/relative depending on placement */
+              bottom: 10px; /* Example positioning */
+              left: 10px;
+              right: 10px;
+              max-width: 400px; /* Adjust width */
+              margin: 0 auto; /* Center if using fixed/absolute */
+              padding: 15px;
+              background-color: rgba(50, 50, 50, 0.9); /* Dark background */
+              color: #ffffff; /* White text */
+              border: 1px solid #888888;
+              border-radius: 8px;
+              z-index: 1000; /* Make sure it's on top */
+              font-size: clamp(11px, 2.5vw, 14px); /* Responsive font size */
+              text-align: center;
+              box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            }
+
+            .pwa-install-instructions p {
+              margin: 0 0 10px 0;
+              font-weight: bold;
+              color: #ffff00; /* Yellow heading text */
+            }
+
+            .pwa-install-instructions ol {
+              list-style-position: inside;
+              text-align: left;
+              padding: 0 10px;
+              margin: 0 0 15px 0;
+            }
+
+            .pwa-install-instructions li {
+              margin-bottom: 8px;
+            }
+
+            /* Style for the optional dismiss button */
+            .pwa-install-instructions button {
+              font-family: 'Press Start 2P', cursive; /* Match your game's font */
+              background-color: #444;
+              color: #cccccc;
+              border: 1px solid #aaaaaa;
+              padding: 5px 10px;
+              font-size: clamp(10px, 2.2vw, 12px);
+              cursor: pointer;
+              border-radius: 5px;
+              transition: background-color 0.3s, color 0.3s;
+            }
+
+            .pwa-install-instructions button:hover {
+                background-color: #555;
+                color: #ffffff;
+            }
+
+            /* Use display-mode media query to show ONLY when running in a browser tab */
+            @media all and (display-mode: browser) {
+              .pwa-install-instructions.show-instructions { /* Target only when JS adds 'show-instructions' class */
+                display: block;
+              }
+            }
+
+            /* Optional: Hide the regular install button on iOS since it won't work */
+            .ios-device #installPwaButton { /* If you add 'ios-device' class via JS */
+                display: none !important;
+            }
+
             /* --- Game Title --- */
             h1#mainTitle { color: #ff0000; font-size: clamp(20px, 5vw, 32px); margin-bottom: 15px; text-shadow: 2px 2px #ffff00; text-align: center; }
 
@@ -551,8 +617,9 @@
                 <a href="#" id="leaderboardViewMoreLink" style="color: #00ffff; text-decoration: underline; font-size: clamp(10px, 2.8vw, 12px);">View Top 1000</a>
             </div>
         </div>
-        <div id="aboutGameButtonContainer" style="text-align: center; margin-top: 15px; margin-bottom: 10px;">
+        <div id="aboutGameButtonContainer" style="text-align: center; margin-top: 15px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
             <button id="aboutGameButton" class="difficulty-button" style="background-color: #333; width: auto; max-width: 200px;">About Game</button>
+            <button id="installPwaButton" class="difficulty-button" style="display: none; width: auto; max-width: 200px;">Install App</button>
         </div>
     </div>
 
@@ -728,9 +795,69 @@
                 <input type="range" id="sfxVolumeSlider" min="0" max="1" step="0.05" value="0.5">
             </div>
         </div>
+        <div id="iosInstallInstructions" class="pwa-install-instructions">
+          <p>To install this app on your iPhone/iPad:</p>
+          <ol>
+            <li>Tap the 'Share' button <img src="images/ios_share_icon.png" alt="iOS Share Icon" style="height: 1em; vertical-align: middle;"> (usually at the bottom or top of Safari).</li>
+            <li>Scroll down and tap 'Add to Home Screen'.</li>
+          </ol>
+          <button id="closeInstallInstructions">Dismiss</button> {/* Optional dismiss button */}
+        </div>
     </footer>
 
     <script>
+        // --- PWA Install Prompt Variables ---
+        let deferredPrompt; // To store the event
+        const installButton = document.getElementById('installPwaButton');
+
+        // --- Event Listener for beforeinstallprompt ---
+        window.addEventListener('beforeinstallprompt', (e) => {
+          // Prevent the mini-infobar from appearing on mobile
+          e.preventDefault();
+          // Stash the event so it can be triggered later.
+          deferredPrompt = e;
+          // Update UI notify the user they can install the PWA
+          console.log('`beforeinstallprompt` event fired.');
+          if (installButton) {
+            installButton.style.display = 'block'; // Show the install button
+          } else {
+            console.warn('Install button not found.');
+          }
+        });
+
+        // --- Click Handler for the Install Button ---
+        if (installButton) {
+          installButton.addEventListener('click', async () => {
+            // Hide the app provided install promotion
+            installButton.style.display = 'none';
+            // Show the install prompt
+            if (deferredPrompt) {
+              deferredPrompt.prompt();
+              // Wait for the user to respond to the prompt
+              const { outcome } = await deferredPrompt.userChoice;
+              console.log(`User response to the install prompt: ${outcome}`);
+              // We've used the prompt, and can't use it again, discard it
+              deferredPrompt = null;
+            } else {
+              console.log('No deferred prompt available to show.');
+            }
+          });
+        } else {
+          console.warn('Install button not found, cannot add click listener.');
+        }
+
+        // --- Optional: Listener for appinstalled event ---
+        window.addEventListener('appinstalled', () => {
+          // Hide the install button
+           if (installButton) {
+            installButton.style.display = 'none';
+           }
+          // Clear the deferredPrompt so it can be garbage collected
+          deferredPrompt = null;
+          console.log('PWA was installed');
+          // Optionally, send analytics event
+        });
+
         // --- Canvas, Context, UI Elements ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -4567,6 +4694,53 @@
 
             // Fetch leaderboard on load
             fetchAndDisplayLeaderboard(10);
+
+            // --- iOS Install Instructions Logic ---
+
+            function isIOS() {
+              return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+              ].includes(navigator.platform)
+              // Plus iPad on iOS 13 detection
+              || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+            }
+
+            const iosInstructionsDiv = document.getElementById('iosInstallInstructions');
+            const closeInstructionsButton = document.getElementById('closeInstallInstructions');
+
+            // Check if it's iOS AND not running in standalone mode (already installed)
+            if (isIOS() && !window.navigator.standalone && iosInstructionsDiv) {
+              // Check if the 'beforeinstallprompt' event is NOT supported by this browser
+              // (This check is a bit indirect, we assume if it doesn't fire quickly, it's not supported)
+              let promptSupported = false;
+              window.addEventListener('beforeinstallprompt', () => {
+                promptSupported = true;
+              });
+
+              // Wait a short time to see if beforeinstallprompt fires
+              setTimeout(() => {
+                if (!promptSupported && iosInstructionsDiv.style.display !== 'block') { // Double check it's not already shown
+                  console.log("iOS detected, standalone mode is false, and beforeinstallprompt likely not supported. Showing instructions.");
+                  iosInstructionsDiv.classList.add('show-instructions'); // Add class to trigger CSS display rule
+                  // Optional: Add class to body to hide the other install button via CSS
+                  document.body.classList.add('ios-device');
+                } else {
+                  console.log("iOS detected, but PWA might be installed or prompt is supported.");
+                }
+              }, 1500); // Wait 1.5 seconds
+            }
+
+            // Add listener for the dismiss button (if it exists)
+            if (closeInstructionsButton && iosInstructionsDiv) {
+                closeInstructionsButton.addEventListener('click', () => {
+                    iosInstructionsDiv.style.display = 'none'; // Directly hide it
+                });
+            }
 
             // Service worker registration (optional)
             if ('serviceWorker' in navigator) {
