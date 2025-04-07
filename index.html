@@ -4043,8 +4043,12 @@
           // Add signature if possible
           try {
             const secretKey = await getGameSecret();
+            console.log("Secret key fetch result:", secretKey ? "Success" : "Failed");
+            
             if (secretKey) {
-              scoreDataToSubmit.signature = await generateScoreSignature(scoreDataToSubmit, secretKey);
+              const signature = await generateScoreSignature(scoreDataToSubmit, secretKey);
+              console.log("Generated signature:", signature.substring(0, 10) + "...");
+              scoreDataToSubmit.signature = signature;
             } else {
               console.warn("Could not get secret key for signature");
             }
@@ -4053,19 +4057,50 @@
             // Continue without signature - server will decide whether to accept
           }
 
+          console.log("Submitting score data:", JSON.stringify(scoreDataToSubmit));
+
           // Continue with your existing function logic
           const result = await submitScoreData(scoreDataToSubmit);
 
-          if (result.success) {
-            submissionStatus.textContent = "Score Submitted!";
-            submissionStatus.style.color = "#00ff00";
-            scoreSubmitted = true; // Mark as submitted for this game instance
-            // Save the player name for future use
-            localStorage.setItem('missileCommandPlayerName', name);
+        if (result.success) {
+          submissionStatus.textContent = "Score Submitted!";
+          submissionStatus.style.color = "#00ff00";
+          scoreSubmitted = true; // Mark as submitted for this game instance
+          // Save the player name for future use
+          localStorage.setItem('missileCommandPlayerName', name);
+        } else {
+          // If submission failed but we're online, store it locally to try again later
+          if (navigator.onLine) {
+            submissionStatus.textContent = `Submission Failed: ${result.error || 'Unknown error'}`;
+            submissionStatus.style.color = "#ff0000";
+            submitScoreButton.disabled = false; // Re-enable on failure
+            
+            // Store the failed submission attempt locally to retry later
+            try {
+              const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
+              scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
+              storedScores.push(scoreDataToSubmit);
+              localStorage.setItem('storedScores', JSON.stringify(storedScores));
+              console.log(`Failed score submission stored locally for later retry.`);
+            } catch (e) {
+              console.error("Error storing failed submission:", e);
+            }
           } else {
-            // Rest of your existing error handling code
-            // ...
+            // We're offline now, so store the score for later
+            submissionStatus.textContent = "Offline. Score saved locally.";
+            submissionStatus.style.color = "#ffff00";
+            
+            try {
+              const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
+              scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
+              storedScores.push(scoreDataToSubmit);
+              localStorage.setItem('storedScores', JSON.stringify(storedScores));
+              console.log(`Score stored locally due to going offline.`);
+            } catch (e) {
+              console.error("Error storing offline submission:", e);
+            }
           }
+        }
         }
 
         // --- [MODIFIED] Function to Sync Stored Scores ---
@@ -4135,24 +4170,33 @@
         async function getGameSecret() {
           // Check if we already have the key in memory
           if (window.gameSecretKey) {
+            console.log("Using cached game secret key");
             return window.gameSecretKey;
           }
           
           try {
+            console.log("Fetching game secret from server...");
             const response = await fetch('/game-secret');
+            console.log("Game secret response status:", response.status);
+            
             if (!response.ok) {
-              console.error('Failed to get game secret');
+              console.error('Failed to get game secret, status:', response.status);
+              const text = await response.text();
+              console.error('Response text:', text);
               return null;
             }
             
             const data = await response.json();
+            console.log("Game secret response data:", data);
+            
             if (!data.key) {
-              console.error('Invalid game secret response');
+              console.error('Invalid game secret response - no key in data:', data);
               return null;
             }
             
             // Store the key in memory only (not localStorage)
             window.gameSecretKey = data.key;
+            console.log("Successfully obtained game secret");
             return data.key;
           } catch (error) {
             console.error('Error fetching game secret:', error);
