@@ -3969,12 +3969,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
-                        name: name, 
-                        score: finalScore, 
-                        wave: waveReached,
-                        stats: gameStats // Submit the stats object
-                    }),
+                    body: JSON.stringify(scoreData), // FIX: Stringify the complete scoreData object passed in
                 });
 
                 if (!response.ok) {
@@ -4187,7 +4182,6 @@
             }
             
             const data = await response.json();
-            console.log("Game secret response data:", data);
             
             if (!data.key) {
               console.error('Invalid game secret response - no key in data:', data);
