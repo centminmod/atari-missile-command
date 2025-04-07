@@ -4106,24 +4106,58 @@
             return { synced: 0, failed: 0 };
           }
 
-          const storedScores = JSON.parse(storedScoresString); // Added line
+          let storedScores = [];
+          try {
+            storedScores = JSON.parse(storedScoresString);
+            if (!Array.isArray(storedScores)) {
+              console.warn("Stored scores data is not an array, resetting.");
+              storedScores = [];
+            }
+          } catch (e) {
+            console.error("Error parsing stored scores, resetting:", e);
+            localStorage.removeItem('storedScores');
+            return { synced: 0, failed: 0 };
+          }
 
-          // Try to get the secret key
+          if (storedScores.length === 0) {
+            console.log("No scores stored locally to sync after parsing.");
+            localStorage.removeItem('storedScores'); // Clean up empty array storage
+            return { synced: 0, failed: 0 };
+          }
+
+          let syncedCount = 0;
+          let failedCount = 0;
+          const remainingScores = []; // Keep track of scores that failed to sync
+
+          // Try to get the secret key once before the loop
           const secretKey = await getGameSecret();
-          
+          const defaultName = (playerNameInput.value.trim().toUpperCase() || 'ACE'); // Use input or 'ACE'
+
           for (const scoreData of storedScores) {
+            // Ensure scoreData is an object
+            if (typeof scoreData !== 'object' || scoreData === null) {
+              console.warn("Skipping invalid score data entry:", scoreData);
+              failedCount++; // Count as failed if data is invalid
+              continue; // Skip this entry
+            }
+
             // If the stored score doesn't have a valid name, use the default/last used one
             if (!scoreData.name || scoreData.name === 'TEMP_OFFLINE') {
               scoreData.name = defaultName;
-              if (scoreData.name === 'OFFLINE_ACE') {
-                console.warn(`Submitting offline score for ${scoreData.score} with default name 'OFFLINE_ACE'.`);
+              if (scoreData.name === 'ACE') { // Log if using the absolute fallback
+                console.warn(`Submitting offline score for ${scoreData.score} with default name 'ACE'.`);
               }
             }
 
             // Generate a fresh signature if we have the key
             if (secretKey) {
               try {
-                scoreData.signature = await generateScoreSignature(scoreData, secretKey);
+                // Ensure scoreData has necessary fields before signing
+                if (scoreData.name && scoreData.score && scoreData.wave) {
+                  scoreData.signature = await generateScoreSignature(scoreData, secretKey);
+                } else {
+                  console.warn("Skipping signature generation due to missing score data fields:", scoreData);
+                }
               } catch (e) {
                 console.error("Failed to generate signature for stored score:", e);
               }
@@ -4132,14 +4166,34 @@
             console.log(`Syncing score: Name=${scoreData.name}, Score=${scoreData.score}`);
             const result = await submitScoreData(scoreData); // Use your existing submission function
 
-            // Rest of your existing code...
+            if (result.success) {
+              syncedCount++;
+            } else {
+              failedCount++;
+              remainingScores.push(scoreData); // Add failed score back to the list
+            }
           }
 
-          // Rest of your existing function...
+          // Update localStorage with only the scores that failed to sync
+          if (remainingScores.length > 0) {
+            localStorage.setItem('storedScores', JSON.stringify(remainingScores));
+            console.log(`Sync complete. Synced: ${syncedCount}, Failed: ${failedCount}. ${remainingScores.length} scores remain stored.`);
+          } else {
+            localStorage.removeItem('storedScores'); // Remove item if all scores were synced
+            console.log(`Sync complete. Synced: ${syncedCount}, Failed: ${failedCount}. All stored scores processed.`);
+          }
+
+          return { synced: syncedCount, failed: failedCount }; // Return the result object
         }
 
         // --- [NEW] Update UI function for sync status ---
         function updateSyncStatusUI(syncResult) {
+            // Add safety check for syncResult
+            if (!syncResult || typeof syncResult.synced !== 'number' || typeof syncResult.failed !== 'number') {
+                console.error("updateSyncStatusUI called with invalid syncResult:", syncResult);
+                return; // Exit early if data is invalid
+            }
+
             // If we're on the game over screen with a submission status display
             if (isGameOver && messageBox.style.display === 'block' && submissionStatus) {
                 if (syncResult.synced > 0 && syncResult.failed === 0) {
