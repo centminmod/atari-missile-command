@@ -724,90 +724,90 @@
     </div>
 
     <div id="storeModal">
-        <h2>Inter-Wave Store</h2>
-        <div id="storeScore">Current Score: $0</div>
-        <div id="storeItemsContainer">
-            <div class="storeItem" title="Clears all enemy missiles and bombs currently on screen.">
-                <div class="storeItemInfo">
-                    <span>Sonic Wave</span>
-                    <span class="itemCost">Cost: $1000</span>
-                    <span class="itemStock" id="stockSonicWave">Stock: 30</span>
+            <h2>Inter-Wave Store</h2>
+            <div id="storeScore">Current Score: $0</div>
+            <div id="storeItemsContainer">
+                <div class="storeItem" title="Clears all enemy missiles and bombs currently on screen.">
+                    <div class="storeItemInfo">
+                        <span>Sonic Wave</span>
+                        <span class="itemCost" id="costSonicWaveDisplay">Cost: $...</span>
+                        <span class="itemStock" id="stockSonicWave">Stock: ...</span>
+                    </div>
+                    <div class="storeItemButtons">
+                        <button class="buyButton buyMultipleButton" id="buySonicWave10Button">BUY x10</button>
+                        <button class="buyButton" id="buySonicWaveButton">BUY</button>
+                    </div>
                 </div>
-                <div class="storeItemButtons">
-                    <button class="buyButton buyMultipleButton" id="buySonicWave10Button">BUY x10</button>
-                    <button class="buyButton" id="buySonicWaveButton">BUY</button>
+                <div class="storeItem" title="Creates a large, powerful explosion at the clicked location.">
+                    <div class="storeItemInfo">
+                        <span>Mega Bomb</span>
+                         <span class="itemCost" id="costBombDisplay">Cost: $...</span>
+                         <span class="itemStock" id="stockBomb">Stock: ...</span>
+                    </div>
+                     <div class="storeItemButtons">
+                        <button class="buyButton buyMultipleButton" id="buyBomb10Button">BUY x10</button>
+                        <button class="buyButton" id="buyBombButton">BUY</button>
+                    </div>
+                </div>
+                <div class="storeItem" title="Adds an orbital missile base. Fires from a higher altitude. Max 3 active.">
+                    <div class="storeItemInfo">
+                        <span>Satellite Base (Max 3)</span>
+                        <span class="itemCost" id="costSatelliteDisplay">Cost: $...</span>
+                        <span class="itemStock" id="stockSatellite">Stock: ...</span>
+                    </div>
+                     <div class="storeItemButtons"> <button class="buyButton" id="buySatelliteButton">BUY</button> </div>
+                </div>
+                <div class="storeItem" title="Adds a temporary shield to an active satellite base.">
+                    <div class="storeItemInfo">
+                         <span>Satellite Shield</span>
+                        <span class="itemCost" id="costSatShieldDisplay">Cost: $...</span>
+                        <span class="itemStock" id="stockSatShield">Stock: ...</span>
+                    </div>
+                     <div class="storeItemButtons"> <button class="buyButton" id="buySatShieldButton">BUY</button> </div>
+                </div>
+                <div class="storeItem" title="Rebuilds one destroyed missile base.">
+                    <div class="storeItemInfo">
+                        <span>Replacement Base</span>
+                        <span class="itemCost" id="costBaseDisplay">Cost: $...</span>
+                        <span class="itemStock" id="stockBase">Stock: ...</span>
+                    </div>
+                     <div class="storeItemButtons"> <button class="buyButton" id="buyBaseButton">BUY</button> </div>
+                </div>
+                <div class="storeItem" title="Rebuilds one destroyed city.">
+                    <div class="storeItemInfo">
+                         <span>Replacement City</span>
+                        <span class="itemCost" id="costCityDisplay">Cost: $...</span>
+                        <span class="itemStock" id="stockCity">Stock: ...</span>
+                    </div>
+                     <div class="storeItemButtons"> <button class="buyButton" id="buyCityButton">BUY</button> </div>
+                </div>
+                <div class="storeItem" title="Adds a temporary shield to an active ground base.">
+                    <div class="storeItemInfo">
+                        <span>Base Shield</span>
+                        <span class="itemCost" id="costShieldDisplay">Cost: $...</span>
+                        <span class="itemStock" id="stockShield">Stock: ...</span>
+                    </div>
+                     <div class="storeItemButtons"> <button class="buyButton" id="buyShieldButton">BUY</button> </div>
+                </div>
+                <div class="storeItem" title="Increases the speed of your missiles.">
+                    <div class="storeItemInfo">
+                         <span>Faster Missiles (Max 15)</span>
+                        <span class="itemCost" id="costFasterMissile">Cost: $...</span>
+                        <span class="itemLevel" id="levelFasterMissile">Level: ...</span>
+                    </div>
+                     <div class="storeItemButtons"> <button class="buyButton" id="buyFasterMissileButton">BUY</button> </div>
+                </div>
+                <div class="storeItem" title="Increases the blast radius of your missile explosions.">
+                    <div class="storeItemInfo">
+                        <span>Wider Explosions (Max 15)</span>
+                        <span class="itemCost" id="costWiderExplosion">Cost: $...</span>
+                        <span class="itemLevel" id="levelWiderExplosion">Level: ...</span>
+                    </div>
+                     <div class="storeItemButtons"> <button class="buyButton" id="buyWiderExplosionButton">BUY</button> </div>
                 </div>
             </div>
-            <div class="storeItem" title="Creates a large, powerful explosion at the clicked location.">
-                <div class="storeItemInfo">
-                    <span>Mega Bomb</span>
-                    <span class="itemCost">Cost: $500</span>
-                    <span class="itemStock" id="stockBomb">Stock: 30</span>
-                </div>
-                 <div class="storeItemButtons">
-                    <button class="buyButton buyMultipleButton" id="buyBomb10Button">BUY x10</button>
-                    <button class="buyButton" id="buyBombButton">BUY</button>
-                </div>
-            </div>
-            <div class="storeItem" title="Adds an orbital missile base. Fires from a higher altitude. Max 3 active.">
-                <div class="storeItemInfo">
-                    <span>Satellite Base (Max 3)</span>
-                    <span class="itemCost">Cost: $4000</span>
-                    <span class="itemStock" id="stockSatellite">Stock: 30</span>
-                </div>
-                 <div class="storeItemButtons"> <button class="buyButton" id="buySatelliteButton">BUY</button> </div>
-            </div>
-            <div class="storeItem" title="Adds a temporary shield to an active satellite base.">
-                <div class="storeItemInfo">
-                    <span>Satellite Shield</span>
-                    <span class="itemCost">Cost: $250</span>
-                    <span class="itemStock" id="stockSatShield">Stock: 100</span>
-                </div>
-                 <div class="storeItemButtons"> <button class="buyButton" id="buySatShieldButton">BUY</button> </div>
-            </div>
-            <div class="storeItem" title="Rebuilds one destroyed missile base.">
-                <div class="storeItemInfo">
-                    <span>Replacement Base</span>
-                    <span class="itemCost">Cost: $1000</span>
-                    <span class="itemStock" id="stockBase">Stock: 30</span>
-                </div>
-                 <div class="storeItemButtons"> <button class="buyButton" id="buyBaseButton">BUY</button> </div>
-            </div>
-            <div class="storeItem" title="Rebuilds one destroyed city.">
-                <div class="storeItemInfo">
-                    <span>Replacement City</span>
-                    <span class="itemCost">Cost: $2000</span>
-                    <span class="itemStock" id="stockCity">Stock: 30</span>
-                </div>
-                 <div class="storeItemButtons"> <button class="buyButton" id="buyCityButton">BUY</button> </div>
-            </div>
-            <div class="storeItem" title="Adds a temporary shield to an active ground base.">
-                <div class="storeItemInfo">
-                    <span>Base Shield</span>
-                    <span class="itemCost">Cost: $250</span>
-                    <span class="itemStock" id="stockShield">Stock: 100</span>
-                </div>
-                 <div class="storeItemButtons"> <button class="buyButton" id="buyShieldButton">BUY</button> </div>
-            </div>
-            <div class="storeItem" title="Increases the speed of your missiles.">
-                <div class="storeItemInfo">
-                    <span>Faster Missiles (Max 10)</span>
-                    <span class="itemCost" id="costFasterMissile">Cost: $1500</span>
-                    <span class="itemLevel" id="levelFasterMissile">Level: 0/10</span>
-                </div>
-                 <div class="storeItemButtons"> <button class="buyButton" id="buyFasterMissileButton">BUY</button> </div>
-            </div>
-            <div class="storeItem" title="Increases the blast radius of your missile explosions.">
-                <div class="storeItemInfo">
-                    <span>Wider Explosions (Max 10)</span>
-                    <span class="itemCost" id="costWiderExplosion">Cost: $1200</span>
-                    <span class="itemLevel" id="levelWiderExplosion">Level: 0/10</span>
-                </div>
-                 <div class="storeItemButtons"> <button class="buyButton" id="buyWiderExplosionButton">BUY</button> </div>
-            </div>
+            <button id="storeContinueButton">Continue to Next Wave</button>
         </div>
-        <button id="storeContinueButton">Continue to Next Wave</button>
-    </div>
 
     <footer>
         <div class="footer-links"> <!-- Added wrapper -->
@@ -1001,12 +1001,12 @@
         const EXPLOSION_RADIUS_START = 13;
         const EXPLOSION_RADIUS_MAX_BASE = 65;
         const EXPLOSION_DURATION = 60;
-        const POINTS_PER_MISSILE = 35;
-        const POINTS_PER_CITY = 100;
-        const POINTS_PER_AMMO = 5;
+        const POINTS_PER_MISSILE = 100;
+        const POINTS_PER_CITY = 1000;
+        const POINTS_PER_AMMO = 10;
         const BONUS_FIRE_SPREAD = 8;
         const BASE_SHIELD_RADIUS_MULTIPLIER = 2.45;
-        const SHIELD_STRENGTH_START = 120;
+        const SHIELD_STRENGTH_START = 150;
         const SHIELD_DAMAGE_PER_HIT = 10;
         const SHIELD_COLOR_FULL = 'rgba(0, 150, 255, 0.6)';
         const SHIELD_COLOR_75 = 'rgba(0, 255, 150, 0.6)';
@@ -1016,23 +1016,23 @@
         const SHIELD_FLASH_DURATION = 5;
         const BOMB_EXPLOSION_RADIUS_MULTIPLIER = 5.5;
         const BOMB_EXPLOSION_DURATION_MULTIPLIER = 1.5;
-        const SONIC_WAVE_SPEED = 4;
+        const SONIC_WAVE_SPEED = 3.5;
         const SONIC_WAVE_HEIGHT = 10;
         const SONIC_WAVE_COLOR = 'rgba(200, 0, 255, 0.5)';
         const ACCURACY_BONUS_THRESHOLD = 20;
-        const ACCURACY_BONUS_POINTS = 50;
+        const ACCURACY_BONUS_POINTS = 25;
         const MULTIPLIER_INCREASE_INTERVAL = 5;
         const MULTIPLIER_MAX = 5.0;
-        const COST_FASTER_MISSILE_BASE = 1500;
-        const COST_WIDER_EXPLOSION_BASE = 1200;
-        const UPGRADE_COST_MULTIPLIER = 1.25;
-        const MAX_UPGRADE_LEVEL = 10;
+        const COST_FASTER_MISSILE_BASE = 10000;
+        const COST_WIDER_EXPLOSION_BASE = 10000;
+        const UPGRADE_COST_MULTIPLIER = 1.55;
+        const MAX_UPGRADE_LEVEL = 15;
         const MISSILE_SPEED_INCREASE_PER_LEVEL = 0.9;
         const EXPLOSION_RADIUS_INCREASE_PER_LEVEL = 8;
         const SMART_BOMB_CHANCE = 0.05;
         const SMART_BOMB_SPLIT_ALTITUDE_MIN = INTERNAL_HEIGHT * 0.45;
         const SMART_BOMB_SPLIT_ALTITUDE_MAX = INTERNAL_HEIGHT * 0.65;
-        const SMART_BOMB_SPLIT_COUNT = 2;
+        const SMART_BOMB_SPLIT_COUNT = 3;
         const SMART_BOMB_SPLIT_SPEED_FACTOR = 0.7;
         const SMART_BOMB_SPLIT_COLOR = '#ff8800';
         const MIRV_CHANCE = 0.10;
@@ -1040,29 +1040,36 @@
         const MIRV_WARHEAD_COUNT = 4;
         const MIRV_WARHEAD_SPEED_FACTOR = 0.9;
         const MIRV_WARHEAD_COLOR = '#ff4444';
-        const COMBO_BONUS_POINTS_PER_EXTRA_KILL = 25; // NEW: Points per extra kill in a combo
+        const COMBO_BONUS_POINTS_PER_EXTRA_KILL = 10; // Points per extra kill in a combo
         const PLANE_SPEED_INCREASE_PER_WAVE = 0.05;
         const PLANE_VARIANT_CHANCE = 0.2;
         const MAX_ACTIVE_SATELLITES = 3;
-        const COST_SATELLITE = 4000; const MAX_STOCK_SATELLITE = 100;
-        const COST_BASE = 1000; const MAX_STOCK_BASE = 100;
-        const COST_CITY = 2000; const MAX_STOCK_CITY = 100;
-        const COST_SHIELD = 250; const MAX_STOCK_SHIELD = 100;
-        const COST_SAT_SHIELD = 250; const MAX_STOCK_SAT_SHIELD = 100;
-        const COST_SONIC_WAVE = 1000; const MAX_STOCK_SONIC_WAVE = 100;
-        const COST_BOMB = 500; const MAX_STOCK_BOMB = 100;
+        const COST_SATELLITE = 100000;
+        const MAX_STOCK_SATELLITE = 100;
+        const COST_BASE = 50000;
+        const MAX_STOCK_BASE = 100;
+        const COST_CITY = 100000;
+        const MAX_STOCK_CITY = 100;
+        const COST_SHIELD = 50000;
+        const MAX_STOCK_SHIELD = 100;
+        const COST_SAT_SHIELD = 50000;
+        const MAX_STOCK_SAT_SHIELD = 100;
+        const COST_SONIC_WAVE = 20000;
+        const MAX_STOCK_SONIC_WAVE = 100;
+        const COST_BOMB = 10000;
+        const MAX_STOCK_BOMB = 100;
         const PLANE_SPEED_BASE = 1.5;
         const PLANE_WIDTH = 50;
         const PLANE_HEIGHT = 20;
-        const PLANE_BONUS_SCORE = 1000;
-        const PLANE_BOMB_POINTS = 20;
+        const PLANE_BONUS_SCORE = 2000;
+        const PLANE_BOMB_POINTS = 10;
         const PLANE_BOMB_SPEED = 1.0;
-        const BASE_BOMBS_PER_PLANE = 10;
+        const BASE_BOMBS_PER_PLANE = 20;
         const BOMBS_INCREASE_PER_WAVE = 1;
         const PLANE_SPAWN_CHANCE = 0.025;
         const PLANE_MIN_Y = INTERNAL_HEIGHT * 0.1;
         const PLANE_MAX_Y = INTERNAL_HEIGHT * 0.3;
-        const PLANE_BOMB_DROP_INTERVAL_MIN = 80;
+        const PLANE_BOMB_DROP_INTERVAL_MIN = 75;
         const PLANE_BOMB_DROP_INTERVAL_MAX = 150;
         const PLANE_BOMB_COLOR = '#FFA500';
         const PLANE_BOMB_TRAIL_COLOR = 'rgba(255, 165, 0, 0.4)';
@@ -2274,37 +2281,37 @@
         // --- Wave System Logic ---
         function defineWaves() {
             return [
-                [{ type: 'missile', count: 16, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 1
+                [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 1
                 
                 // Wave 2 - Introduce a single shield bomb (Type 1: Concentric Rings) at lower speed
-                [{ type: 'missile', count: 20, speedFactor: 1.15 }, { type: 'plane', count: 1 }, { type: 'shield_bomb', count: 1, bombType: 1, speedFactor: 0.65 }],
+                [{ type: 'missile', count: 28, speedFactor: 1.15 }, { type: 'plane', count: 1 }, { type: 'shield_bomb', count: 1, bombType: 1, speedFactor: 0.65 }],
                 
                 // Wave 3 - Slightly faster shield bomb, same type for consistency
-                [{ type: 'missile', count: 24, speedFactor: 1.2 }, { type: 'plane', count: 2, variantChance: 0.1 }, { type: 'shield_bomb', count: 1, bombType: 1, speedFactor: 0.75 }],
+                [{ type: 'missile', count: 33, speedFactor: 1.2 }, { type: 'plane', count: 3, variantChance: 0.1 }, { type: 'shield_bomb', count: 1, bombType: 1, speedFactor: 0.75 }],
                 
                 // Wave 4 - Introduce Type 2 shield bomb (Orbital Defense)
-                [{ type: 'missile', count: 18, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 5, speedFactor: 1.0 }, { type: 'shield_bomb', count: 1, bombType: 2, speedFactor: 0.80 }],
+                [{ type: 'missile', count: 24, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 5, speedFactor: 1.0 }, { type: 'shield_bomb', count: 1, bombType: 2, speedFactor: 0.80 }],
                 
                 // Wave 5 - Introduce Type 3 shield bomb (Tech Sphere)
-                [{ type: 'missile', count: 18, speedFactor: 1.25 }, { type: 'plane', count: 6, variantChance: 0.2 }, { type: 'smart_bomb', count: 7, speedFactor: 1.1 }, { type: 'shield_bomb', count: 1, bombType: 3, speedFactor: 0.85 }],
+                [{ type: 'missile', count: 26, speedFactor: 1.25 }, { type: 'plane', count: 6, variantChance: 0.2 }, { type: 'smart_bomb', count: 7, speedFactor: 1.1 }, { type: 'shield_bomb', count: 1, bombType: 3, speedFactor: 0.85 }],
                 
                 // Wave 6 - Two shield bombs (mixed types)
-                [{ type: 'missile', count: 22, speedFactor: 1.35 }, { type: 'plane', count: 7, variantChance: 0.2 }, { type: 'mirv', count: 7, speedFactor: 1.0 }, { type: 'shield_bomb', count: 2, speedFactor: 0.85 }],
+                [{ type: 'missile', count: 28, speedFactor: 1.35 }, { type: 'plane', count: 8, variantChance: 0.2 }, { type: 'mirv', count: 7, speedFactor: 1.0 }, { type: 'shield_bomb', count: 2, speedFactor: 0.85 }],
                 
                 // Wave 7 - Increase shield bomb count
-                [{ type: 'missile', count: 22, speedFactor: 1.40 }, { type: 'smart_bomb', count: 7, speedFactor: 1.15 }, { type: 'plane', count: 9, variantChance: 0.35, speedFactor: 1.1 }, { type: 'shield_bomb', count: 2, speedFactor: 0.90 }],
+                [{ type: 'missile', count: 31, speedFactor: 1.40 }, { type: 'smart_bomb', count: 7, speedFactor: 1.15 }, { type: 'plane', count: 9, variantChance: 0.35, speedFactor: 1.1 }, { type: 'shield_bomb', count: 2, speedFactor: 0.90 }],
                 
                 // Wave 8 - More shield bombs at faster speed
-                [{ type: 'missile', count: 25, speedFactor: 1.45 }, { type: 'mirv', count: 16, speedFactor: 1.15 }, { type: 'smart_bomb', count: 7, speedFactor: 1.2 }, { type: 'shield_bomb', count: 3, speedFactor: 0.95 }],
+                [{ type: 'missile', count: 36, speedFactor: 1.45 }, { type: 'mirv', count: 16, speedFactor: 1.15 }, { type: 'smart_bomb', count: 7, speedFactor: 1.2 }, { type: 'shield_bomb', count: 3, speedFactor: 0.95 }],
                 
                 // Wave 9 - Mix of all enemy types
-                [{ type: 'missile', count: 25, speedFactor: 1.5 }, { type: 'smart_bomb', count: 7, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 7, variantChance: 0.5, speedFactor: 1.2 }, { type: 'shield_bomb', count: 3, speedFactor: 0.95 }],
+                [{ type: 'missile', count: 35, speedFactor: 1.5 }, { type: 'smart_bomb', count: 7, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 9, variantChance: 0.5, speedFactor: 1.2 }, { type: 'shield_bomb', count: 3, speedFactor: 0.95 }],
                 
                 // Wave 10 - Even more challenging
-                [{ type: 'missile', count: 28, speedFactor: 1.6 }, { type: 'smart_bomb', count: 7, speedFactor: 1.5 }, { type: 'mirv', count: 6, speedFactor: 1.4 }, { type: 'plane', count: 10, variantChance: 0.6, speedFactor: 1.3 }, { type: 'shield_bomb', count: 3, speedFactor: 1.0 }],
+                [{ type: 'missile', count: 38, speedFactor: 1.6 }, { type: 'smart_bomb', count: 7, speedFactor: 1.5 }, { type: 'mirv', count: 6, speedFactor: 1.4 }, { type: 'plane', count: 10, variantChance: 0.6, speedFactor: 1.3 }, { type: 'shield_bomb', count: 3, speedFactor: 1.0 }],
                 
                 // Wave 11 - Maximum challenge with all types and specific shield bomb types
-                [{ type: 'missile', count: 32, speedFactor: 1.7 }, { type: 'smart_bomb', count: 7, speedFactor: 1.6 }, { type: 'mirv', count: 7, speedFactor: 1.5 }, { type: 'plane', count: 10, variantChance: 0.7, speedFactor: 1.4 }, { type: 'shield_bomb', count: 2, bombType: 1, speedFactor: 1.05 }, { type: 'shield_bomb', count: 2, bombType: 2, speedFactor: 1.05 }, { type: 'shield_bomb', count: 2, bombType: 3, speedFactor: 1.10 }],
+                [{ type: 'missile', count: 38, speedFactor: 1.7 }, { type: 'smart_bomb', count: 7, speedFactor: 1.6 }, { type: 'mirv', count: 7, speedFactor: 1.5 }, { type: 'plane', count: 12, variantChance: 0.7, speedFactor: 1.4 }, { type: 'shield_bomb', count: 2, bombType: 1, speedFactor: 1.05 }, { type: 'shield_bomb', count: 2, bombType: 2, speedFactor: 1.05 }, { type: 'shield_bomb', count: 2, bombType: 3, speedFactor: 1.10 }],
             ];
         }
         function initWave(waveIndex) {
@@ -3014,67 +3021,92 @@
 
         // --- Store Logic ---
         function updateStoreUI() {
-            storeScoreDisplay.textContent = `Current Score: $${score}`;
-            stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`;
-            stockBaseDisplay.textContent = `Stock: ${storeStockBase}`;
-            stockCityDisplay.textContent = `Stock: ${storeStockCity}`;
-            stockShieldDisplay.textContent = `Stock: ${storeStockShield}`;
-            stockSatShieldDisplay.textContent = `Stock: ${storeStockSatShield}`;
-            stockSonicWaveDisplay.textContent = `Stock: ${storeStockSonicWave}`;
-            stockBombDisplay.textContent = `Stock: ${storeStockBomb}`;
+                    storeScoreDisplay.textContent = `Current Score: $${score}`;
+                    stockSatelliteDisplay.textContent = `Stock: ${storeStockSatellite}`;
+                    stockBaseDisplay.textContent = `Stock: ${storeStockBase}`;
+                    stockCityDisplay.textContent = `Stock: ${storeStockCity}`;
+                    stockShieldDisplay.textContent = `Stock: ${storeStockShield}`;
+                    stockSatShieldDisplay.textContent = `Stock: ${storeStockSatShield}`;
+                    stockSonicWaveDisplay.textContent = `Stock: ${storeStockSonicWave}`;
+                    stockBombDisplay.textContent = `Stock: ${storeStockBomb}`;
 
-            const canAffordSatellite = score >= COST_SATELLITE;
-            const satelliteInStock = storeStockSatellite > 0;
-            const activeSatellites = satelliteBases.filter(s => s.alive).length;
-            const canPlaceSatellite = activeSatellites < MAX_ACTIVE_SATELLITES;
-            buySatelliteButton.disabled = !(canAffordSatellite && satelliteInStock && canPlaceSatellite);
+                    // Get cost display elements (using new/existing IDs)
+                    const costSonicWaveDisplay = document.getElementById('costSonicWaveDisplay');
+                    const costBombDisplay = document.getElementById('costBombDisplay');
+                    const costSatelliteDisplay = document.getElementById('costSatelliteDisplay');
+                    const costSatShieldDisplay = document.getElementById('costSatShieldDisplay');
+                    const costBaseDisplay = document.getElementById('costBaseDisplay');
+                    const costCityDisplay = document.getElementById('costCityDisplay');
+                    const costShieldDisplay = document.getElementById('costShieldDisplay');
+                    const costFasterMissileDisplay = document.getElementById('costFasterMissile');
+                    const costWiderExplosionDisplay = document.getElementById('costWiderExplosion');
+                    const levelFasterMissileDisplay = document.getElementById('levelFasterMissile');
+                    const levelWiderExplosionDisplay = document.getElementById('levelWiderExplosion');
 
-            const canAffordBase = score >= COST_BASE;
-            const baseInStock = storeStockBase > 0;
-            const canRebuildBase = bases.some(b => !b.alive);
-            buyBaseButton.disabled = !(canAffordBase && baseInStock && canRebuildBase);
 
-            const canAffordCity = score >= COST_CITY;
-            const cityInStock = storeStockCity > 0;
-            const canRebuildCity = cities.some(c => !c.alive);
-            buyCityButton.disabled = !(canAffordCity && cityInStock && canRebuildCity);
+                    // Update text content using the cost constants
+                    if (costSonicWaveDisplay) costSonicWaveDisplay.textContent = `Cost: $${COST_SONIC_WAVE}`;
+                    if (costBombDisplay) costBombDisplay.textContent = `Cost: $${COST_BOMB}`;
+                    if (costSatelliteDisplay) costSatelliteDisplay.textContent = `Cost: $${COST_SATELLITE}`;
+                    if (costSatShieldDisplay) costSatShieldDisplay.textContent = `Cost: $${COST_SAT_SHIELD}`;
+                    if (costBaseDisplay) costBaseDisplay.textContent = `Cost: $${COST_BASE}`;
+                    if (costCityDisplay) costCityDisplay.textContent = `Cost: $${COST_CITY}`;
+                    if (costShieldDisplay) costShieldDisplay.textContent = `Cost: $${COST_SHIELD}`;
 
-            const canAffordShield = score >= COST_SHIELD;
-            const shieldInStock = storeStockShield > 0;
-            const canPlaceShield = baseShields.some((shield, index) => bases[index].alive && (!shield || !shield.alive));
-            buyShieldButton.disabled = !(canAffordShield && shieldInStock && canPlaceShield);
+                    // Update upgrade costs
+                    const costFasterMissile = calculateUpgradeCost(COST_FASTER_MISSILE_BASE, playerMissileSpeedLevel);
+                    costFasterMissileDisplay.textContent = `Cost: $${costFasterMissile}`;
+                    levelFasterMissileDisplay.textContent = `Level: ${playerMissileSpeedLevel}/${MAX_UPGRADE_LEVEL}`;
+                    buyFasterMissileButton.disabled = !(score >= costFasterMissile && playerMissileSpeedLevel < MAX_UPGRADE_LEVEL);
+                    if (playerMissileSpeedLevel >= MAX_UPGRADE_LEVEL) { costFasterMissileDisplay.textContent = "MAX LEVEL"; buyFasterMissileButton.disabled = true; }
 
-            const canAffordSatShield = score >= COST_SAT_SHIELD;
-            const satShieldInStock = storeStockSatShield > 0;
-            const canPlaceSatShield = satelliteBases.some(s => s.alive && (!s.shield || !s.shield.alive));
-            buySatShieldButton.disabled = !(canAffordSatShield && satShieldInStock && canPlaceSatShield);
+                    const costWiderExplosion = calculateUpgradeCost(COST_WIDER_EXPLOSION_BASE, explosionRadiusLevel);
+                    costWiderExplosionDisplay.textContent = `Cost: $${costWiderExplosion}`;
+                    levelWiderExplosionDisplay.textContent = `Level: ${explosionRadiusLevel}/${MAX_UPGRADE_LEVEL}`;
+                    buyWiderExplosionButton.disabled = !(score >= costWiderExplosion && explosionRadiusLevel < MAX_UPGRADE_LEVEL);
+                    if (explosionRadiusLevel >= MAX_UPGRADE_LEVEL) { costWiderExplosionDisplay.textContent = "MAX LEVEL"; buyWiderExplosionButton.disabled = true; }
 
-            const canAffordSonic = score >= COST_SONIC_WAVE;
-            const sonicInStock = storeStockSonicWave > 0;
-            buySonicWaveButton.disabled = !(canAffordSonic && sonicInStock);
-            const canAffordSonic10 = score >= COST_SONIC_WAVE * 10;
-            const sonicInStock10 = storeStockSonicWave >= 10;
-            buySonicWave10Button.disabled = !(canAffordSonic10 && sonicInStock10);
+                    // --- Rest of the button disabling logic ---
+                    const canAffordSatellite = score >= COST_SATELLITE;
+                    const satelliteInStock = storeStockSatellite > 0;
+                    const activeSatellites = satelliteBases.filter(s => s.alive).length;
+                    const canPlaceSatellite = activeSatellites < MAX_ACTIVE_SATELLITES;
+                    buySatelliteButton.disabled = !(canAffordSatellite && satelliteInStock && canPlaceSatellite);
 
-            const canAffordBomb = score >= COST_BOMB;
-            const bombInStock = storeStockBomb > 0;
-            buyBombButton.disabled = !(canAffordBomb && bombInStock);
-            const canAffordBomb10 = score >= COST_BOMB * 10;
-            const bombInStock10 = storeStockBomb >= 10;
-            buyBomb10Button.disabled = !(canAffordBomb10 && bombInStock10);
+                    const canAffordBase = score >= COST_BASE;
+                    const baseInStock = storeStockBase > 0;
+                    const canRebuildBase = bases.some(b => !b.alive);
+                    buyBaseButton.disabled = !(canAffordBase && baseInStock && canRebuildBase);
 
-            const costFasterMissile = calculateUpgradeCost(COST_FASTER_MISSILE_BASE, playerMissileSpeedLevel);
-            costFasterMissileDisplay.textContent = `Cost: $${costFasterMissile}`;
-            levelFasterMissileDisplay.textContent = `Level: ${playerMissileSpeedLevel}/${MAX_UPGRADE_LEVEL}`;
-            buyFasterMissileButton.disabled = !(score >= costFasterMissile && playerMissileSpeedLevel < MAX_UPGRADE_LEVEL);
-            if (playerMissileSpeedLevel >= MAX_UPGRADE_LEVEL) { costFasterMissileDisplay.textContent = "MAX LEVEL"; buyFasterMissileButton.disabled = true; }
+                    const canAffordCity = score >= COST_CITY;
+                    const cityInStock = storeStockCity > 0;
+                    const canRebuildCity = cities.some(c => !c.alive);
+                    buyCityButton.disabled = !(canAffordCity && cityInStock && canRebuildCity);
 
-            const costWiderExplosion = calculateUpgradeCost(COST_WIDER_EXPLOSION_BASE, explosionRadiusLevel);
-            costWiderExplosionDisplay.textContent = `Cost: $${costWiderExplosion}`;
-            levelWiderExplosionDisplay.textContent = `Level: ${explosionRadiusLevel}/${MAX_UPGRADE_LEVEL}`;
-            buyWiderExplosionButton.disabled = !(score >= costWiderExplosion && explosionRadiusLevel < MAX_UPGRADE_LEVEL);
-            if (explosionRadiusLevel >= MAX_UPGRADE_LEVEL) { costWiderExplosionDisplay.textContent = "MAX LEVEL"; buyWiderExplosionButton.disabled = true; }
-        }
+                    const canAffordShield = score >= COST_SHIELD;
+                    const shieldInStock = storeStockShield > 0;
+                    const canPlaceShield = baseShields.some((shield, index) => bases[index].alive && (!shield || !shield.alive));
+                    buyShieldButton.disabled = !(canAffordShield && shieldInStock && canPlaceShield);
+
+                    const canAffordSatShield = score >= COST_SAT_SHIELD;
+                    const satShieldInStock = storeStockSatShield > 0;
+                    const canPlaceSatShield = satelliteBases.some(s => s.alive && (!s.shield || !s.shield.alive));
+                    buySatShieldButton.disabled = !(canAffordSatShield && satShieldInStock && canPlaceSatShield);
+
+                    const canAffordSonic = score >= COST_SONIC_WAVE;
+                    const sonicInStock = storeStockSonicWave > 0;
+                    buySonicWaveButton.disabled = !(canAffordSonic && sonicInStock);
+                    const canAffordSonic10 = score >= COST_SONIC_WAVE * 10;
+                    const sonicInStock10 = storeStockSonicWave >= 10;
+                    buySonicWave10Button.disabled = !(canAffordSonic10 && sonicInStock10);
+
+                    const canAffordBomb = score >= COST_BOMB;
+                    const bombInStock = storeStockBomb > 0;
+                    buyBombButton.disabled = !(canAffordBomb && bombInStock);
+                    const canAffordBomb10 = score >= COST_BOMB * 10;
+                    const bombInStock10 = storeStockBomb >= 10;
+                    buyBomb10Button.disabled = !(canAffordBomb10 && bombInStock10);
+                }
         function findAndRebuildBase() { const deadBaseIndex = bases.findIndex(b => !b.alive); if (deadBaseIndex !== -1) { bases[deadBaseIndex].alive = true; bases[deadBaseIndex].ammo = selectedDifficultyAmmo; return true; } return false; }
         function findAndRebuildCity() { const deadCityIndex = cities.findIndex(c => !c.alive); if (deadCityIndex !== -1) { cities[deadCityIndex].alive = true; return true; } return false; }
         function buyReplacementBase() { 
