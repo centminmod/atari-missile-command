@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- UPDATED: Improved viewport meta tag for better mobile handling -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
     <meta name="description" content="Missile Command - Atari Classic Clone Game">
     <meta name="theme-color" content="#000000"/>
@@ -346,7 +345,8 @@
                 
                 body {
                     padding: 5px;
-                    overflow: hidden; /* Prevent scrolling */
+                    overflow-y: auto; /* Allow vertical scrolling */
+                    overflow-x: hidden; /* Keep horizontal scrolling disabled */
                 }
                 
                 h1#mainTitle {
@@ -584,6 +584,56 @@
                 /* Adjust padding to use space more efficiently */
                 #playerStatsModal > div > div {
                     padding: 6px;
+                }
+            }
+
+            /* About Game Modal Styles */
+            #aboutGameModal {
+                display: none; 
+                position: fixed; 
+                top: 32%; /* Default for desktop */
+                left: 50%; 
+                transform: translate(-50%, -50%); 
+                width: 90%; 
+                max-width: 650px; 
+                max-height: 85vh; 
+                background-color: rgba(0, 20, 0, 0.95); 
+                border: 3px solid #00ff00; 
+                border-radius: 15px; 
+                box-shadow: 0 0 25px #00ff00; 
+                padding: clamp(8px, 3vw, 15px); 
+                z-index: 20; 
+                color: #00ff00; 
+                font-size: clamp(10px, 2.5vw, 11.5px); 
+                box-sizing: border-box; 
+                overflow-y: auto;
+            }
+
+            /* Desktop Breakpoint 1 */
+            @media (max-width: 1540px) {
+                #aboutGameModal {
+                    top: 40%; /* Adjusted for ~1540px width */
+                }
+            }
+
+            /* Desktop Breakpoint 2 */
+            @media (max-width: 1270px) {
+                #aboutGameModal {
+                    top: 45%; /* Adjusted for ~1270px width */
+                }
+            }
+
+            /* Tablet */
+            @media (max-width: 768px) {
+                #aboutGameModal {
+                    top: 40%; /* Adjusted for tablet */
+                }
+            }
+
+            /* Mobile */
+            @media (max-width: 480px) {
+                #aboutGameModal {
+                    top: 50%; /* Adjusted for mobile */
                 }
             }
         </style>
@@ -4776,7 +4826,7 @@
     </script>
 
     <!-- About Game Modal -->
-    <div id="aboutGameModal" style="display: none; position: fixed; top: 32%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; max-height: 85vh; background-color: rgba(0, 20, 0, 0.95); border: 3px solid #00ff00; border-radius: 15px; box-shadow: 0 0 25px #00ff00; padding: clamp(8px, 3vw, 15px); z-index: 20; color: #00ff00; font-size: clamp(10px, 2.5vw, 11.5px); box-sizing: border-box; overflow-y: auto;">
+    <div id="aboutGameModal">
         <h2 style="font-size: clamp(16px, 5vw, 22px); margin: 0 0 clamp(8px, 3vw, 15px) 0; text-align: center; color: #ffff00; line-height: 1.2;">About Missile Command</h2>
         
         <div style="margin-bottom: clamp(10px, 3vw, 20px);">
