@@ -674,8 +674,8 @@
     </div>
 
     <div id="uiContainer">
-        <div id="score">SCORE: $0</div>
-        <div id="highScore">HI: $0</div>
+        <div id="score">CURRENT SCORE: $0</div>
+        <div id="highScore">TOTAL: $0</div>
         <div id="wave">WAVE: 1</div>
         <div id="citiesLeft">CITIES: 6</div>
         <div id="multiplier">MULT: 1.0x</div>
@@ -1040,7 +1040,7 @@
         const MIRV_WARHEAD_COUNT = 4;
         const MIRV_WARHEAD_SPEED_FACTOR = 0.9;
         const MIRV_WARHEAD_COLOR = '#ff4444';
-        const COMBO_BONUS_POINTS_PER_EXTRA_KILL = 10; // Points per extra kill in a combo
+        const COMBO_BONUS_POINTS_PER_EXTRA_KILL = 15; // Points per extra kill in a combo
         const PLANE_SPEED_INCREASE_PER_WAVE = 0.05;
         const PLANE_VARIANT_CHANCE = 0.2;
         const MAX_ACTIVE_SATELLITES = 3;
@@ -3419,8 +3419,8 @@
             }
         }
         function updateUI() {
-            scoreDisplay.textContent = `SCORE: $${score}`;
-            highScoreDisplay.textContent = `HI: $${highScore}`;
+            scoreDisplay.textContent = `CURRENT SCORE: $${score}`;
+            highScoreDisplay.textContent = `TOTAL: $${gameTotalScore}`; // Changed to display gameTotalScore
             waveDisplay.textContent = `WAVE: ${currentWave + 1}`;
             const livingCities = cities.filter(c => c.alive).length;
             citiesLeftDisplay.textContent = `CITIES: ${livingCities}`;
