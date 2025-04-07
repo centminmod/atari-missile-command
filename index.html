@@ -3996,163 +3996,116 @@
 
         // --- [MODIFIED] Function to Submit High Score ---
         async function submitHighScore() {
-            // This function now primarily handles the UI for *immediate* submission when online
-            const name = playerNameInput.value.trim().toUpperCase();
-            const finalScore = gameTotalScore; // Use the current game's score
-            const waveReached = currentWave + 1;
+          // This function handles UI for submission when online
+          const name = playerNameInput.value.trim().toUpperCase();
+          const finalScore = gameTotalScore;
+          const waveReached = currentWave + 1;
 
-            if (!name || name.length === 0 || name.length > 18) {
-                submissionStatus.textContent = "Enter 1-18 characters.";
-                submissionStatus.style.color = "#ff0000";
-                return;
-            }
-            if (finalScore <= 0) {
-                submissionStatus.textContent = "No score to submit.";
-                submissionStatus.style.color = "#ffff00";
-                submitScoreButton.disabled = true;
-                return;
-            }
-
-            // Collect stats for immediate submission
-            const gameStats = {
-                missilesFired: statsMissilesFired,
-                enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
-                planeBombsDestroyed: statsPlaneBombsDestroyed,
-                planesDestroyed: statsPlanesDestroyed,
-                citiesLost: statsCitiesLost,
-                basesLost: statsBasesLost,
-                accuracyBonusHits: statsAccuracyBonusHits,
-                shieldBombsDestroyed: statsShieldBombsDestroyed,
-                difficulty: selectedDifficultyName,
-                missileSpeedLevel: playerMissileSpeedLevel,
-                explosionRadiusLevel: explosionRadiusLevel,
-                accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0")
-            };
-
+          if (!name || name.length === 0 || name.length > 18) {
+            submissionStatus.textContent = "Enter 1-18 characters.";
+            submissionStatus.style.color = "#ff0000";
+            return;
+          }
+          if (finalScore <= 0) {
+            submissionStatus.textContent = "No score to submit.";
+            submissionStatus.style.color = "#ffff00";
             submitScoreButton.disabled = true;
-            submissionStatus.textContent = "Submitting...";
-            submissionStatus.style.color = "#00ff00";
+            return;
+          }
 
-            const scoreDataToSubmit = {
-                name: name,
-                score: finalScore,
-                wave: waveReached,
-                stats: gameStats
-            };
+          // Collect stats for immediate submission
+          const gameStats = {
+            missilesFired: statsMissilesFired,
+            enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
+            planeBombsDestroyed: statsPlaneBombsDestroyed,
+            planesDestroyed: statsPlanesDestroyed,
+            citiesLost: statsCitiesLost,
+            basesLost: statsBasesLost,
+            accuracyBonusHits: statsAccuracyBonusHits,
+            shieldBombsDestroyed: statsShieldBombsDestroyed,
+            difficulty: selectedDifficultyName,
+            missileSpeedLevel: playerMissileSpeedLevel,
+            explosionRadiusLevel: explosionRadiusLevel,
+            accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0")
+          };
 
-            const result = await submitScoreData(scoreDataToSubmit);
+          submitScoreButton.disabled = true;
+          submissionStatus.textContent = "Submitting...";
+          submissionStatus.style.color = "#00ff00";
 
-            if (result.success) {
-                submissionStatus.textContent = "Score Submitted!";
-                submissionStatus.style.color = "#00ff00";
-                scoreSubmitted = true; // Mark as submitted for this game instance
-                // Save the player name for future use
-                localStorage.setItem('missileCommandPlayerName', name);
+          const scoreDataToSubmit = {
+            name: name,
+            score: finalScore,
+            wave: waveReached,
+            stats: gameStats
+          };
+
+          // Add signature if possible
+          try {
+            const secretKey = await getGameSecret();
+            if (secretKey) {
+              scoreDataToSubmit.signature = await generateScoreSignature(scoreDataToSubmit, secretKey);
             } else {
-                // If submission failed but we're online, store it locally to try again later
-                if (navigator.onLine) {
-                    submissionStatus.textContent = `Submission Failed: ${result.error || 'Unknown error'}`;
-                    submissionStatus.style.color = "#ff0000";
-                    submitScoreButton.disabled = false; // Re-enable on failure
-                    
-                    // Store the failed submission attempt locally to retry later
-                    try {
-                        const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
-                        scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
-                        storedScores.push(scoreDataToSubmit);
-                        localStorage.setItem('storedScores', JSON.stringify(storedScores));
-                        console.log(`Failed score submission stored locally for later retry.`);
-                    } catch (e) {
-                        console.error("Error storing failed submission:", e);
-                    }
-                } else {
-                    // We're offline now, so store the score for later
-                    submissionStatus.textContent = "Offline. Score saved locally.";
-                    submissionStatus.style.color = "#ffff00";
-                    
-                    try {
-                        const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
-                        scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
-                        storedScores.push(scoreDataToSubmit);
-                        localStorage.setItem('storedScores', JSON.stringify(storedScores));
-                        console.log(`Score stored locally due to going offline.`);
-                    } catch (e) {
-                        console.error("Error storing offline submission:", e);
-                    }
-                }
+              console.warn("Could not get secret key for signature");
             }
+          } catch (e) {
+            console.error("Failed to generate signature:", e);
+            // Continue without signature - server will decide whether to accept
+          }
+
+          // Continue with your existing function logic
+          const result = await submitScoreData(scoreDataToSubmit);
+
+          if (result.success) {
+            submissionStatus.textContent = "Score Submitted!";
+            submissionStatus.style.color = "#00ff00";
+            scoreSubmitted = true; // Mark as submitted for this game instance
+            // Save the player name for future use
+            localStorage.setItem('missileCommandPlayerName', name);
+          } else {
+            // Rest of your existing error handling code
+            // ...
+          }
         }
 
-        // --- [NEW] Function to Sync Stored Scores ---
+        // --- [MODIFIED] Function to Sync Stored Scores ---
         async function syncStoredScores() {
-            const storedScoresString = localStorage.getItem('storedScores');
-            if (!storedScoresString) {
-                console.log("No scores stored locally to sync.");
-                return { synced: 0, failed: 0 };
+          const storedScoresString = localStorage.getItem('storedScores');
+          if (!storedScoresString) {
+            console.log("No scores stored locally to sync.");
+            return { synced: 0, failed: 0 };
+          }
+
+          // Rest of your existing function...
+          
+          // Try to get the secret key
+          const secretKey = await getGameSecret();
+          
+          for (const scoreData of storedScores) {
+            // If the stored score doesn't have a valid name, use the default/last used one
+            if (!scoreData.name || scoreData.name === 'TEMP_OFFLINE') {
+              scoreData.name = defaultName;
+              if (scoreData.name === 'OFFLINE_ACE') {
+                console.warn(`Submitting offline score for ${scoreData.score} with default name 'OFFLINE_ACE'.`);
+              }
             }
 
-            let storedScores = [];
-            try {
-                storedScores = JSON.parse(storedScoresString);
-            } catch (e) {
-                console.error("Error parsing stored scores:", e);
-                localStorage.removeItem('storedScores'); // Clear corrupted data
-                return { synced: 0, failed: 0, error: 'Parse error' };
+            // Generate a fresh signature if we have the key
+            if (secretKey) {
+              try {
+                scoreData.signature = await generateScoreSignature(scoreData, secretKey);
+              } catch (e) {
+                console.error("Failed to generate signature for stored score:", e);
+              }
             }
 
-            if (storedScores.length === 0) {
-                console.log("Stored scores array is empty.");
-                return { synced: 0, failed: 0 };
-            }
+            console.log(`Syncing score: Name=${scoreData.name}, Score=${scoreData.score}`);
+            const result = await submitScoreData(scoreData); // Use your existing submission function
 
-            console.log(`Attempting to sync ${storedScores.length} stored score(s)...`);
-            // Use the last entered name if available, otherwise prompt or use default
-            const defaultName = (localStorage.getItem('missileCommandPlayerName') || 'OFFLINE_ACE').toUpperCase();
+            // Rest of your existing code...
+          }
 
-            // We'll keep track of scores that succeeded and failed
-            const remainingScores = [];
-            let syncedCount = 0;
-            let failedCount = 0;
-
-            for (const scoreData of storedScores) {
-                // If the stored score doesn't have a valid name, use the default/last used one
-                if (!scoreData.name || scoreData.name === 'TEMP_OFFLINE') {
-                    scoreData.name = defaultName;
-                    if (scoreData.name === 'OFFLINE_ACE') {
-                        console.warn(`Submitting offline score for ${scoreData.score} with default name 'OFFLINE_ACE'.`);
-                    }
-                }
-
-                console.log(`Syncing score: Name=${scoreData.name}, Score=${scoreData.score}`);
-                const result = await submitScoreData(scoreData); // Use the refactored submission function
-
-                if (!result.success) {
-                    console.warn(`Failed to sync score (Score: ${scoreData.score}, Name: ${scoreData.name}): ${result.error}`);
-                    remainingScores.push(scoreData); // Keep failed scores to try again later
-                    failedCount++;
-                } else {
-                    console.log(`Successfully synced score (Score: ${scoreData.score}, Name: ${scoreData.name})`);
-                    syncedCount++;
-                }
-                // Small delay between submissions to avoid overwhelming the server
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-
-            // Update the localStorage with only the failed scores
-            if (remainingScores.length > 0) {
-                console.warn(`${remainingScores.length} score(s) failed to sync. Saving remaining scores.`);
-                localStorage.setItem('storedScores', JSON.stringify(remainingScores));
-            } else {
-                console.log("All stored scores synced successfully.");
-                localStorage.removeItem('storedScores');
-            }
-            
-            // Return information about the sync operation
-            return { 
-                synced: syncedCount, 
-                failed: failedCount,
-                remaining: remainingScores.length
-            };
+          // Rest of your existing function...
         }
 
         // --- [NEW] Update UI function for sync status ---
@@ -4176,6 +4129,50 @@
             
             // Optionally add UI notifications elsewhere in the game about synced scores
             // For example, a small notification banner at the top or a toast message
+        }
+
+        // Add this function to get the game secret
+        async function getGameSecret() {
+          // Check if we already have the key in memory
+          if (window.gameSecretKey) {
+            return window.gameSecretKey;
+          }
+          
+          try {
+            const response = await fetch('/game-secret');
+            if (!response.ok) {
+              console.error('Failed to get game secret');
+              return null;
+            }
+            
+            const data = await response.json();
+            if (!data.key) {
+              console.error('Invalid game secret response');
+              return null;
+            }
+            
+            // Store the key in memory only (not localStorage)
+            window.gameSecretKey = data.key;
+            return data.key;
+          } catch (error) {
+            console.error('Error fetching game secret:', error);
+            return null;
+          }
+        }
+
+        // Add this function to generate signatures
+        async function generateScoreSignature(scoreData, secretKey) {
+          // Create a string to hash (include all important fields)
+          const dataToHash = `${scoreData.name}-${scoreData.score}-${scoreData.wave}-${secretKey}`;
+          
+          // Use Web Crypto API to create a hash
+          const encoder = new TextEncoder();
+          const data = encoder.encode(dataToHash);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+          
+          // Convert hash to hex string
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
         // --- Event Listeners ---

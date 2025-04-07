@@ -3,6 +3,8 @@
  *
  * Environment variables:
  * - LEADERBOARD_KV: The KV namespace binding for storing scores.
+ * - ALLOWED_ORIGINS: Comma-separated list of allowed origins (domains)
+ * - SCORE_SECRET_KEY: Secret key used for score signature verification
  */
 
 // Key to store the scores array in KV
@@ -13,6 +15,52 @@ const MAX_SCORES_TO_STORE = 1000; // Changed from 10 to 1000
 const DEFAULT_SCORES_TO_RETURN = 10; // Added for clarity
 // Maximum number of scores that can be requested via the 'limit' parameter in a GET request
 const MAX_SCORES_TO_RETURN = 1000; // Added limit for GET requests
+
+// Helper function to handle CORS
+function handleCors(request, env) {
+  // Get allowed origins from environment variables
+  const allowedOriginsStr = env.ALLOWED_ORIGINS || 'https://missile-command-game.centminmod.com';
+  const allowedOrigins = allowedOriginsStr.split(',').map(origin => origin.trim());
+  
+  // Get the requesting origin
+  const requestOrigin = request.headers.get('Origin');
+  
+  // Set default (fallback) origin
+  let corsOrigin = 'https://missile-command-game.centminmod.com';
+  
+  // Check if the request origin is in our allowed list
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    corsOrigin = requestOrigin;
+  }
+  
+  return {
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Vary': 'Origin'
+  };
+}
+
+// Verify the signature of submitted score data
+async function verifyScoreSignature(scoreData, signature, secretKey) {
+  if (!secretKey) {
+    console.error('Missing SCORE_SECRET_KEY environment variable');
+    return false;
+  }
+  
+  // Recreate the expected signature
+  const dataToHash = `${scoreData.name}-${scoreData.score}-${scoreData.wave}-${secretKey}`;
+  
+  // Hash using the same algorithm
+  const encoder = new TextEncoder();
+  const data = encoder.encode(dataToHash);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  
+  // Convert to hex for comparison
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const expectedSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  // Compare signatures
+  return signature === expectedSignature;
+}
 
 export async function onRequest(context) {
   // Environment variable is available on context.env
@@ -26,6 +74,20 @@ export async function onRequest(context) {
   }
 
   try {
+    // Handle preflight OPTIONS requests for CORS
+    if (request.method === 'OPTIONS') {
+      const corsHeaders = handleCors(request, env);
+      return new Response(null, {
+        headers: {
+          ...corsHeaders,
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Max-Age': '86400' // 24 hours
+        },
+        status: 204
+      });
+    }
+    
     // Handle GET requests (fetching scores)
     if (request.method === 'GET') {
       console.log('GET request received for scores');
@@ -39,7 +101,7 @@ export async function onRequest(context) {
         limit = DEFAULT_SCORES_TO_RETURN; // Default to 10 if invalid or not provided
       }
       // Ensure the requested limit does not exceed the maximum allowed
-      limit = Math.min(limit, MAX_SCORES_TO_RETURN); // Cap at 50
+      limit = Math.min(limit, MAX_SCORES_TO_RETURN); // Cap at maximum
 
       console.log(`Requesting top ${limit} scores`);
 
@@ -52,12 +114,14 @@ export async function onRequest(context) {
 
       console.log(`Returning top ${scores.length} scores:`, JSON.stringify(scores));
 
+      // Get CORS headers
+      const corsHeaders = handleCors(request, env);
+
       // Return the (potentially sliced) scores array as JSON
       return new Response(JSON.stringify(scores), {
         headers: {
           'Content-Type': 'application/json',
-          // Allow requests from any origin (adjust for production if needed)
-          'Access-Control-Allow-Origin': '*',
+          ...corsHeaders
         },
         status: 200,
       });
@@ -71,6 +135,29 @@ export async function onRequest(context) {
       try {
         newScoreEntry = await request.json();
         console.log('Received score entry:', JSON.stringify(newScoreEntry));
+        
+        // Verify signature if secret key is available
+        if (env.SCORE_SECRET_KEY) {
+          if (!newScoreEntry.signature) {
+            console.warn('Missing signature in score submission');
+            return new Response('Missing signature', { status: 403 });
+          }
+          
+          const isValid = await verifyScoreSignature(
+            newScoreEntry, 
+            newScoreEntry.signature, 
+            env.SCORE_SECRET_KEY
+          );
+          
+          if (!isValid) {
+            console.error('Invalid signature for score submission');
+            return new Response('Invalid signature', { status: 403 });
+          }
+          
+          console.log('Score signature verified successfully');
+        } else {
+          console.warn('SCORE_SECRET_KEY not configured, signature verification skipped');
+        }
       } catch (e) {
         console.error('Failed to parse request body:', e);
         return new Response('Invalid JSON body.', { status: 400 });
@@ -172,18 +259,21 @@ export async function onRequest(context) {
       scores.sort((a, b) => b.score - a.score);
 
       // Keep only the top N scores, based on MAX_SCORES_TO_STORE
-      scores = scores.slice(0, MAX_SCORES_TO_STORE); // Keep up to 50 scores
+      scores = scores.slice(0, MAX_SCORES_TO_STORE); 
 
       // Store the updated (and potentially truncated) scores array back into KV
       // Use await to ensure the write operation completes before responding
       await kvStore.put(SCORES_KEY, JSON.stringify(scores));
       console.log(`Successfully updated scores in KV (up to ${MAX_SCORES_TO_STORE}):`, JSON.stringify(scores));
 
-      // Respond with success and the updated leaderboard (up to 50 scores)
+      // Get CORS headers for the response
+      const corsHeaders = handleCors(request, env);
+
+      // Respond with success and the updated leaderboard
       return new Response(JSON.stringify({ success: true, leaderboard: scores }), {
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*', // Adjust for production
+          ...corsHeaders
         },
         status: 200,
       });
@@ -191,9 +281,16 @@ export async function onRequest(context) {
     // Handle methods other than GET or POST
     } else {
       console.log(`Method ${request.method} not allowed`);
+      
+      // Get CORS headers
+      const corsHeaders = handleCors(request, env);
+      
       return new Response('Method Not Allowed', {
          status: 405,
-         headers: { 'Allow': 'GET, POST' } // Indicate allowed methods
+         headers: { 
+           'Allow': 'GET, POST, OPTIONS',
+           ...corsHeaders
+         }
       });
     }
   // Catch any unexpected errors during request processing
