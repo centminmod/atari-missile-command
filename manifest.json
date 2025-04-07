@@ -1,8 +1,8 @@
 {
   "name": "Missile Command",
-  "short_name": "Missile Cmd",
+  "short_name": "MissileCmd",
   "description": "Missile Command - Atari Classic Clone Game",
-  "start_url": "/index.html", // Or just "/" if index.html is the default server page
+  "start_url": "/", // Or just "/" if index.html is the default server page
   "display": "standalone", // Opens in its own window, like a native app
   "background_color": "#000000", // Color shown on the splash screen before the app loads
   "theme_color": "#000000", // Color for the browser UI elements (like the title bar)
