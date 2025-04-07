@@ -2,7 +2,7 @@
 
 // --- Configuration ---
 // Increment this version number when you update assets or caching logic
-const APP_VERSION = 'v3'; // Incremented version
+const APP_VERSION = 'v4'; // Incremented version
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
 const DATA_CACHE_NAME = `missile-command-data-cache-${APP_VERSION}`; // Separate cache for dynamic data
 
@@ -82,7 +82,7 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
 
   // Strategy for API calls (e.g., leaderboard) - Network First, fallback to Cache
-  if (requestUrl.pathname.startsWith('/scores') || requestUrl.pathname.startsWith('/game-secret')) {
+  if (requestUrl.pathname.startsWith('/scores') || requestUrl.pathname.startsWith('/game-secret')|| requestUrl.pathname.startsWith('/api')) {
     event.respondWith(
       caches.open(DATA_CACHE_NAME).then((cache) => {
         return fetch(event.request)
