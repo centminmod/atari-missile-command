@@ -34,12 +34,19 @@ export default {
       // 3. Basic Input Validation
       if (!gameData || typeof gameData !== 'object' || !Array.isArray(gameData.clicks)) {
         console.warn('Received invalid game data format:', gameData);
-        return new Response(JSON.stringify({ error: 'Invalid game data format. Expected JSON object with a "clicks" array.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-      }
-      console.log(`Received game data: Difficulty=${gameData.difficulty}, Score=${gameData.score}, Wave=${gameData.wave}, Clicks=${gameData.clicks.length}`);
-      
-      // Log store actions if present
-      if (Array.isArray(gameData.storeActions)) {
+         return new Response(JSON.stringify({ error: 'Invalid game data format. Expected JSON object with a "clicks" array.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+       }
+ 
+       // Calculate click counts early for logging
+       const totalClicks = gameData.clicks.length;
+       const bombClicks = gameData.clicks.filter(c => c.armedWeapon === 'bomb').length;
+       const sonicWaveClicks = gameData.clicks.filter(c => c.armedWeapon === 'sonicWave').length;
+       const missileClicks = totalClicks - bombClicks - sonicWaveClicks;
+ 
+       console.log(`Received game data: Difficulty=${gameData.difficulty}, Score=${gameData.score}, Wave=${gameData.wave}, Clicks=${totalClicks} (M:${missileClicks}, B:${bombClicks}, SW:${sonicWaveClicks})`);
+ 
+       // Log store actions if present
+       if (Array.isArray(gameData.storeActions)) {
         console.log(`Store actions: ${gameData.storeActions.length} purchases/upgrades recorded`);
       }
 
@@ -52,15 +59,12 @@ export default {
           return new Response(JSON.stringify({ error: `Gameplay data too large (${gameData.clicks.length} clicks). Analysis aborted before calling AI.` }), { status: 413, headers: { 'Content-Type': 'application/json' } });
       }
 
-      // Summarize click data
-       let clickSummaryText = `Total Clicks: ${gameData.clicks.length}. `;
-        if (gameData.clicks.length > 0) {
-           const bombClicks = gameData.clicks.filter(c => c.armedWeapon === 'bomb').length;
-           const sonicWaveClicks = gameData.clicks.filter(c => c.armedWeapon === 'sonicWave').length; // Added
-           const missileClicks = gameData.clicks.length - bombClicks - sonicWaveClicks; // Adjusted
-           clickSummaryText += `Bomb Clicks: ${bombClicks} (${((bombClicks / gameData.clicks.length) * 100).toFixed(1)}%). `;
-           clickSummaryText += `Sonic Wave Clicks: ${sonicWaveClicks} (${((sonicWaveClicks / gameData.clicks.length) * 100).toFixed(1)}%). `; // Added
-           clickSummaryText += `Missile Clicks: ${missileClicks} (${((missileClicks / gameData.clicks.length) * 100).toFixed(1)}%). `; // Percentage adjusted implicitly
+       // Summarize click data
+        let clickSummaryText = `Total Clicks: ${gameData.clicks.length}. `;
+         if (totalClicks > 0) { // Use pre-calculated counts
+             clickSummaryText += `Bomb Clicks: ${bombClicks} (${((bombClicks / gameData.clicks.length) * 100).toFixed(1)}%). `;
+             clickSummaryText += `Sonic Wave Clicks: ${sonicWaveClicks} (${((sonicWaveClicks / gameData.clicks.length) * 100).toFixed(1)}%). `; // Added
+             clickSummaryText += `Missile Clicks: ${missileClicks} (${((missileClicks / gameData.clicks.length) * 100).toFixed(1)}%). `; // Percentage adjusted implicitly
             if (gameData.clicks.length > 1) {
                const gameDurationSeconds = (gameData.clicks[gameData.clicks.length - 1].timestamp - gameData.clicks[0].timestamp) / 1000;
                clickSummaryText += `Approx. Game Duration: ${gameDurationSeconds.toFixed(1)}s. `;
