@@ -1131,6 +1131,7 @@
         let waveTimer = 0;
         let waveEnemiesSpawned = 0;
         let waveEnemiesRequired = 0;
+        let submittedPlayerNameThisSession = null; // ADDED: Track submitted name for the current session
         // NEW: Keyboard control variables
         let keyboardSelectedBaseIndex = -1; // -1 = none, 0-2 ground, 3-5 satellite
         let reticleX = INTERNAL_WIDTH / 2;
@@ -2806,6 +2807,7 @@
                 gameLoopId = null;
             }
             stopMusic(); // ADDED: Stop music on game over
+            submittedPlayerNameThisSession = null; // Reset submitted name tracker
             console.log("Game Over processing complete.");
         }
 
@@ -4023,6 +4025,14 @@
                 }
                 const gameData = JSON.parse(storedDataString);
 
+                // ADDED: Include player name if submitted this session
+                if (submittedPlayerNameThisSession) {
+                    gameData.playerName = submittedPlayerNameThisSession;
+                    console.log(`Including submitted player name in analysis request: ${submittedPlayerNameThisSession}`);
+                } else {
+                    console.log("No player name submitted this session, not including in analysis request.");
+                }
+
                 // 2. Call your Cloudflare Worker
                 const workerUrl = '/api'; // Adjust to your actual worker URL
                 console.log(`Sending ${gameData.clicks?.length || 0} clicks to worker: ${workerUrl}`);
@@ -4278,6 +4288,7 @@
           submissionStatus.textContent = "Score Submitted!";
           submissionStatus.style.color = "#00ff00";
           scoreSubmitted = true; // Mark as submitted for this game instance
+          submittedPlayerNameThisSession = name; // ADDED: Store name for this session
           // Save the player name for future use
           localStorage.setItem('missileCommandPlayerName', name);
         } else {

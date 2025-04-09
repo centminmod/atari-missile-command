@@ -43,7 +43,9 @@ export default {
        const sonicWaveClicks = gameData.clicks.filter(c => c.armedWeapon === 'sonicWave').length;
        const missileClicks = totalClicks - bombClicks - sonicWaveClicks;
   
-        console.log(`Received game data: Difficulty=${gameData.difficulty}, Score=${gameData.score}, Wave=${gameData.wave}, Clicks=${totalClicks} (M:${missileClicks}, B:${bombClicks}, SW:${sonicWaveClicks})`);
+        // ADDED: Include player name in log if available
+        const playerNameLog = gameData.playerName ? `, Player=${gameData.playerName}` : '';
+        console.log(`Received game data: Difficulty=${gameData.difficulty}, Score=${gameData.score}, Wave=${gameData.wave}${playerNameLog}, Clicks=${totalClicks} (M:${missileClicks}, B:${bombClicks}, SW:${sonicWaveClicks})`);
   
         // Log store actions if present
         if (Array.isArray(gameData.storeActions) && gameData.storeActions.length > 0) {
@@ -156,6 +158,7 @@ Game Session Data:
 - Difficulty: ${gameData.difficulty || 'N/A'}
 - Final Score: ${gameData.score || 0}
 - Wave Reached: ${gameData.wave || 1}
+${gameData.playerName ? `- Player Name: ${gameData.playerName}` : ''}
 - Game Stats: ${JSON.stringify(gameData.stats || {})}
 - Gameplay Click Summary: ${clickSummaryText}
 ${storeActionsSummary ? `- Store Purchases: ${storeActionsSummary}` : ''}
