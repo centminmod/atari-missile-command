@@ -3364,7 +3364,15 @@
 
         // --- Special Weapon Logic ---
         function updateSpecialWeaponsUI() { sonicWaveCountDisplay.textContent = inventorySonicWave; bombCountDisplay.textContent = inventoryBomb; const canUseSpecials = gameHasStarted && !isGameOver && !isPaused && !transitioningWave; sonicWaveControl.classList.toggle('disabled', inventorySonicWave <= 0 || !canUseSpecials || activeSonicWave); bombControl.classList.toggle('disabled', inventoryBomb <= 0 || !canUseSpecials); bombControl.classList.toggle('armed', isBombArmed); if (canUseSpecials) { canvas.style.cursor = isBombArmed ? 'cell' : 'crosshair'; } else { canvas.style.cursor = 'default'; } }
-        function triggerSonicWave() { if (inventorySonicWave > 0 && !activeSonicWave && !sonicWaveControl.classList.contains('disabled')) { inventorySonicWave--; activeSonicWave = { y: canvas.height - (canvas.height * GROUND_HEIGHT_RATIO), alive: true }; updateSpecialWeaponsUI(); } }
+        function triggerSonicWave() { 
+            if (inventorySonicWave > 0 && !activeSonicWave && !sonicWaveControl.classList.contains('disabled')) { 
+                inventorySonicWave--; 
+                activeSonicWave = { y: canvas.height - (canvas.height * GROUND_HEIGHT_RATIO), alive: true }; 
+                // ADDED: Record Sonic Wave usage click
+                recordGameClick(-1, -1, 'sonicWave'); // Use -1, -1 for coordinates as it's an icon click
+                updateSpecialWeaponsUI(); 
+            } 
+        }
         function armBomb() { if (inventoryBomb > 0 && !bombControl.classList.contains('disabled')) { isBombArmed = !isBombArmed; updateSpecialWeaponsUI(); } }
         function deployBomb(clickX, clickY) {
             if (isBombArmed) {
