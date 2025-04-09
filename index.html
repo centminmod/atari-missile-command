@@ -152,7 +152,7 @@
             #startHighScore { color: #aaa; font-size: clamp(12px, 3vw, 14px); margin-top: 15px; text-align: center; }
 
             /* --- Buttons --- */
-            button { font-family: 'Press Start 2P', cursive; background-color: #333; color: #00ff00; border: 2px solid #00ff00; padding: 8px 15px; font-size: clamp(12px, 3vw, 16px); cursor: pointer; box-shadow: 0 0 8px #00ff00 inset; transition: background-color 0.3s, box-shadow 0.3s, color 0.3s, border-color 0.3s; border-radius: 5px; white-space: nowrap; flex-grow: 0; flex-shrink: 1; }
+            button { font-family: 'Press Start 2P', cursive; background-color: #333; color: #00ff00; border: 2px solid #00ff00; padding: 8px 15px; font-size: clamp(10px, 3vw, 13px); cursor: pointer; box-shadow: 0 0 8px #00ff00 inset; transition: background-color 0.3s, box-shadow 0.3s, color 0.3s, border-color 0.3s; border-radius: 5px; white-space: nowrap; flex-grow: 0; flex-shrink: 1; }
             .difficulty-button { border-color: #ffff00; color: #ffff00; box-shadow: 0 0 8px #ffff00 inset; min-width: auto; text-align: center; }
             .difficulty-button:hover:not(:disabled), .difficulty-button:focus:not(:disabled) { box-shadow: 0 0 12px #ffff00 inset, 0 0 8px #ffff00; background-color: #444; }
             .difficulty-button.selected { background-color: #555500; box-shadow: 0 0 12px #ffff00 inset, 0 0 12px #ffff00; color: #fff; }
@@ -188,7 +188,7 @@
             #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); color: #ffff00; display: none; align-items: center; justify-content: center; font-size: clamp(30px, 10vw, 48px); text-shadow: 3px 3px #ff0000; z-index: 15; pointer-events: none; }
 
             /* --- Store Modal --- */
-            #storeModal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; max-height: 80vh; background-color: rgba(0, 20, 0, 0.9); border: 3px solid #00ff00; border-radius: 15px; box-shadow: 0 0 25px #00ff00; padding: 15px; z-index: 20; display: none; color: #00ff00; font-size: clamp(11px, 2.5vw, 11.5px); box-sizing: border-box; overflow-y: auto; }
+            #storeModal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; max-height: 80vh; background-color: rgba(0, 20, 0, 0.9); border: 3px solid #00ff00; border-radius: 15px; box-shadow: 0 0 25px #00ff00; padding: 15px; z-index: 20; display: none; color: #00ff00; font-size: clamp(10px, 2.5vw, 11px); box-sizing: border-box; overflow-y: auto; }
             #storeModal h2 { font-size: clamp(20px, 5vw, 22px); margin: 0 0 15px 0; text-align: center; color: #ffff00; }
             #storeScore { font-size: clamp(14px, 3.5vw, 15px); margin-bottom: 15px; text-align: center; color: #fff; }
             #storeItemsContainer { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 15px; }
@@ -198,7 +198,7 @@
             .itemCost { color: #ffff00; }
             .itemStock, .itemLevel { color: #aaa; font-size: clamp(10px, 2vw, 12px); }
             .storeItemButtons { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; justify-content: flex-end; margin-top: 5px; }
-            .buyButton { padding: 6px 12px; font-size: clamp(11px, 2.5vw, 14px); min-width: auto; flex-shrink: 1; }
+            .buyButton { padding: 6px 12px; font-size: clamp(10px, 2.5vw, 11px); min-width: auto; flex-shrink: 1; }
             .buyMultipleButton { border-color: #00aaaa; color: #00cccc; box-shadow: 0 0 6px #00aaaa inset; padding: 6px 8px; font-size: clamp(10px, 2.2vw, 12px); }
             .buyMultipleButton:hover:not(:disabled) { box-shadow: 0 0 10px #00aaaa inset, 0 0 6px #00aaaa; }
             #storeContinueButton { display: block; margin: 20px auto 0 auto; }
@@ -213,7 +213,7 @@
             /* --- Sound Controls Styling (Moved from inline) --- */
             .sound-controls { display: flex; flex-direction: row; /* Default: side-by-side */ flex-wrap: wrap; /* Allow wrapping if needed */ justify-content: center; /* Center items if they wrap */ align-items: center; gap: 15px; /* Gap between music/sfx groups */ }
             .sound-controls > div { display: flex; align-items: center; gap: 8px; } /* Keep inner items aligned */
-            .sound-controls button { padding: 4px 8px; font-size: 10px; min-width: 90px; }
+            .sound-controls button { padding: 4px 8px; font-size: 9.5px; min-width: 90px; }
             .sound-controls label { font-size: 10px; }
             .sound-controls input[type="range"] { width: 80px; height: 8px; cursor: pointer; vertical-align: middle; /* Align slider better */ }
 
@@ -610,9 +610,12 @@
             }
 
             /* Desktop Breakpoint 1 */
-            @media (max-width: 1540px) {
+            @media (max-width: 1520px) {
                 #aboutGameModal {
-                    top: 40%; /* Adjusted for ~1540px width */
+                    top: 40%; /* Adjusted for ~1520px width */
+                }
+                #storeModal {
+                    top: 40%;
                 }
             }
 
@@ -621,6 +624,9 @@
                 #aboutGameModal {
                     top: 45%; /* Adjusted for ~1270px width */
                 }
+                #storeModal {
+                    top: 45%;
+                }
             }
 
             /* Tablet */
@@ -628,12 +634,18 @@
                 #aboutGameModal {
                     top: 40%; /* Adjusted for tablet */
                 }
+                #storeModal {
+                    top: 40%;
+                }
             }
 
             /* Mobile */
             @media (max-width: 480px) {
                 #aboutGameModal {
                     top: 50%; /* Adjusted for mobile */
+                }
+                #storeModal {
+                    top: 50%;
                 }
             }
         </style>
