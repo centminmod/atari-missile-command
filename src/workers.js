@@ -42,15 +42,27 @@ export default {
        const bombClicks = gameData.clicks.filter(c => c.armedWeapon === 'bomb').length;
        const sonicWaveClicks = gameData.clicks.filter(c => c.armedWeapon === 'sonicWave').length;
        const missileClicks = totalClicks - bombClicks - sonicWaveClicks;
+  
+        console.log(`Received game data: Difficulty=${gameData.difficulty}, Score=${gameData.score}, Wave=${gameData.wave}, Clicks=${totalClicks} (M:${missileClicks}, B:${bombClicks}, SW:${sonicWaveClicks})`);
+  
+        // Log store actions if present
+        if (Array.isArray(gameData.storeActions) && gameData.storeActions.length > 0) {
+         // Calculate breakdown for logging
+         const purchaseCountsForLog = {};
+         gameData.storeActions.forEach(action => {
+           const itemType = action.item || 'unknown';
+           purchaseCountsForLog[itemType] = (purchaseCountsForLog[itemType] || 0) + (action.quantity || 1);
+         });
+         const purchaseDetails = Object.entries(purchaseCountsForLog)
+           .map(([item, count]) => `${item}:${count}`)
+           .join(', ');
+         console.log(`Store actions: ${gameData.storeActions.length} recorded (${purchaseDetails})`);
+       } else if (Array.isArray(gameData.storeActions)) {
+         // Log if the array exists but is empty
+         console.log(`Store actions: 0 recorded`);
+       }
  
-       console.log(`Received game data: Difficulty=${gameData.difficulty}, Score=${gameData.score}, Wave=${gameData.wave}, Clicks=${totalClicks} (M:${missileClicks}, B:${bombClicks}, SW:${sonicWaveClicks})`);
- 
-       // Log store actions if present
-       if (Array.isArray(gameData.storeActions)) {
-        console.log(`Store actions: ${gameData.storeActions.length} purchases/upgrades recorded`);
-      }
-
-      // 4. Input Token Limit Handling (Pre-check & Summarization)
+       // 4. Input Token Limit Handling (Pre-check & Summarization)
       const MAX_RAW_CLICKS_TO_INCLUDE = 5000;
       const ABSOLUTE_CLICK_LIMIT = 10000;
 
