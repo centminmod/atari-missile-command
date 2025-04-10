@@ -313,10 +313,10 @@ function validateScoreConsistency(score, stats) {
   if (!stats) return true;
 
   // Calculate expected score components
-  const POINTS_PER_MISSILE = 35;
-  const POINTS_PER_PLANE_BOMB = 20;
-  const POINTS_PER_PLANE = 1000;
-  const POINTS_PER_ACCURACY_BONUS = 50;
+  const POINTS_PER_MISSILE = 100;
+  const POINTS_PER_PLANE_BOMB = 10;
+  const POINTS_PER_PLANE = 2000;
+  const POINTS_PER_ACCURACY_BONUS = 25;
   const SHIELD_BOMB_MULTIPLIER = 3;
 
   // Calculate base points from enemy kills (without multipliers)
