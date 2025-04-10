@@ -273,6 +273,8 @@
                 button { padding: 6px 12px; }
                 #messageBox { padding: 15px; max-width: 95%; }
                 #storeModal { padding: 10px; }
+                #storeModal h2 { font-size: 14px; }
+                #storeScore { font-size: 10px; }
                 #storeItemsContainer { gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));}
                 footer { margin-top: 15px; gap: 8px; }
                 footer a { margin: 0 4px; }
@@ -305,15 +307,15 @@
                 #statsContainer { font-size: 9px; grid-template-columns: 1fr; gap: 3px 10px; }
                 .messageBoxButtons { gap: 8px; }
                 #storeModal { padding: 8px; width: 95%; max-height: 75vh; }
-                #storeModal h2 { font-size: 18px; }
-                #storeScore { font-size: 12px; }
+                #storeModal h2 { font-size: 14px; }
+                #storeScore { font-size: 10px; }
                 #storeItemsContainer { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 6px; }
                 .storeItem { padding: 6px 8px; gap: 6px; }
-                .storeItemInfo span { font-size: 10px; margin-bottom: 1px; line-height: 1.15; }
+                .storeItemInfo span { font-size: 9px; margin-bottom: 1px; line-height: 1.15; }
                 .itemStock, .itemLevel { font-size: 9px; }
                 .storeItemButtons { gap: 4px; }
-                .buyButton { padding: 4px 8px; font-size: 10px; }
-                .buyMultipleButton { padding: 4px 6px; font-size: 9px; }
+                .buyButton { padding: 4px 8px; font-size: 8px; }
+                .buyMultipleButton { padding: 4px 6px; font-size: 8px; }
                 #pauseOverlay { font-size: 24px; }
                 /* Footer styles for small screens */
                 footer { margin-top: 10px; font-size: 9px; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -404,10 +406,13 @@
                 }
                 
                 #storeModal {
-                    max-width: 85vh;
+                    max-width: 135vh;
                     max-height: 90vh;
                 }
                 
+                #storeModal h2 { font-size: 15px; margin: 0 0 5px 0; }
+                #storeScore { font-size: 11px; margin-bottom: 5px; }
+
                 #storeItemsContainer {
                     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
                     gap: 6px;
@@ -417,6 +422,13 @@
                     padding: 6px;
                     min-height: 0;
                 }
+
+                .storeItemInfo { margin-bottom: 1px; }
+                .storeItemInfo span { font-size: 9px; margin-bottom: 1px; line-height: 1.15; }
+                .itemStock, .itemLevel { font-size: 9px; }
+                .storeItemButtons { gap: 4px; }
+                .buyButton { padding: 4px 8px; font-size: 8px; }
+                .buyMultipleButton { padding: 4px 6px; font-size: 8px; }
                 
                 .buyButton {
                     padding: 4px 8px;
