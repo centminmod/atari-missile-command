@@ -3827,7 +3827,8 @@
                 x: Math.round(clickX),
                 y: Math.round(clickY),
                 timestamp: Date.now(),
-                armedWeapon: armedWeapon || 'missile'
+                armedWeapon: armedWeapon || 'missile',
+                wave: currentWave // ADDED: Include current wave number
             });
         }
 
