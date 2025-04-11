@@ -254,7 +254,39 @@ export async function onRequest(context) {
         }
         // Only add stats if they are consistent (this line is reached only if isConsistent is true)
         scoreDataToAdd.stats = sanitizedStats;
-      }
+
+        // --- ADDED: Kill Count Plausibility Check ---
+        let killCountsFlagged = false;
+        if (wave !== undefined && wave > 0) { // Only check if wave is valid
+            const maxEnemies = calculateMaxEnemiesForWave(wave);
+            const tolerance = (wave <= waveDefinitions.length) ? 1.00 : 1.05; // Exact for defined waves, 5% buffer for scaled
+
+            // Check total missile types (regular + smart + mirv)
+            const totalMissilesDestroyed = sanitizedStats.enemyMissilesDestroyed || 0;
+            if (totalMissilesDestroyed > maxEnemies.totalMissileTypes * tolerance) {
+                killCountsFlagged = true;
+                console.warn(`Flagged: Wave ${wave}, Missiles Destroyed (${totalMissilesDestroyed}) > Max Possible (${(maxEnemies.totalMissileTypes * tolerance).toFixed(0)})`);
+            }
+
+            // Check planes
+            const planesDestroyed = sanitizedStats.planesDestroyed || 0;
+            if (planesDestroyed > maxEnemies.plane * tolerance) {
+                killCountsFlagged = true;
+                console.warn(`Flagged: Wave ${wave}, Planes Destroyed (${planesDestroyed}) > Max Possible (${(maxEnemies.plane * tolerance).toFixed(0)})`);
+            }
+
+            // Check shield bombs
+            const shieldBombsDestroyed = sanitizedStats.shieldBombsDestroyed || 0;
+            if (shieldBombsDestroyed > maxEnemies.shield_bomb * tolerance) {
+                killCountsFlagged = true;
+                console.warn(`Flagged: Wave ${wave}, Shield Bombs Destroyed (${shieldBombsDestroyed}) > Max Possible (${(maxEnemies.shield_bomb * tolerance).toFixed(0)})`);
+            }
+            // Note: We don't check planeBombsDestroyed as it's highly variable per plane.
+        }
+        scoreDataToAdd.flagged_killcounts = killCountsFlagged; // Add the flag
+        // --- END Kill Count Plausibility Check ---
+
+      } // End of stats processing block
 
       // Check if the name is valid after sanitization
       if (!name) {
@@ -379,3 +411,71 @@ function validateScoreConsistency(score, stats) {
 
   return isReasonable;
 }
+
+// --- ADDED: Wave Definitions and Scaling Logic (from index.html) ---
+const waveDefinitions = [
+    [{ type: 'missile', count: 22, speedFactor: 1.1 }, { type: 'plane', count: 1 }], // Wave 1 (Index 0)
+    [{ type: 'missile', count: 28, speedFactor: 1.15 }, { type: 'plane', count: 1 }, { type: 'shield_bomb', count: 1, bombType: 1, speedFactor: 0.65 }], // Wave 2
+    [{ type: 'missile', count: 33, speedFactor: 1.2 }, { type: 'plane', count: 3, variantChance: 0.1 }, { type: 'shield_bomb', count: 1, bombType: 1, speedFactor: 0.75 }], // Wave 3
+    [{ type: 'missile', count: 24, speedFactor: 1.25 }, { type: 'plane', count: 4, variantChance: 0.2 }, { type: 'smart_bomb', count: 5, speedFactor: 1.0 }, { type: 'shield_bomb', count: 1, bombType: 2, speedFactor: 0.80 }], // Wave 4
+    [{ type: 'missile', count: 26, speedFactor: 1.25 }, { type: 'plane', count: 6, variantChance: 0.2 }, { type: 'smart_bomb', count: 7, speedFactor: 1.1 }, { type: 'shield_bomb', count: 1, bombType: 3, speedFactor: 0.85 }], // Wave 5
+    [{ type: 'missile', count: 28, speedFactor: 1.35 }, { type: 'plane', count: 8, variantChance: 0.2 }, { type: 'mirv', count: 7, speedFactor: 1.0 }, { type: 'shield_bomb', count: 2, speedFactor: 0.85 }], // Wave 6
+    [{ type: 'missile', count: 31, speedFactor: 1.40 }, { type: 'smart_bomb', count: 7, speedFactor: 1.15 }, { type: 'plane', count: 9, variantChance: 0.35, speedFactor: 1.1 }, { type: 'shield_bomb', count: 2, speedFactor: 0.90 }], // Wave 7
+    [{ type: 'missile', count: 36, speedFactor: 1.45 }, { type: 'mirv', count: 16, speedFactor: 1.15 }, { type: 'smart_bomb', count: 7, speedFactor: 1.2 }, { type: 'shield_bomb', count: 3, speedFactor: 0.95 }], // Wave 8
+    [{ type: 'missile', count: 35, speedFactor: 1.5 }, { type: 'smart_bomb', count: 7, speedFactor: 1.35 }, { type: 'mirv', count: 5, speedFactor: 1.25 }, { type: 'plane', count: 9, variantChance: 0.5, speedFactor: 1.2 }, { type: 'shield_bomb', count: 3, speedFactor: 0.95 }], // Wave 9
+    [{ type: 'missile', count: 38, speedFactor: 1.6 }, { type: 'smart_bomb', count: 7, speedFactor: 1.5 }, { type: 'mirv', count: 6, speedFactor: 1.4 }, { type: 'plane', count: 10, variantChance: 0.6, speedFactor: 1.3 }, { type: 'shield_bomb', count: 3, speedFactor: 1.0 }], // Wave 10
+    [{ type: 'missile', count: 38, speedFactor: 1.7 }, { type: 'smart_bomb', count: 7, speedFactor: 1.6 }, { type: 'mirv', count: 7, speedFactor: 1.5 }, { type: 'plane', count: 12, variantChance: 0.7, speedFactor: 1.4 }, { type: 'shield_bomb', count: 2, bombType: 1, speedFactor: 1.05 }, { type: 'shield_bomb', count: 2, bombType: 2, speedFactor: 1.05 }, { type: 'shield_bomb', count: 2, bombType: 3, speedFactor: 1.10 }], // Wave 11
+];
+
+const baseScalingIncrease = 0.06;
+const maxScalingFactor = 4.0;
+
+/**
+ * Calculates the maximum cumulative number of each enemy type spawned up to a given wave.
+ * @param {number} targetWave - The wave number (1-based) up to which to calculate spawns.
+ * @returns {object} - An object containing max counts for each enemy type.
+ */
+function calculateMaxEnemiesForWave(targetWave) {
+    const maxCounts = {
+        missile: 0,
+        smart_bomb: 0,
+        mirv: 0,
+        plane: 0,
+        shield_bomb: 0,
+        totalMissileTypes: 0 // Sum of missile, smart_bomb, mirv
+    };
+
+    if (targetWave <= 0) return maxCounts;
+
+    for (let waveIndex = 0; waveIndex < targetWave; waveIndex++) {
+        let currentWaveConfig;
+        const effectiveWaveIndex = Math.min(waveIndex, waveDefinitions.length - 1);
+
+        // Deep copy the definition to avoid modifying the original
+        currentWaveConfig = JSON.parse(JSON.stringify(waveDefinitions[effectiveWaveIndex]));
+
+        // Apply scaling if the actual wave index is beyond the defined waves
+        if (waveIndex >= waveDefinitions.length) {
+            const scalingFactor = Math.min(
+                maxScalingFactor,
+                1 + (waveIndex - (waveDefinitions.length - 1)) * baseScalingIncrease
+            );
+            currentWaveConfig.forEach(part => {
+                part.count = Math.ceil(part.count * scalingFactor);
+            });
+        }
+
+        // Sum counts for the current wave
+        currentWaveConfig.forEach(part => {
+            if (maxCounts.hasOwnProperty(part.type)) {
+                maxCounts[part.type] += part.count || 0;
+            }
+        });
+    }
+
+    // Calculate total missile types
+    maxCounts.totalMissileTypes = maxCounts.missile + maxCounts.smart_bomb + maxCounts.mirv;
+
+    return maxCounts;
+}
+// --- END ADDED Logic ---
