@@ -4272,9 +4272,15 @@
                 }
 
                 const result = await response.json();
-                console.log("Submission response:", result);
-                // Save the successfully submitted name for next time
-                localStorage.setItem('missileCommandPlayerName', name);
+                // Only log the full response if the user is the debug user
+                if (window.enableDebugLogging) {
+                    console.log("Submission response:", result);
+                } else {
+                    // Optionally log a simpler message for non-debug users
+                    console.log("Score submission processed.");
+                }
+                // Save the successfully submitted name for next time - DISABLED as requested
+                // localStorage.setItem('missileCommandPlayerName', name);
                 return { success: true };
 
             } catch (error) {
