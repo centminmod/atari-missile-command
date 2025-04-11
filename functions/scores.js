@@ -387,9 +387,11 @@ function validateScoreConsistency(score, stats) {
 
   // Estimate a reasonable score range
   // Note: We can't know the exact score because of wave bonuses, score multipliers during play,
-  // and other factors, so we use a generous tolerance range
+  // and other factors, so we use a generous tolerance range.
+  // The score multiplier (up to 5x) applies DURING the wave, so the final score can be significantly higher
+  // than just base points * difficulty multiplier. We increase the max multiplier here to account for this.
   const minExpectedScore = basePoints * difficultyMultiplier * 0.5; // 50% of base estimate
-  const maxExpectedScore = basePoints * difficultyMultiplier * 5.0; // Up to 5x multiplier
+  const maxExpectedScore = basePoints * difficultyMultiplier * 15.0; // Increased from 5.0 to 15.0 to allow for score multiplier effect
 
   // Add a minimum floor for very low scores to avoid false positives
   const absoluteMinScore = 100; 
