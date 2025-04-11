@@ -168,6 +168,11 @@ export async function onRequest(context) {
         console.warn('Invalid score entry format:', JSON.stringify(newScoreEntry));
         return new Response('Invalid score entry format. Required: { "name": string, "score": number, "wave": optional number }', { status: 400 });
       }
+      // Enforce presence of stats object for all submissions
+      if (!newScoreEntry.stats || typeof newScoreEntry.stats !== 'object') {
+        console.warn('Missing or invalid stats object in score submission:', JSON.stringify(newScoreEntry));
+        return new Response('Score submission must include a valid stats object.', { status: 400 });
+      }
 
       // Sanitize the player name: trim whitespace, limit length, uppercase, allow specific characters
       const name = newScoreEntry.name.trim().substring(0, 18).toUpperCase().replace(/[^A-Z0-9\s_-]/g, '');
