@@ -1166,6 +1166,9 @@
         let waveEnemiesSpawned = 0;
         let waveEnemiesRequired = 0;
         let submittedPlayerNameThisSession = null; // ADDED: Track submitted name for the current session
+        // ADDED: Duration tracking variables
+        let waveStartTime = 0;
+        let totalGameDurationSeconds = 0;
         // NEW: Keyboard control variables
         let keyboardSelectedBaseIndex = -1; // -1 = none, 0-2 ground, 3-5 satellite
         let reticleX = INTERNAL_WIDTH / 2;
@@ -1177,6 +1180,8 @@
         let frameCount = 0;
         let frameTimes = [];
         const FRAME_SAMPLE_SIZE = 60; // Number of frames to sample for performance
+        // ADDED: Debug logging flag
+        window.enableDebugLogging = false;
 
         // --- ADDED: Web Audio API Setup ---
         let audioContext;
@@ -2354,6 +2359,7 @@
                 console.log(`initWave: Entered for wave ${waveIndex}`);
                 currentWave = waveIndex;
                 waveTimer = 0; // Reset wave timer
+                waveStartTime = Date.now(); // ADDED: Start wave timer
 
                 const effectiveWaveIndex = Math.min(waveIndex, waveDefinitions.length - 1);
                 if (!waveDefinitions || waveDefinitions.length === 0) {
@@ -2605,6 +2611,13 @@
             } catch (error) { console.error("Error during startGame:", error); showMessage("STARTUP ERROR", `Failed to start game: ${error.message}`, "Check console for details."); isGameOver = true; }
         }
         function nextWave() {
+            // ADDED: Accumulate wave duration
+            if (waveStartTime > 0) {
+                const waveDuration = (Date.now() - waveStartTime) / 1000;
+                totalGameDurationSeconds += waveDuration;
+                console.log(`Wave ${currentWave + 1} duration: ${waveDuration.toFixed(1)}s. Total duration: ${totalGameDurationSeconds.toFixed(1)}s`);
+                waveStartTime = 0; // Reset for next wave start in initWave
+            }
             let bonusEarned = calculateBonus();
             score += Math.round(bonusEarned * difficultyScoreMultiplier);
             gameTotalScore += Math.round(bonusEarned * difficultyScoreMultiplier);
@@ -2643,6 +2656,13 @@
             console.log("Game Over triggered.");
             isGameOver = true;
             gameHasStarted = false; transitioningWave = false; isPaused = false;
+            // ADDED: Accumulate final wave duration on game over
+            if (waveStartTime > 0) {
+                const waveDuration = (Date.now() - waveStartTime) / 1000;
+                totalGameDurationSeconds += waveDuration;
+                console.log(`Final wave (${currentWave + 1}) duration: ${waveDuration.toFixed(1)}s. Total duration: ${totalGameDurationSeconds.toFixed(1)}s`);
+                waveStartTime = 0;
+            }
             bonusMissileCount = 0; baseShields = [null, null, null];
             isBombArmed = false; activeSonicWave = null;
             canvas.style.cursor = 'default'; // Change cursor back from crosshair/cell
@@ -4270,10 +4290,10 @@
             return;
           }
 
-          // Collect stats for immediate submission
-          const gameStats = {
-            missilesFired: statsMissilesFired,
-            enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
+            // Collect stats for immediate submission
+            const gameStats = {
+              missilesFired: statsMissilesFired,
+              enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
             planeBombsDestroyed: statsPlaneBombsDestroyed,
             planesDestroyed: statsPlanesDestroyed,
             citiesLost: statsCitiesLost,
@@ -4282,9 +4302,10 @@
             shieldBombsDestroyed: statsShieldBombsDestroyed,
             difficulty: selectedDifficultyName,
             missileSpeedLevel: playerMissileSpeedLevel,
-            explosionRadiusLevel: explosionRadiusLevel,
-            accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0")
-          };
+              explosionRadiusLevel: explosionRadiusLevel,
+              accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0"),
+              duration: Math.round(totalGameDurationSeconds) // ADDED: Include total duration
+            };
 
           submitScoreButton.disabled = true;
           submissionStatus.textContent = "Submitting...";
@@ -4314,7 +4335,12 @@
             // Continue without signature - server will decide whether to accept
           }
 
-          console.log("Submitting score data:", JSON.stringify(scoreDataToSubmit));
+          // Conditionally log the full payload
+          if (window.enableDebugLogging) {
+            console.log("Submitting score data (Debug):", JSON.stringify(scoreDataToSubmit));
+          } else {
+            console.log("Submitting score data (Non-Debug)..."); // Log less detail for regular users
+          }
 
           // Continue with your existing function logic
           const result = await submitScoreData(scoreDataToSubmit);
@@ -4578,6 +4604,7 @@
                 // Reset game state variables
                 score = 0; gameTotalScore = 0; currentWave = -1; consecutiveIntercepts = 0; scoreMultiplier = 1.0;
                 playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; bonusMissileCount = 0;
+                totalGameDurationSeconds = 0; waveStartTime = 0; // ADDED: Reset duration timers
                 storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
                 inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null;
                 satelliteBases = []; baseShields = [null, null, null]; cities = []; bases = []; incomingMissiles = []; playerMissiles = []; explosions = []; planes = []; planeBombs = [];
@@ -4906,7 +4933,26 @@
                         // Optional: Notify user they have scores waiting to sync
                     }
                 }
+                // Extra brace removed from here
             }, 1000); // 1 second delay
+
+            // --- [NEW] Fetch debug status on load (using IIAFE) ---
+            (async () => {
+              try {
+                  const debugResponse = await fetch('/check-debug-status');
+                  if (debugResponse.ok) {
+                      const debugData = await debugResponse.json();
+                      window.enableDebugLogging = debugData.isDebug;
+                      console.log(`Debug logging enabled: ${window.enableDebugLogging}`);
+                  } else {
+                      console.warn('Failed to fetch debug status from server.');
+                  }
+              } catch (error) {
+                  console.error('Error fetching debug status:', error);
+              }
+            })(); // Immediately invoke the async function
+            // --- END Fetch debug status ---
+
         }; // End of window.onload
 
     </script>

@@ -138,6 +138,7 @@ export async function onRequest(context) {
         
         // Verify signature if secret key is available
         if (env.SCORE_SECRET_KEY) {
+          console.log('SCORE_SECRET_KEY found, attempting signature verification...'); // ADDED: Confirmation log
           if (!newScoreEntry.signature) {
             console.warn('Missing signature in score submission');
             return new Response('Missing signature', { status: 403 });
@@ -213,7 +214,8 @@ export async function onRequest(context) {
           accuracy: 'number',
           difficulty: 'string',
           missileSpeedLevel: 'number',
-          explosionRadiusLevel: 'number'
+          explosionRadiusLevel: 'number',
+          duration: 'number' // ADDED: Duration field
         };
         
         // Process each field if it matches expected type
@@ -283,8 +285,22 @@ export async function onRequest(context) {
             }
             // Note: We don't check planeBombsDestroyed as it's highly variable per plane.
         }
-        scoreDataToAdd.flagged_killcounts = killCountsFlagged; // Add the flag
-        // --- END Kill Count Plausibility Check ---
+        scoreDataToAdd.flagged_killcounts = killCountsFlagged; // Add the kill count flag
+
+        // --- ADDED: Duration Plausibility Check ---
+        let durationFlagged = false;
+        if (wave !== undefined && wave > 0 && sanitizedStats.duration !== undefined) {
+            if (!isDurationPlausible(wave, sanitizedStats.duration)) {
+                durationFlagged = true;
+                console.warn(`Flagged: Wave ${wave}, Duration (${sanitizedStats.duration}s) seems implausible.`);
+            }
+        } else if (sanitizedStats.duration === undefined) {
+             // Flag if duration is missing, as client should now always send it
+             durationFlagged = true;
+             console.warn(`Flagged: Duration missing from submission for wave ${wave}.`);
+        }
+        scoreDataToAdd.flagged_duration = durationFlagged; // Add the duration flag
+        // --- END Duration Plausibility Check ---
 
       } // End of stats processing block
 
@@ -479,5 +495,35 @@ function calculateMaxEnemiesForWave(targetWave) {
     maxCounts.totalMissileTypes = maxCounts.missile + maxCounts.smart_bomb + maxCounts.mirv;
 
     return maxCounts;
+}
+
+/**
+ * Checks if the reported game duration is plausible for the given wave.
+ * @param {number} wave - The wave number (1-based).
+ * @param {number} durationSeconds - The total game duration in seconds.
+ * @returns {boolean} - True if the duration seems plausible, false otherwise.
+ */
+function isDurationPlausible(wave, durationSeconds) {
+    if (typeof wave !== 'number' || wave <= 0 || typeof durationSeconds !== 'number' || durationSeconds < 0) {
+        return false; // Invalid input
+    }
+
+    // Basic checks:
+    // - Minimum average time per wave (e.g., 5 seconds) for higher waves
+    // - Maximum average time per wave (e.g., 5 minutes) to catch absurdly long durations
+    const minAvgTimePerWave = 5; // seconds
+    const maxAvgTimePerWave = 300; // seconds (5 minutes)
+
+    const averageTime = durationSeconds / wave;
+
+    if (wave > 5 && averageTime < minAvgTimePerWave) {
+        return false; // Too fast for later waves
+    }
+    if (averageTime > maxAvgTimePerWave) {
+        return false; // Too slow
+    }
+
+    // Could add more sophisticated checks later if needed
+    return true;
 }
 // --- END ADDED Logic ---
