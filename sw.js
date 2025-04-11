@@ -2,7 +2,7 @@
 
 // --- Configuration ---
 // Increment this version number when you update assets or caching logic
-const APP_VERSION = 'v24'; // Incremented version
+const APP_VERSION = 'v25'; // Incremented version
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
 const DATA_CACHE_NAME = `missile-command-data-cache-${APP_VERSION}`; // Separate cache for dynamic data
 

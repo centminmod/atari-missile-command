@@ -4345,21 +4345,36 @@
           };
 
           // Add signature if possible
-          try {
-            const secretKey = await getGameSecret();
-            console.log("Secret key fetch result:", secretKey ? "Success" : "Failed");
-            
-            if (secretKey) {
-              const signature = await generateScoreSignature(scoreDataToSubmit, secretKey);
-              console.log("Generated signature:", signature.substring(0, 10) + "...");
-              scoreDataToSubmit.signature = signature;
-            } else {
-              console.warn("Could not get secret key for signature");
+            try {
+              const secretKey = await getGameSecret();
+              
+              if (window.enableDebugLogging) {
+                console.log("Secret key fetch result:", secretKey ? "Success" : "Failed");
+              }
+              
+              if (secretKey) {
+                const signature = await generateScoreSignature(scoreDataToSubmit, secretKey);
+                
+                if (window.enableDebugLogging) {
+                  console.log("Generated signature:", signature.substring(0, 10) + "...");
+                } else {
+                  console.log("Score signature generated");
+                }
+                
+                scoreDataToSubmit.signature = signature;
+              } else {
+                // Keep warning for both debug and non-debug as it's important
+                console.warn("Could not get secret key for signature");
+              }
+            } catch (e) {
+              // Keep error log for both cases, but limit details for non-debug
+              if (window.enableDebugLogging) {
+                console.error("Failed to generate signature:", e);
+              } else {
+                console.error("Failed to generate score signature");
+              }
+              // Continue without signature - server will decide whether to accept
             }
-          } catch (e) {
-            console.error("Failed to generate signature:", e);
-            // Continue without signature - server will decide whether to accept
-          }
 
           // Conditionally log the full payload
           if (window.enableDebugLogging) {
