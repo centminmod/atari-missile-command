@@ -110,15 +110,26 @@ export async function onRequest(context) {
       let scores = storedScores || []; // Default to empty array if no scores exist
 
       // Slice the scores array based on the requested limit *before* returning
-      scores = scores.slice(0, limit);
+      const limitedScores = scores.slice(0, limit);
 
-      console.log(`Returning top ${scores.length} scores:`, JSON.stringify(scores));
+      // IMPORTANT: Ensure the full stats object is included for each score
+      // The current code seems to store the full entry including stats,
+      // so just returning the sliced array should be sufficient, assuming
+      // the 'scores' array retrieved from KV contains the full objects.
+      // Let's log one entry to confirm structure before returning.
+      if (limitedScores.length > 0) {
+        console.log('Sample score entry being returned (GET):', JSON.stringify(limitedScores[0]));
+      } else {
+        console.log('No scores to return.');
+      }
+
+      console.log(`Returning top ${limitedScores.length} scores.`); // Simplified log
 
       // Get CORS headers
       const corsHeaders = handleCors(request, env);
 
-      // Return the (potentially sliced) scores array as JSON
-      return new Response(JSON.stringify(scores), {
+      // Return the limited scores array as JSON
+      return new Response(JSON.stringify(limitedScores), {
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders

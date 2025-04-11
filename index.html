@@ -3988,14 +3988,25 @@
                 }
             }
 
-            // No stats data available - show basic info + date
+            // --- ADDED: Format Duration ---
+            let formattedDuration = 'N/A';
+            if (playerData.stats && typeof playerData.stats.duration === 'number' && playerData.stats.duration >= 0) {
+                const totalSeconds = playerData.stats.duration;
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = Math.round(totalSeconds % 60); // Round seconds
+                formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            // --- END ADDED ---
+
+            // No stats data available - show basic info + date + duration (if somehow available)
             if (!playerData.stats) {
                 statsModal.innerHTML = `
                     <h2 style="color: #ffff00; text-align: center; margin-bottom: 10px;">Player: ${playerData.name}</h2>
                     <div style="text-align: center; margin-bottom: 15px; line-height: 1.5;">
                         <p style="margin: 0; color: #ffffff; font-size: 14px;">Score: $${playerData.score}</p>
                         <p style="margin: 0;">Wave: ${playerData.wave || '?'} | Difficulty: Unknown</p>
-                        <p style="margin: 0; font-size: 10px; color: #aaaaaa;">${formattedDate}</p>
+                        <p style="margin: 0; font-size: 8px; color: #aaaaaa;">${formattedDate}</p> {/* Font size changed */}
+                        <p style="margin: 0; font-size: 8px; color: #aaaaaa;">Game Duration: ${formattedDuration}</p> {/* Duration added */}
                     </div>
                     <p style="text-align: center; color: #aaaaaa; margin-top: 20px;">No detailed stats available for this player.</p>
                     <button id="closeStatsButton" style="display: block; margin: 20px auto 0;">Close</button>
@@ -4018,7 +4029,8 @@
                 <div style="text-align: center; margin-bottom: 15px; line-height: 1.5;">
                     <p style="margin: 0; color: #ffffff; font-size: 14px;">Score: $${playerData.score}</p>
                     <p style="margin: 0;">Wave: ${playerData.wave || '?'} | Difficulty: ${stats.difficulty || 'Unknown'}</p>
-                    <p style="margin: 0; font-size: 10px; color: #aaaaaa;">${formattedDate}</p>
+                    <p style="margin: 0; font-size: 8px; color: #aaaaaa;">${formattedDate}</p>
+                    <p style="margin: 0; font-size: 8px; color: #aaaaaa;">Game Duration: ${formattedDuration}</p>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
