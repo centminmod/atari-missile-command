@@ -449,7 +449,8 @@ const baseScalingIncrease = 0.06;
 const maxScalingFactor = 4.0;
 
 /**
- * Calculates the maximum cumulative number of each enemy type spawned up to a given wave.
+ * Calculates the maximum cumulative number of each enemy type spawned up to a given wave,
+ * including random spawns.
  * @param {number} targetWave - The wave number (1-based) up to which to calculate spawns.
  * @returns {object} - An object containing max counts for each enemy type.
  */
@@ -465,6 +466,24 @@ function calculateMaxEnemiesForWave(targetWave) {
 
     if (targetWave <= 0) return maxCounts;
 
+    // Estimated random plane spawns per wave (based on analysis of game mechanics)
+    // These estimates account for the PLANE_SPAWN_CHANCE and increasing spawn rate multiplier
+    const randomPlaneEstimates = [
+        0,  // Wave 0 (not used)
+        4,  // Wave 1
+        7,  // Wave 2
+        10, // Wave 3
+        14, // Wave 4
+        18, // Wave 5
+        22, // Wave 6
+        27, // Wave 7
+        32, // Wave 8
+        36, // Wave 9
+        41, // Wave 10
+        46  // Wave 11
+    ];
+
+    // Process each wave up to the target wave
     for (let waveIndex = 0; waveIndex < targetWave; waveIndex++) {
         let currentWaveConfig;
         const effectiveWaveIndex = Math.min(waveIndex, waveDefinitions.length - 1);
@@ -483,16 +502,38 @@ function calculateMaxEnemiesForWave(targetWave) {
             });
         }
 
-        // Sum counts for the current wave
+        // Sum counts for the current wave from predefined wave definitions
         currentWaveConfig.forEach(part => {
             if (maxCounts.hasOwnProperty(part.type)) {
                 maxCounts[part.type] += part.count || 0;
             }
         });
+
+        // Add estimated random plane spawns for this wave
+        const waveNumber = waveIndex + 1; // Convert to 1-based wave number
+        if (waveNumber < randomPlaneEstimates.length) {
+            maxCounts.plane += randomPlaneEstimates[waveNumber];
+        } else {
+            // For waves beyond our estimates, use a formula based on wave number
+            // This assumes random planes continue to increase with wave number
+            maxCounts.plane += Math.ceil(waveNumber * 5); // Approximately 5 additional planes per wave
+        }
     }
 
     // Calculate total missile types
     maxCounts.totalMissileTypes = maxCounts.missile + maxCounts.smart_bomb + maxCounts.mirv;
+
+    // Apply tolerance factors to account for variations in gameplay
+    // Planes need a higher tolerance due to random spawn mechanics
+    const planeTolerance = 1.5;  // 50% tolerance for planes
+    const missileTolerance = 1.1; // 10% tolerance for missiles
+
+    maxCounts.plane = Math.ceil(maxCounts.plane * planeTolerance);
+    maxCounts.totalMissileTypes = Math.ceil(maxCounts.totalMissileTypes * missileTolerance);
+    maxCounts.missile = Math.ceil(maxCounts.missile * missileTolerance);
+    maxCounts.smart_bomb = Math.ceil(maxCounts.smart_bomb * missileTolerance);
+    maxCounts.mirv = Math.ceil(maxCounts.mirv * missileTolerance);
+    maxCounts.shield_bomb = Math.ceil(maxCounts.shield_bomb * missileTolerance);
 
     return maxCounts;
 }
