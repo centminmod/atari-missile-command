@@ -235,10 +235,19 @@ export async function onRequest(context) {
             score,
             stats: sanitizedStats
           }));
-          // Optionally flag suspicious entries but still accept them
-          sanitizedStats.flagged = true;
+          // --- MODIFICATION START ---
+          // Reject the score submission instead of just flagging it
+          const corsHeaders = handleCors(request, env); // Get CORS headers for the error response
+          return new Response(JSON.stringify({ success: false, error: 'Score rejected due to inconsistency with game statistics.' }), {
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders
+            },
+            status: 400, // Bad Request
+          });
+          // --- MODIFICATION END ---
         }
-        
+        // Only add stats if they are consistent (this line is reached only if isConsistent is true)
         scoreDataToAdd.stats = sanitizedStats;
       }
 
