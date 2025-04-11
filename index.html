@@ -2698,7 +2698,11 @@
                     };
 
                     localStorage.setItem(fixedStorageKey, JSON.stringify(dataToStore));
-                    console.log(`Saved game data (${gameClickData.length} clicks) to local storage key: ${fixedStorageKey}`);
+                    if (window.enableDebugLogging) {
+                        console.log(`Saved game data (${gameClickData.length} clicks) to local storage key: ${fixedStorageKey}`);
+                    } else {
+                        console.log("Game data saved to local storage");
+                    }
 
                 } catch (e) {
                     console.error("Failed to save game data to local storage:", e);
@@ -4133,7 +4137,11 @@
 
                 // Parse the successful JSON response from the Worker
                 const analysisResult = await response.json();
-                console.log("Received analysis:", analysisResult);
+                if (window.enableDebugLogging) {
+                    console.log("Received analysis:", analysisResult);
+                } else {
+                    console.log("Analysis results received");
+                }
 
                 // 4. Display the Analysis Result
                 messageTitle.textContent = "AI Gameplay Analysis";
@@ -4526,19 +4534,31 @@
         async function getGameSecret() {
           // Check if we already have the key in memory
           if (window.gameSecretKey) {
-            console.log("Using cached game secret key");
+            if (window.enableDebugLogging) {
+              console.log("Using cached game secret key");
+            }
             return window.gameSecretKey;
           }
           
           try {
-            console.log("Fetching game secret from server...");
+            if (window.enableDebugLogging) {
+              console.log("Fetching game secret from server...");
+            } else {
+              console.log("Authenticating...");
+            }
+            
             const response = await fetch('/game-secret');
-            console.log("Game secret response status:", response.status);
+            
+            if (window.enableDebugLogging) {
+              console.log("Game secret response status:", response.status);
+            }
             
             if (!response.ok) {
               console.error('Failed to get game secret, status:', response.status);
-              const text = await response.text();
-              console.error('Response text:', text);
+              if (window.enableDebugLogging) {
+                const text = await response.text();
+                console.error('Response text:', text);
+              }
               return null;
             }
             
@@ -4551,7 +4571,13 @@
             
             // Store the key in memory only (not localStorage)
             window.gameSecretKey = data.key;
-            console.log("Successfully obtained game secret");
+            
+            if (window.enableDebugLogging) {
+              console.log("Successfully obtained game secret");
+            } else {
+              console.log("Authentication successful");
+            }
+            
             return data.key;
           } catch (error) {
             console.error('Error fetching game secret:', error);
