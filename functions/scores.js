@@ -276,7 +276,7 @@ function validateSubmission(scoreData, clientIp) {
   };
 }
 
-async function onRequest(context) {
+export async function onRequest(context) {
   // Environment variable is available on context.env
   const { request, env } = context;
   const kvStore = env.LEADERBOARD_KV;
@@ -836,10 +836,3 @@ function isDurationPlausible(wave, durationSeconds) {
 
     return true;
 }
-
-export default {
-  async fetch(request, env, ctx) {
-    const context = { request, env, ctx };
-    return await onRequest(context);
-  }
-};
