@@ -1184,6 +1184,8 @@
         const FRAME_SAMPLE_SIZE = 60; // Number of frames to sample for performance
         // ADDED: Debug logging flag
         window.enableDebugLogging = false;
+        // NEW: Kill counting control variable
+        let useDeferredKillCounting = true; // Set to true to use new method, false for old
 
         // --- ADDED: Web Audio API Setup ---
         let audioContext;
@@ -1728,7 +1730,7 @@
             const ignoreEnemyObjectsWhenExploding = config.ignoreEnemyObjectsWhenExploding || false;
 
             return {
-                x: startX, y: startY, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, speed: speed, color: color, trailColor: trailColor, alive: true, trail: [{x: startX, y: startY}], isPlaneBomb: false, isSmartBomb: isSmartBomb, isMIRV: isMIRV, isSplit: isSplit, hasSplit: false, wavePartType: config.wavePartType, ignoreEnemyObjectsWhenExploding: ignoreEnemyObjectsWhenExploding,
+                x: startX, y: startY, targetX: target.x, targetY: target.y, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, speed: speed, color: color, trailColor: trailColor, alive: true, trail: [{x: startX, y: startY}], isPlaneBomb: false, isSmartBomb: isSmartBomb, isMIRV: isMIRV, isSplit: isSplit, hasSplit: false, wavePartType: config.wavePartType, ignoreEnemyObjectsWhenExploding: ignoreEnemyObjectsWhenExploding, countedAsDestroyed: false, // NEW: Flag for deferred counting
 
                 update() {
                     if (!this.alive) return;
@@ -1919,6 +1921,7 @@
                 size: size,
                 // IMPORTANT: Ensure the wavePartType is correctly set for counting
                 wavePartType: 'shield_bomb', // Fixed value to ensure proper counting
+                countedAsDestroyed: false, // NEW: Flag for deferred counting
                 
                 update() {
                     if (!this.alive) return;
@@ -2227,10 +2230,13 @@
                                     
                                     // If all shields destroyed, explode the shield bomb
                                     if (missile.shieldLayers <= 0) {
-                                        missile.alive = false;
+                                        missile.alive = false; // Mark as destroyed
                                         explosionMadeKill = true;
-                                        statsEnemyMissilesDestroyed++;
-                                        statsShieldBombsDestroyed++;
+                                        // Conditional immediate counting
+                                        if (!useDeferredKillCounting) {
+                                            statsEnemyMissilesDestroyed++;
+                                            statsShieldBombsDestroyed++;
+                                        }
                                         
                                         // Award points (3x normal missile points)
                                         let pointsToAdd = POINTS_PER_MISSILE * 3;
@@ -2283,10 +2289,17 @@
                                 }
                             } else {
                                 // Original code for regular missiles
-                                missile.alive = false; explosion.collidedMissiles.add(index); explosionMadeKill = true; statsEnemyMissilesDestroyed++; let pointsToAdd = POINTS_PER_MISSILE; if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { pointsToAdd += ACCURACY_BONUS_POINTS; statsAccuracyBonusHits++; messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; accuracyBonusMessageTimer = 120; comboMessageTimer = 0; /* Clear combo message if accuracy bonus occurs */ } const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; if (explosion.color === '#00ff00') explosion.killCount++; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color);
+                                missile.alive = false; // Mark as destroyed
+                                explosion.collidedMissiles.add(index);
+                                explosionMadeKill = true;
+                                // Conditional immediate counting
+                                if (!useDeferredKillCounting) {
+                                    statsEnemyMissilesDestroyed++;
+                                }
+                                let pointsToAdd = POINTS_PER_MISSILE; if (explosion.color === '#00ff00' && dist < ACCURACY_BONUS_THRESHOLD) { pointsToAdd += ACCURACY_BONUS_POINTS; statsAccuracyBonusHits++; messageBonusText.textContent = `ACCURACY BONUS +$${Math.round(ACCURACY_BONUS_POINTS * scoreMultiplier * difficultyScoreMultiplier)}!`; accuracyBonusMessageTimer = 120; comboMessageTimer = 0; /* Clear combo message if accuracy bonus occurs */ } const finalPoints = Math.round(pointsToAdd * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; if (explosion.color === '#00ff00') explosion.killCount++; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color);
                             }
-                        } 
-                    } 
+                        }
+                    }
                 });
 
                 // Original code for planes and bombs (modified to increment killCount)
@@ -3556,7 +3569,19 @@
                  activeSonicWave.y -= SONIC_WAVE_SPEED;
                  const waveTop = activeSonicWave.y - SONIC_WAVE_HEIGHT;
                  const waveBottom = activeSonicWave.y;
-                 incomingMissiles.forEach(missile => { if (missile.alive && missile.y >= waveTop && missile.y <= waveBottom) { missile.alive = false; statsEnemyMissilesDestroyed++; const finalPoints = Math.round(POINTS_PER_MISSILE * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color); } });
+                 incomingMissiles.forEach(missile => {
+                     if (missile.alive && missile.y >= waveTop && missile.y <= waveBottom) {
+                         missile.alive = false; // Mark as destroyed
+                         // Conditional immediate counting
+                         if (!useDeferredKillCounting) {
+                             if (missile.isShieldBomb) {
+                                 statsShieldBombsDestroyed++;
+                             }
+                             statsEnemyMissilesDestroyed++;
+                         }
+                         const finalPoints = Math.round(POINTS_PER_MISSILE * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(missile.x, missile.y, EXPLOSION_RADIUS_START, missile.color);
+                     }
+                 });
                  planeBombs.forEach(bomb => { if (bomb.alive && bomb.y >= waveTop && bomb.y <= waveBottom) { bomb.alive = false; statsPlaneBombsDestroyed++; const finalPoints = Math.round(PLANE_BOMB_POINTS * scoreMultiplier * difficultyScoreMultiplier); score += finalPoints; gameTotalScore += finalPoints; createExplosion(bomb.x, bomb.y, EXPLOSION_RADIUS_START * 0.8, bomb.color); } });
                  if (waveTop <= 0) { activeSonicWave.alive = false; activeSonicWave = null; updateSpecialWeaponsUI(); }
             }
@@ -3579,11 +3604,27 @@
             if (comboMessageTimer > 0) { // NEW: Handle combo message timer
                  comboMessageTimer--;
                  if (comboMessageTimer === 0 && accuracyBonusMessageTimer === 0) { // Only clear if accuracy message is also done
-                     messageBonusText.textContent = "";
-                 }
-            }
-        }
-        function updateUI() {
+                      messageBonusText.textContent = "";
+                  }
+             }
+
+             // --- NEW: Deferred Kill Counting Logic ---
+             if (useDeferredKillCounting) {
+                 incomingMissiles.forEach(missile => {
+                     if (!missile.alive && !missile.countedAsDestroyed) {
+                         if (missile.isShieldBomb) {
+                             statsShieldBombsDestroyed++;
+                         }
+                         statsEnemyMissilesDestroyed++;
+                         missile.countedAsDestroyed = true; // Mark as counted
+                     }
+                 });
+                 // Note: Plane bombs are counted immediately in their collision check,
+                 // as they don't have the same potential for multiple hits within a frame.
+             }
+             // --- END Deferred Kill Counting Logic ---
+         }
+         function updateUI() {
             scoreDisplay.textContent = `CURRENT SCORE: $${score}`;
             highScoreDisplay.textContent = `TOTAL: $${gameTotalScore}`; // Changed to display gameTotalScore
             waveDisplay.textContent = `WAVE: ${currentWave + 1}`;
