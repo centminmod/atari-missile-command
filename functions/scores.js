@@ -285,6 +285,7 @@ function validateSubmission(scoreData, clientIp) {
         };
       }
     }
+  }
   
   // Score passed validation or we're in LOG_ONLY mode
   return { 
@@ -294,7 +295,7 @@ function validateSubmission(scoreData, clientIp) {
   };
 }
 
-async function onRequest(context) {
+export async function onRequest(context) {
   // Environment variable is available on context.env
   const { request, env } = context;
   const kvStore = env.LEADERBOARD_KV;
@@ -836,4 +837,3 @@ function isDurationPlausible(wave, durationSeconds) {
 
     return true;
 }
-} // Added closing brace at the end of the file
