@@ -480,6 +480,17 @@ export async function onRequest(context) {
           }
         });
 
+        // Convert gameStartTime to gameStartedAt ISO string
+        if (sanitizedStats.gameStartTime) {
+          try {
+            const startDate = new Date(sanitizedStats.gameStartTime);
+            // Add a formatted version while keeping the original timestamp
+            sanitizedStats.gameStartedAt = startDate.toISOString();
+          } catch (e) {
+            console.warn("Could not format gameStartTime:", e);
+          }
+        }
+
         // Perform enhanced validation with our new function
         const clientIp = request.headers.get('CF-Connecting-IP');
         const validationResult = validateSubmission({
