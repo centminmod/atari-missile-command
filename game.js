@@ -217,6 +217,7 @@ const PLANE_BOMB_COLOR = '#FFA500';
 const PLANE_BOMB_TRAIL_COLOR = 'rgba(255, 165, 0, 0.4)';
 
 // Game State Variables
+let gameStartTimestamp = 0;
 let score = 0;
 let gameTotalScore = 0;
 let highScore = 0;
@@ -1788,7 +1789,7 @@ function checkWaveEnd() {
 // --- Game Flow ---
 function startGame() {
     try {
-        console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding..."); optimizeCanvasForOrientation();
+        console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding..."); optimizeCanvasForOrientation(); gameStartTimestamp = Date.now(); console.log(`Game started at: ${new Date(gameStartTimestamp).toISOString()}`);
         score = 0; scoreSubmitted = false; gameTotalScore = 0; gameClickData = []; storeActions = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
         storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
         inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null; satelliteBases = []; baseShields = [null, null, null]; planes = []; planeBombs = []; incomingMissiles = []; playerMissiles = []; explosions = []; statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0; playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; consecutiveIntercepts = 0; scoreMultiplier = 1.0; highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0');
@@ -1870,6 +1871,18 @@ function gameOver() {
     console.log("Game Over triggered.");
     isGameOver = true;
     gameHasStarted = false; transitioningWave = false; isPaused = false;
+    
+    // ADDED: Calculate total game duration from start timestamp
+    const gameEndTimestamp = Date.now();
+    const actualGameDuration = (gameEndTimestamp - gameStartTimestamp) / 1000; // in seconds
+    console.log(`Game ended at: ${new Date(gameEndTimestamp).toISOString()}`);
+    console.log(`Total game time from button click: ${actualGameDuration.toFixed(1)}s`);
+    
+    // Compare with tracked wave durations for validation
+    if (Math.abs(actualGameDuration - totalGameDurationSeconds) > 5) {
+        console.warn(`Duration discrepancy: Wave-based calculation (${totalGameDurationSeconds.toFixed(1)}s) differs from start-to-end time (${actualGameDuration.toFixed(1)}s)`);
+    }
+    
     // ADDED: Accumulate final wave duration on game over
     if (waveStartTime > 0) {
         const waveDuration = (Date.now() - waveStartTime) / 1000;
@@ -1877,6 +1890,7 @@ function gameOver() {
         console.log(`Final wave (${currentWave + 1}) duration: ${waveDuration.toFixed(1)}s. Total duration: ${totalGameDurationSeconds.toFixed(1)}s`);
         waveStartTime = 0;
     }
+    
     bonusMissileCount = 0; baseShields = [null, null, null];
     isBombArmed = false; activeSonicWave = null;
     canvas.style.cursor = 'default'; // Change cursor back from crosshair/cell
@@ -1894,6 +1908,13 @@ function gameOver() {
                 timestamp: timestamp,
                 score: gameTotalScore,
                 wave: currentWave + 1,
+                // ADDED: Include game timing information
+                timingInfo: {
+                    gameStartTimestamp: gameStartTimestamp,
+                    gameEndTimestamp: gameEndTimestamp,
+                    totalDurationSeconds: actualGameDuration,
+                    calculatedDurationSeconds: totalGameDurationSeconds
+                },
                 // Include game stats for analysis context
                 stats: {
                     missilesFired: statsMissilesFired,
@@ -1904,6 +1925,8 @@ function gameOver() {
                     citiesLost: statsCitiesLost,
                     basesLost: statsBasesLost,
                     accuracyBonusHits: statsAccuracyBonusHits,
+                    // ADDED: Save game start timestamp directly in stats for submission
+                    gameStartTime: gameStartTimestamp,
                     // ADDED: Save wave stats
                     waveStats: waveStats.map(stat => stat ? stat.spawnToCompletionMs : null) // Store only the duration in ms
                 },
@@ -1965,6 +1988,8 @@ function gameOver() {
                     missileSpeedLevel: playerMissileSpeedLevel,
                     explosionRadiusLevel: explosionRadiusLevel,
                     accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0"),
+                    // ADDED: Include game start timestamp
+                    gameStartTime: gameStartTimestamp,
                     // ADDED: Save wave stats for offline scores too
                     waveStats: waveStats.map(stat => stat ? stat.spawnToCompletionMs : null)
                 },
@@ -2084,6 +2109,10 @@ function gameOver() {
     }
     stopMusic(); // ADDED: Stop music on game over
     submittedPlayerNameThisSession = null; // Reset submitted name tracker
+    
+    // We don't reset gameStartTimestamp here because we need it for score submission
+    // It will be reset when a new game starts or when the game is fully restarted
+    
     console.log("Game Over processing complete.");
 }
 
@@ -3628,21 +3657,23 @@ async function submitHighScore() {
     planeBombsDestroyed: statsPlaneBombsDestroyed,
     planesDestroyed: statsPlanesDestroyed,
     citiesLost: statsCitiesLost,
-                    basesLost: statsBasesLost,
-                    accuracyBonusHits: statsAccuracyBonusHits,
-                    shieldBombsDestroyed: statsShieldBombsDestroyed,
-                    difficulty: selectedDifficultyName,
-                    missileSpeedLevel: playerMissileSpeedLevel,
-                    explosionRadiusLevel: explosionRadiusLevel,
-                    accuracy: parseFloat(statsMissilesFired > 0 ?
-                      ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) :
-                      "0.0"),
-                    duration: Math.round(totalGameDurationSeconds),
-                    // ADDED: Include wave stats in submission
-                    waveStats: waveStats.map(stat => stat ? stat.spawnToCompletionMs : null)
-                  };
+    basesLost: statsBasesLost,
+    accuracyBonusHits: statsAccuracyBonusHits,
+    shieldBombsDestroyed: statsShieldBombsDestroyed,
+    difficulty: selectedDifficultyName,
+    missileSpeedLevel: playerMissileSpeedLevel,
+    explosionRadiusLevel: explosionRadiusLevel,
+    accuracy: parseFloat(statsMissilesFired > 0 ?
+      ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) :
+      "0.0"),
+    duration: Math.round(totalGameDurationSeconds),
+    // ADDED: Include gameStartTime in submitted stats
+    gameStartTime: gameStartTimestamp,
+    // ADDED: Include wave stats in submission
+    waveStats: waveStats.map(stat => stat ? stat.spawnToCompletionMs : null)
+  };
 
-                  submitScoreButton.disabled = true;
+  submitScoreButton.disabled = true;
   submissionStatus.textContent = "Submitting...";
   submissionStatus.style.color = "#00ff00";
 
@@ -3654,36 +3685,36 @@ async function submitHighScore() {
   };
 
   // Add signature if possible
-    try {
-      const secretKey = await getGameSecret();
-      
-      if (window.enableDebugLogging) {
-        console.log("Secret key fetch result:", secretKey ? "Success" : "Failed");
-      }
-      
-      if (secretKey) {
-        const signature = await generateScoreSignature(scoreDataToSubmit, secretKey);
-        
-        if (window.enableDebugLogging) {
-          console.log("Generated signature:", signature.substring(0, 10) + "...");
-        } else {
-          console.log("Score signature generated");
-        }
-        
-        scoreDataToSubmit.signature = signature;
-      } else {
-        // Keep warning for both debug and non-debug as it's important
-        console.warn("Could not get secret key for signature");
-      }
-    } catch (e) {
-      // Keep error log for both cases, but limit details for non-debug
-      if (window.enableDebugLogging) {
-        console.error("Failed to generate signature:", e);
-      } else {
-        console.error("Failed to generate score signature");
-      }
-      // Continue without signature - server will decide whether to accept
+  try {
+    const secretKey = await getGameSecret();
+    
+    if (window.enableDebugLogging) {
+      console.log("Secret key fetch result:", secretKey ? "Success" : "Failed");
     }
+    
+    if (secretKey) {
+      const signature = await generateScoreSignature(scoreDataToSubmit, secretKey);
+      
+      if (window.enableDebugLogging) {
+        console.log("Generated signature:", signature.substring(0, 10) + "...");
+      } else {
+        console.log("Score signature generated");
+      }
+      
+      scoreDataToSubmit.signature = signature;
+    } else {
+      // Keep warning for both debug and non-debug as it's important
+      console.warn("Could not get secret key for signature");
+    }
+  } catch (e) {
+    // Keep error log for both cases, but limit details for non-debug
+    if (window.enableDebugLogging) {
+      console.error("Failed to generate signature:", e);
+    } else {
+      console.error("Failed to generate score signature");
+    }
+    // Continue without signature - server will decide whether to accept
+  }
 
   // Conditionally log the full payload
   if (window.enableDebugLogging) {
@@ -3695,46 +3726,50 @@ async function submitHighScore() {
   // Continue with your existing function logic
   const result = await submitScoreData(scoreDataToSubmit);
 
-if (result.success) {
-  submissionStatus.textContent = "Score Submitted!";
-  submissionStatus.style.color = "#00ff00";
-  scoreSubmitted = true; // Mark as submitted for this game instance
-  submittedPlayerNameThisSession = name; // ADDED: Store name for this session
-  // Save the player name for future use
-  localStorage.setItem('missileCommandPlayerName', name);
-} else {
-  // If submission failed but we're online, store it locally to try again later
-  if (navigator.onLine) {
-    submissionStatus.textContent = `Submission Failed: ${result.error || 'Unknown error'}`;
-    submissionStatus.style.color = "#ff0000";
-    submitScoreButton.disabled = false; // Re-enable on failure
+  if (result.success) {
+    submissionStatus.textContent = "Score Submitted!";
+    submissionStatus.style.color = "#00ff00";
+    scoreSubmitted = true; // Mark as submitted for this game instance
+    submittedPlayerNameThisSession = name; // ADDED: Store name for this session
+    // Save the player name for future use
+    localStorage.setItem('missileCommandPlayerName', name);
     
-    // Store the failed submission attempt locally to retry later
-    try {
-      const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
-      scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
-      storedScores.push(scoreDataToSubmit);
-      localStorage.setItem('storedScores', JSON.stringify(storedScores));
-      console.log(`Failed score submission stored locally for later retry.`);
-    } catch (e) {
-      console.error("Error storing failed submission:", e);
-    }
+    // NOW we can reset the gameStartTimestamp since submission is complete
+    gameStartTimestamp = 0;
+    
   } else {
-    // We're offline now, so store the score for later
-    submissionStatus.textContent = "Offline. Score saved locally.";
-    submissionStatus.style.color = "#ffff00";
-    
-    try {
-      const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
-      scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
-      storedScores.push(scoreDataToSubmit);
-      localStorage.setItem('storedScores', JSON.stringify(storedScores));
-      console.log(`Score stored locally due to going offline.`);
-    } catch (e) {
-      console.error("Error storing offline submission:", e);
+    // If submission failed but we're online, store it locally to try again later
+    if (navigator.onLine) {
+      submissionStatus.textContent = `Submission Failed: ${result.error || 'Unknown error'}`;
+      submissionStatus.style.color = "#ff0000";
+      submitScoreButton.disabled = false; // Re-enable on failure
+      
+      // Store the failed submission attempt locally to retry later
+      try {
+        const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
+        scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
+        storedScores.push(scoreDataToSubmit);
+        localStorage.setItem('storedScores', JSON.stringify(storedScores));
+        console.log(`Failed score submission stored locally for later retry.`);
+      } catch (e) {
+        console.error("Error storing failed submission:", e);
+      }
+    } else {
+      // We're offline now, so store the score for later
+      submissionStatus.textContent = "Offline. Score saved locally.";
+      submissionStatus.style.color = "#ffff00";
+      
+      try {
+        const storedScores = JSON.parse(localStorage.getItem('storedScores') || '[]');
+        scoreDataToSubmit.timestamp = Date.now(); // Add timestamp
+        storedScores.push(scoreDataToSubmit);
+        localStorage.setItem('storedScores', JSON.stringify(storedScores));
+        console.log(`Score stored locally due to going offline.`);
+      } catch (e) {
+        console.error("Error storing offline submission:", e);
+      }
     }
   }
-}
 }
 
 // --- [MODIFIED] Function to Sync Stored Scores ---
@@ -3820,6 +3855,12 @@ async function syncStoredScores() {
   } else {
     localStorage.removeItem('storedScores'); // Remove item if all scores were synced
     console.log(`Sync complete. Synced: ${syncedCount}, Failed: ${failedCount}. All stored scores processed.`);
+  }
+
+  if (remainingScores.length === 0) {
+      // If all scores were synced, we can reset the timestamp
+      gameStartTimestamp = 0;
+      console.log("All scores synced, reset game start timestamp");
   }
 
   return { synced: syncedCount, failed: failedCount }; // Return the result object
@@ -3972,7 +4013,7 @@ document.querySelectorAll('#restartButton').forEach(button => {
         // Reset game state variables
         score = 0; gameTotalScore = 0; currentWave = -1; consecutiveIntercepts = 0; scoreMultiplier = 1.0;
         playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; bonusMissileCount = 0;
-        totalGameDurationSeconds = 0; waveStartTime = 0; waveAllSpawnedTimestamp = 0; waveStats = []; // ADDED: Reset duration/stat tracking
+        totalGameDurationSeconds = 0; waveStartTime = 0; waveAllSpawnedTimestamp = 0; waveStats = []; gameStartTimestamp = 0;
         storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
         inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null;
         satelliteBases = []; baseShields = [null, null, null]; cities = []; bases = []; incomingMissiles = []; playerMissiles = []; explosions = []; planes = []; planeBombs = [];
@@ -4194,6 +4235,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // --- MODIFIED: window.onload ---
 window.onload = () => {
+    // Reset game state variables
+    gameStartTimestamp = 0;
+
     // Set canvas dimensions
     canvas.width = INTERNAL_WIDTH; canvas.height = INTERNAL_HEIGHT;
 

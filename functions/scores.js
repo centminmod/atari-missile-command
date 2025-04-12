@@ -459,7 +459,8 @@ export async function onRequest(context) {
           difficulty: 'string',
           missileSpeedLevel: 'number',
           explosionRadiusLevel: 'number',
-          duration: 'number' // ADDED: Duration field
+          duration: 'number',
+          gameStartTime: 'number'
         };
         
         // Process each field if it matches expected type
