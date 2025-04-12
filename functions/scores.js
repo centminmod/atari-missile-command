@@ -276,7 +276,7 @@ function validateSubmission(scoreData, clientIp) {
   };
 }
 
-export async function onRequest(context) {
+async function onRequest(context) {
   // Environment variable is available on context.env
   const { request, env } = context;
   const kvStore = env.LEADERBOARD_KV;
