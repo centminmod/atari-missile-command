@@ -3636,6 +3636,11 @@ async function submitScoreData(scoreData) {
 
         if (!response.ok) {
             const errorText = await response.text();
+            // --- AUTO-CLEAR LOCAL STORED SCORES ON 403 INVALID SESSION TOKEN ---
+            if (response.status === 403 && errorText.includes('Invalid or expired session token')) {
+                localStorage.removeItem('storedScores');
+                console.warn('Cleared local stored scores due to invalid/expired session token.');
+            }
             throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
 
