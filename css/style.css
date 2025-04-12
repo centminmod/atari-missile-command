@@ -1,0 +1,648 @@
+/* --- General Body and Font --- */
+html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px; box-sizing: border-box; min-height: 100vh; background-color: #000; font-family: 'Press Start 2P', cursive; color: #00ff00; }
+
+/* ADDED: Touch optimization */
+html {
+    touch-action: manipulation; /* Optimizes touch actions */
+}
+
+/* This ensures no selection is possible during gameplay */
+#gameCanvas, #specialWeaponsUI, #controlsContainer {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Improve tap target sizes for mobile */
+button, .weaponControl, .buyButton {
+    min-height: 34px; /* Minimum height recommended for touch targets */
+}
+
+/* Additional mobile optimization */
+* {
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+}
+
+.pwa-install-instructions {
+  display: none; /* Hidden by default */
+  position: fixed; /* Or absolute/relative depending on placement */
+  bottom: 10px; /* Example positioning */
+  left: 10px;
+  right: 10px;
+  max-width: 400px; /* Adjust width */
+  margin: 0 auto; /* Center if using fixed/absolute */
+  padding: 15px;
+  background-color: rgba(50, 50, 50, 0.9); /* Dark background */
+  color: #ffffff; /* White text */
+  border: 1px solid #888888;
+  border-radius: 8px;
+  z-index: 1000; /* Make sure it's on top */
+  font-size: clamp(11px, 2.5vw, 14px); /* Responsive font size */
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.pwa-install-instructions p {
+  margin: 0 0 10px 0;
+  font-weight: bold;
+  color: #ffff00; /* Yellow heading text */
+}
+
+.pwa-install-instructions ol {
+  list-style-position: inside;
+  text-align: left;
+  padding: 0 10px;
+  margin: 0 0 15px 0;
+}
+
+.pwa-install-instructions li {
+  margin-bottom: 8px;
+}
+
+/* Style for the optional dismiss button */
+.pwa-install-instructions button {
+  font-family: 'Press Start 2P', cursive; /* Match your game's font */
+  background-color: #444;
+  color: #cccccc;
+  border: 1px solid #aaaaaa;
+  padding: 5px 10px;
+  font-size: clamp(10px, 2.2vw, 12px);
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.pwa-install-instructions button:hover {
+    background-color: #555;
+    color: #ffffff;
+}
+
+/* Use display-mode media query to show ONLY when running in a browser tab */
+@media all and (display-mode: browser) {
+  .pwa-install-instructions.show-instructions { /* Target only when JS adds 'show-instructions' class */
+    display: block;
+  }
+}
+
+/* Optional: Hide the regular install button on iOS since it won't work */
+.ios-device #installPwaButton { /* If you add 'ios-device' class via JS */
+    display: none !important;
+}
+
+/* --- Game Title --- */
+h1#mainTitle { color: #ff0000; font-size: clamp(20px, 5vw, 32px); margin-bottom: 15px; text-shadow: 2px 2px #ffff00; text-align: center; }
+
+/* --- Game Canvas Container --- */
+#canvasContainer { position: relative; width: 100%; max-width: 800px; aspect-ratio: 800 / 600; margin: 0 auto; }
+
+/* --- Game Canvas --- */
+#gameCanvas { display: none; background-color: #111; border: 2px solid #00ff00; box-shadow: 0 0 15px #00ff00; cursor: crosshair; width: 100%; height: 100%; image-rendering: pixelated; position: absolute; top: 0; left: 0; }
+
+/* --- UI Container --- */
+#uiContainer { display: none; flex-wrap: wrap; justify-content: space-around; align-items: center; width: 100%; max-width: 800px; padding: 8px 0; font-size: clamp(9px, 2.5vw, 11px); gap: 8px; border-bottom: 1px solid #005500; margin-bottom: 5px; }
+#score, #highScore, #wave, #citiesLeft, #multiplier { flex-grow: 1; text-align: center; min-width: 80px; }
+#highScore { color: #aaa; }
+#multiplier { color: #ffff00; font-weight: bold; text-shadow: 1px 1px #000; }
+
+/* --- Bonus Indicator --- */
+#bonusIndicator { color: #ffaa00; font-weight: bold; text-shadow: 1px 1px #000; display: none; order: 5; text-align: center; flex-basis: 100%; margin-top: 5px; }
+
+/* --- Controls Container --- */
+#controlsContainer { margin-top: 10px; display: none; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 800px; }
+
+/* --- Special Weapons UI --- */
+#specialWeaponsUI { background-color: #222; border: 1px solid #444; border-radius: 8px; padding: 8px 10px; margin-top: 10px; display: none; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center; width: auto; max-width: 95%; }
+.weaponControl { display: flex; flex-direction: column; align-items: center; cursor: pointer; border: 2px solid transparent; padding: 5px; border-radius: 5px; transition: border-color 0.3s, background-color 0.3s; }
+.weaponControl.armed { border-color: #ff0000; background-color: rgba(255, 0, 0, 0.2); }
+.weaponControl:hover:not(.disabled) { background-color: rgba(0, 255, 0, 0.1); }
+.weaponControl.disabled { opacity: 0.4; cursor: not-allowed; }
+.weaponIcon { font-size: clamp(18px, 4vw, 24px); width: 30px; height: 30px; line-height: 30px; text-align: center; border: 1px solid #888; border-radius: 4px; margin-bottom: 4px; }
+.weaponCount { font-size: clamp(10px, 2vw, 12px); color: #ffff00; }
+
+/* --- Start Menu --- */
+#startMenuContainer { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; padding: 10px; box-sizing: border-box; }
+#difficultySelection { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-top: 0; padding: 15px; border: 2px solid #ffff00; border-radius: 10px; background-color: rgba(30, 30, 0, 0.5); width: 100%; box-sizing: border-box; }
+#difficultySelection h3 { margin: 0 0 10px 0; color: #ffff00; font-size: clamp(16px, 4vw, 18px); text-align: center; }
+#startHighScore { color: #aaa; font-size: clamp(12px, 3vw, 14px); margin-top: 15px; text-align: center; }
+
+/* --- Buttons --- */
+button { font-family: 'Press Start 2P', cursive; background-color: #333; color: #00ff00; border: 2px solid #00ff00; padding: 8px 15px; font-size: clamp(10px, 3vw, 13px); cursor: pointer; box-shadow: 0 0 8px #00ff00 inset; transition: background-color 0.3s, box-shadow 0.3s, color 0.3s, border-color 0.3s; border-radius: 5px; white-space: nowrap; flex-grow: 0; flex-shrink: 1; }
+.difficulty-button { border-color: #ffff00; color: #ffff00; box-shadow: 0 0 8px #ffff00 inset; min-width: auto; text-align: center; }
+.difficulty-button:hover:not(:disabled), .difficulty-button:focus:not(:disabled) { box-shadow: 0 0 12px #ffff00 inset, 0 0 8px #ffff00; background-color: #444; }
+.difficulty-button.selected { background-color: #555500; box-shadow: 0 0 12px #ffff00 inset, 0 0 12px #ffff00; color: #fff; }
+#actualStartButton { margin-top: 20px; display: none; }
+button:hover:not(:disabled), button:focus:not(:disabled) { background-color: #444; outline: none; }
+button:not(.difficulty-button):hover:not(:disabled) { box-shadow: 0 0 12px #00ff00 inset, 0 0 8px #00ff00; }
+button:active:not(:disabled) { background-color: #222; }
+button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+/* --- Message Box --- */
+#messageBox { position: fixed; top: 35%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.9); border: 3px solid #ff0000; padding: 20px; text-align: center; color: #ff0000; display: none; z-index: 30; box-shadow: 0 0 20px #ff0000; border-radius: 10px; width: 90%; max-width: 670px; box-sizing: border-box; max-height: 70vh; overflow-y: auto; padding-bottom: 25px; }
+#messageBox h2 { margin: 0 0 10px 0; font-size: clamp(20px, 5vw, 32px); }
+#messageBox p { margin: 5px 0 10px 0; font-size: clamp(10.5px, 3vw, 10.5px); color: #ffff00; line-height: 1.4; }
+#messageText, #messageSubText { text-align: left; /* This makes the message text left-aligned */ }
+/* For the unordered lists in the AI advice section */
+#messageSubText ul {
+    text-align: left;
+    padding-left: 20px; /* Add some indentation for the list */
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#messageSubText li {
+    margin-bottom: 4px; /* Spacing between list items */
+}
+#messageBox p.bonus-alert { color: #ffaa00; font-weight: bold; display: block; min-height: 1em; margin-top: 8px; }
+#statsContainer { margin-top: 15px; padding-top: 10px; border-top: 1px solid #550000; font-size: clamp(10px, 2.5vw, 11.5px); color: #ccc; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 15px; }
+#statsContainer span { display: block; margin-bottom: 4px; white-space: nowrap; }
+.messageBoxButtons { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+#goToStoreButton, #skipStoreButton { display: none; }
+
+/* --- Pause Overlay --- */
+#pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); color: #ffff00; display: none; align-items: center; justify-content: center; font-size: clamp(30px, 10vw, 48px); text-shadow: 3px 3px #ff0000; z-index: 15; pointer-events: none; }
+
+/* --- Store Modal --- */
+#storeModal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; max-height: 80vh; background-color: rgba(0, 20, 0, 0.9); border: 3px solid #00ff00; border-radius: 15px; box-shadow: 0 0 25px #00ff00; padding: 15px; z-index: 20; display: none; color: #00ff00; font-size: clamp(10px, 2.5vw, 11px); box-sizing: border-box; overflow-y: auto; }
+#storeModal h2 { font-size: clamp(20px, 5vw, 22px); margin: 0 0 15px 0; text-align: center; color: #ffff00; }
+#storeScore { font-size: clamp(14px, 3.5vw, 15px); margin-bottom: 15px; text-align: center; color: #fff; }
+#storeItemsContainer { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 15px; }
+.storeItem { padding: 10px; background-color: rgba(0, 50, 0, 0.7); border-radius: 5px; border: 1px solid #008800; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px; }
+.storeItemInfo { margin-bottom: 8px; }
+.storeItemInfo span { display: block; margin-bottom: 3px; }
+.itemCost { color: #ffff00; }
+.itemStock, .itemLevel { color: #aaa; font-size: clamp(10px, 2vw, 12px); }
+.storeItemButtons { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; justify-content: flex-end; margin-top: 5px; }
+.buyButton { padding: 6px 12px; font-size: clamp(10px, 2.5vw, 11px); min-width: auto; flex-shrink: 1; }
+.buyMultipleButton { border-color: #00aaaa; color: #00cccc; box-shadow: 0 0 6px #00aaaa inset; padding: 6px 8px; font-size: clamp(10px, 2.2vw, 12px); }
+.buyMultipleButton:hover:not(:disabled) { box-shadow: 0 0 10px #00aaaa inset, 0 0 6px #00aaaa; }
+#storeContinueButton { display: block; margin: 20px auto 0 auto; }
+
+/* --- Footer --- */
+footer { width: 100%; max-width: 800px; margin-top: 20px; padding: 10px 0; border-top: 1px solid #005500; font-size: clamp(10px, 2.5vw, 12px); display: flex; flex-direction: column; /* Stack items vertically */ align-items: center; /* Center items horizontally */ gap: 15px; /* Increased gap */ }
+.footer-links { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; /* Center links within their container */ }
+.footer-links .link-group { margin-right: 10px; } /* Spacing between link groups */
+footer a { color: #00ff00; text-decoration: none; transition: color 0.3s, text-shadow 0.3s; display: inline-block; vertical-align: middle; line-height: 1; margin: 0 5px; }
+footer a:hover, footer a:focus { color: #ffff00; text-shadow: 0 0 5px #ffff00; outline: none; }
+footer a img { vertical-align: middle; margin: 0 3px; height: 20px; width: auto; }
+/* --- Sound Controls Styling (Moved from inline) --- */
+.sound-controls { display: flex; flex-direction: row; /* Default: side-by-side */ flex-wrap: wrap; /* Allow wrapping if needed */ justify-content: center; /* Center items if they wrap */ align-items: center; gap: 15px; /* Gap between music/sfx groups */ }
+.sound-controls > div { display: flex; align-items: center; gap: 8px; } /* Keep inner items aligned */
+.sound-controls button { padding: 4px 8px; font-size: 9.5px; min-width: 90px; }
+.sound-controls label { font-size: 10px; }
+.sound-controls input[type="range"] { width: 80px; height: 8px; cursor: pointer; vertical-align: middle; /* Align slider better */ }
+
+/* --- Leaderboard Styles --- */
+#leaderboardContainer { margin-top: 20px; padding: 15px; border: 2px solid #00ffff; border-radius: 10px; background-color: rgba(0, 30, 30, 0.5); width: 100%; max-width: 550px; box-sizing: border-box; color: #00ffff; display: none; text-align: center; }
+#leaderboardContainer h3 { margin: 0 0 10px 0; font-size: clamp(16px, 4vw, 18px); color: #ffffff; }
+#leaderboardList { list-style: none; padding: 0; margin: 0; font-size: clamp(10.5px, 3vw, 10.5px); text-align: left; max-height: 300px; overflow-y: auto; }
+#leaderboardList li { display: flex; justify-content: space-between; padding: 3px 5px; border-bottom: 1px dashed rgba(0, 255, 255, 0.3); }
+ #leaderboardList li:last-child { border-bottom: none; }
+#leaderboardList .rank { flex-basis: 8%; text-align: right; padding-right: 10px; color: #aaaaaa; }
+/* --- MODIFICATION START --- */
+#leaderboardList .name { flex-basis: 45%; white-space: nowrap; }
+#leaderboardList .wave { flex-basis: 12%; text-align: right; padding-right: 10px; color: #cccccc; white-space: nowrap; } /* Added */
+#leaderboardList .score { flex-basis: 35%; text-align: right; color: #ffff00; }
+/* --- MODIFICATION END --- */
+#leaderboardLoading { color: #aaaaaa; }
+#leaderboardViewMoreContainer {
+    margin-top: 10px;
+    display: none; /* Initially hidden */
+    text-align: center;
+}
+#leaderboardViewMoreLink {
+    color: #00ffff;
+    text-decoration: underline;
+    font-size: clamp(10px, 2.8vw, 12px);
+    cursor: pointer;
+}
+#leaderboardViewMoreLink:hover {
+    color: #ffffff;
+}
+
+/* --- Game Over Score Submission Styles --- */
+#scoreSubmission { margin-top: 15px; padding-top: 10px; border-top: 1px solid #550000; display: none; flex-direction: column; align-items: center; gap: 8px; }
+#scoreSubmission label { font-size: clamp(11px, 2.8vw, 14px); color: #ffff00; }
+#playerNameInput { font-family: 'Press Start 2P', cursive; background-color: #222; color: #00ff00; border: 1px solid #00ff00; padding: 5px 8px; font-size: clamp(12px, 3vw, 16px); text-align: center; width: 320px; text-transform: uppercase; border-radius: 3px; }
+#submitScoreButton { margin-top: 5px; }
+#submissionStatus { margin-top: 5px; font-size: clamp(10px, 2.5vw, 12px); color: #00ff00; min-height: 1em; }
+
+.gameAnalysisButton, #viewGameSummaryLink {
+    background-color: #00AA00; /* Green background */
+    color: #FFFFFF; /* White text */
+    border-color: #00FF00; /* Bright green border */
+    box-shadow: 0 0 8px #00FF00 inset;
+}
+
+.gameAnalysisButton:hover:not(:disabled), #viewGameSummaryLink:hover:not(:disabled) {
+    box-shadow: 0 0 12px #00FF00 inset, 0 0 8px #00FF00;
+    background-color: #00CC00;
+}
+
+/* --- Media Queries --- */
+@media (max-width: 768px) {
+    #uiContainer { gap: 6px; padding: 5px 0; font-size: clamp(9px, 2.2vw, 11px); }
+    #controlsContainer { gap: 8px; }
+    #specialWeaponsUI { gap: 10px; padding: 6px 8px; }
+    #difficultySelection { gap: 8px; padding: 10px; }
+    button { padding: 6px 12px; }
+    #messageBox { padding: 15px; max-width: 95%; }
+    #storeModal { padding: 10px; }
+    #storeModal h2 { font-size: 14px; }
+    #storeScore { font-size: 10px; }
+    #storeItemsContainer { gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));}
+    footer { margin-top: 15px; gap: 8px; }
+    footer a { margin: 0 4px; }
+    footer a img { margin: 0 2px; height: 18px; }
+    .storeItem { flex-direction: column; align-items: stretch; padding: 8px 10px; min-height: 0; gap: 8px; }
+    .storeItemInfo { margin-bottom: 5px; flex-grow: 0; }
+    .storeItemInfo span { display: block; margin-bottom: 2px; line-height: 1.2; }
+    .storeItemButtons { justify-content: space-between; }
+    .buyButton { align-self: center; flex-shrink: 0; }
+     #leaderboardList .name { flex-basis: 45%; white-space: nowrap; /* Ensure nowrap is here too */ }
+     #leaderboardList .rank { flex-basis: 8%; }
+     #leaderboardList .wave { flex-basis: 12%; }
+     #leaderboardList .score { flex-basis: 35%; }
+}
+
+@media (max-width: 480px) {
+    body { padding: 5px; }
+    h1#mainTitle { font-size: 18px; margin-bottom: 10px; }
+    #uiContainer { font-size: 8px; gap: 4px; justify-content: space-between;}
+    #score, #highScore, #wave, #citiesLeft, #multiplier { min-width: 55px; }
+    #controlsContainer { gap: 5px; }
+    #specialWeaponsUI { gap: 8px; padding: 5px; }
+    #difficultySelection { padding: 8px; gap: 6px; }
+    #difficultySelection h3 { font-size: 14px; margin-bottom: 8px; }
+    button { padding: 5px 10px; font-size: 10px; }
+    .difficulty-button { font-size: 11px; }
+    #messageBox { padding: 10px; width: 95%; top: 45%; max-height: 80vh; }
+    #messageBox h2 { font-size: 18px; }
+    #messageBox p { font-size: 11px; }
+    #statsContainer { font-size: 9px; grid-template-columns: 1fr; gap: 3px 10px; }
+    .messageBoxButtons { gap: 8px; }
+    #storeModal { padding: 8px; width: 95%; max-height: 75vh; }
+    #storeModal h2 { font-size: 14px; }
+    #storeScore { font-size: 10px; }
+    #storeItemsContainer { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 6px; }
+    .storeItem { padding: 6px 8px; gap: 6px; }
+    .storeItemInfo span { font-size: 9px; margin-bottom: 1px; line-height: 1.15; }
+    .itemStock, .itemLevel { font-size: 9px; }
+    .storeItemButtons { gap: 4px; }
+    .buyButton { padding: 4px 8px; font-size: 8px; }
+    .buyMultipleButton { padding: 4px 6px; font-size: 8px; }
+    #pauseOverlay { font-size: 24px; }
+    /* Footer styles for small screens */
+    footer { margin-top: 10px; font-size: 9px; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .footer-links { justify-content: center; }
+    .footer-links .link-group { margin-right: 0; margin-bottom: 5px; }
+    .sound-controls { flex-direction: column; /* Stack sound controls vertically */ align-items: center; gap: 8px; /* Adjust gap for stacked layout */ }
+    .sound-controls input[type="range"] { width: 100px; } /* Slightly wider slider */
+    footer a img { height: 16px; }
+
+    /* Leaderboard specific adjustments for small screens */
+     #leaderboardContainer { max-width: 98%; }
+     #leaderboardList { font-size: clamp(9.0px, 3vw, 9.0px); }
+     /* --- MODIFICATION START --- */
+     #leaderboardList .rank { flex-basis: 10%; }
+     #leaderboardList .name { flex-basis: 40%; white-space: nowrap; /* Ensure nowrap is here too */ }
+     #leaderboardList .wave { flex-basis: 15%; }
+     #leaderboardList .score { flex-basis: 35%; }
+     /* --- MODIFICATION END --- */
+}
+
+/* ADDED: Landscape-specific adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+    /* Make better use of horizontal space */
+    #canvasContainer {
+        max-width: 90vh; /* Base max-width on viewport height instead */
+        aspect-ratio: 800 / 600; /* Maintain aspect ratio */
+        margin: 0 auto;
+    }
+    
+    body {
+        padding: 5px;
+        overflow-y: auto; /* Allow vertical scrolling */
+        overflow-x: hidden; /* Keep horizontal scrolling disabled */
+    }
+    
+    h1#mainTitle {
+        font-size: clamp(16px, 3vw, 24px);
+        margin: 5px 0;
+    }
+    
+    /* Optimize UI layout for landscape */
+    #uiContainer {
+        padding: 4px 0;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 5px;
+    }
+    
+    #score, #highScore, #wave, #citiesLeft, #multiplier {
+        min-width: auto;
+        font-size: clamp(8px, 2vw, 10px);
+    }
+    
+    /* Ensure control buttons are properly sized in landscape */
+    #controlsContainer button {
+        width: auto;
+        min-width: 120px;
+        max-width: 150px;
+        font-size: 12px;
+        padding: 6px 8px;
+        margin: 3px 0;
+    }
+    
+    /* Improve weapon controls visibility */
+    .weaponControl {
+        margin: 5px 0;
+    }
+    
+    /* Ensure the game canvas is properly positioned */
+    #canvasContainer {
+        position: relative;
+        z-index: 5;
+    }
+    
+    #messageBox {
+        max-width: 85vh;
+        max-height: 80vh;
+        padding: 10px;
+        top: 50%;
+    }
+    
+    #messageBox h2 {
+        font-size: clamp(16px, 4vw, 24px);
+    }
+    
+    #messageBox p {
+        font-size: clamp(9px, 2.5vw, 10px);
+    }
+    
+    #storeModal {
+        max-width: 135vh;
+        max-height: 90vh;
+    }
+    
+    #storeModal h2 { font-size: 15px; margin: 0 0 5px 0; }
+    #storeScore { font-size: 11px; margin-bottom: 5px; }
+
+    #storeItemsContainer {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 6px;
+    }
+    
+    .storeItem {
+        padding: 6px;
+        min-height: 0;
+    }
+
+    .storeItemInfo { margin-bottom: 1px; }
+    .storeItemInfo span { font-size: 9px; margin-bottom: 1px; line-height: 1.15; }
+    .itemStock, .itemLevel { font-size: 9px; }
+    .storeItemButtons { gap: 4px; }
+    .buyButton { padding: 4px 8px; font-size: 8px; }
+    .buyMultipleButton { padding: 4px 6px; font-size: 8px; }
+    
+    .buyButton {
+        padding: 4px 8px;
+        font-size: clamp(9px, 2vw, 11px);
+    }
+}
+
+/* IMPROVED: Very small landscape screens */
+@media (orientation: landscape) and (max-height: 350px) {
+    #canvasContainer {
+        max-width: 85vh;
+    }
+    
+    h1#mainTitle {
+        font-size: clamp(14px, 2.5vw, 18px);
+        margin: 2px 0;
+    }
+    
+    #score, #highScore, #wave, #citiesLeft, #multiplier {
+        font-size: 8px;
+    }
+    
+    /* Even more compact UI for very small screens */
+    #controlsContainer button {
+        min-width: 100px;
+        font-size: 10px;
+        padding: 4px 6px;
+        margin: 2px 0;
+    }
+    
+    /* Reduce opacity of UI panels to see more of the game */
+    #specialWeaponsUI, #controlsContainer {
+        opacity: 0.85;
+        transition: opacity 0.3s;
+    }
+    
+    #specialWeaponsUI:hover, #controlsContainer:hover {
+        opacity: 1;
+    }
+    
+    .storeItem {
+        padding: 4px;
+    }
+    
+    .buyButton {
+        padding: 3px 6px;
+        font-size: clamp(8px, 1.8vw, 10px);
+    }
+    
+    /* Optimize score submission form */
+    #scoreSubmission {
+        margin-top: 10px;
+        padding-top: 8px;
+    }
+    
+    #playerNameInput {
+        font-size: clamp(10px, 2.5vw, 12px);
+        padding: 4px 6px;
+        width: 250px;
+    }
+    
+    #submitScoreButton {
+        font-size: clamp(10px, 2.5vw, 12px);
+        padding: 4px 8px;
+    }
+}
+
+/* Player Stats Modal */
+#playerStatsModal h3 {
+    margin: 0 0 10px 0;
+    font-size: clamp(14px, 4vw, 16px);
+}
+
+#playerStatsModal p {
+    margin: 5px 0;
+    font-size: clamp(9px, 2.5vw, 11px);
+    line-height: 1.4;
+}
+
+#closeStatsButton {
+    font-family: 'Press Start 2P', cursive;
+    background-color: #333;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    padding: 8px 15px;
+    font-size: clamp(10px, 3vw, 12px);
+    cursor: pointer;
+    box-shadow: 0 0 8px #00ff00 inset;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    border-radius: 5px;
+    min-height: 34px; /* Match other button heights for mobile */
+}
+
+#closeStatsButton:hover {
+    background-color: #444;
+    box-shadow: 0 0 12px #00ff00 inset;
+}
+
+/* Leaderboard item hover effect */
+#leaderboardList li {
+    transition: background-color 0.2s;
+}
+
+#leaderboardList li:hover {
+    background-color: rgba(0, 255, 255, 0.1);
+}
+
+/* Media queries for player stats modal */
+@media (max-width: 768px) {
+    #playerStatsModal {
+        padding: 12px;
+        width: 95%;
+    }
+    
+    #playerStatsModal h2 {
+        font-size: clamp(16px, 5vw, 20px);
+    }
+    
+    /* Make grid single column on smaller tablets */
+    #playerStatsModal .grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    #playerStatsModal {
+        padding: 10px;
+        max-height: 85vh;
+    }
+    
+    #playerStatsModal h2 {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    #playerStatsModal h3 {
+        font-size: 12px;
+    }
+    
+    #playerStatsModal p {
+        font-size: 9px;
+        margin: 3px 0;
+    }
+    
+    #closeStatsButton {
+        padding: 6px 12px;
+        font-size: 10px;
+        margin-top: 15px;
+    }
+}
+
+/* Landscape mode optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+    #playerStatsModal {
+        top: 50%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    #playerStatsModal > div {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    
+    /* Adjust padding to use space more efficiently */
+    #playerStatsModal > div > div {
+        padding: 6px;
+    }
+}
+
+/* About Game Modal Styles */
+#aboutGameModal {
+    display: none; 
+    position: fixed; 
+    top: 32%; /* Default for desktop */
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    width: 90%; 
+    max-width: 650px; 
+    max-height: 85vh; 
+    background-color: rgba(0, 20, 0, 0.95); 
+    border: 3px solid #00ff00; 
+    border-radius: 15px; 
+    box-shadow: 0 0 25px #00ff00; 
+    padding: clamp(8px, 3vw, 15px); 
+    z-index: 20; 
+    color: #00ff00; 
+    font-size: clamp(10px, 2.5vw, 11.5px); 
+    box-sizing: border-box; 
+    overflow-y: auto;
+}
+
+/* Desktop Breakpoint 1 */
+@media (max-width: 1920px) {
+    #aboutGameModal {
+        top: 35%; /* Adjusted for ~19200px width */
+    }
+    #storeModal {
+        top: 35%;
+    }
+}
+
+/* Desktop Breakpoint 2 */
+@media (max-width: 1540px) {
+    #aboutGameModal {
+        top: 40%; /* Adjusted for ~1540px width */
+    }
+    #storeModal {
+        top: 40%;
+    }
+}
+
+/* Desktop Breakpoint 3 */
+@media (max-width: 1270px) {
+    #aboutGameModal {
+        top: 45%; /* Adjusted for ~1270px width */
+    }
+    #storeModal {
+        top: 45%;
+    }
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+    #aboutGameModal {
+        top: 40%; /* Adjusted for tablet */
+    }
+    #storeModal {
+        top: 40%;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    #aboutGameModal {
+        top: 50%; /* Adjusted for mobile */
+    }
+    #storeModal {
+        top: 50%;
+    }
+}
