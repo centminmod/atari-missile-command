@@ -38,9 +38,9 @@ const VALIDATION_CONFIG = {
 // Tolerance factors for validation (adjust as needed)
 const VALIDATION_TOLERANCES = {
   definedWaveTolerance: 1.05,      // 5% tolerance for waves 1-11 (exactly defined)
-  generatedWaveTolerance: 1.20,    // 20% tolerance for waves 12+ (formula-generated)
-  minAccuracyForHighWaves: 90,     // Minimum accuracy % required for very high waves
-  minSecondsPerWave: 25            // Minimum seconds per wave for duration check
+  generatedWaveTolerance: 1.30,    // 30% tolerance for waves 12+ (formula-generated)
+  minAccuracyForHighWaves: 85,     // Minimum accuracy % required for very high waves
+  minSecondsPerWave: 15            // Minimum seconds per wave for duration check
 };
 
 // Helper function to handle CORS
@@ -147,9 +147,10 @@ function validateSubmission(scoreData, clientIp) {
   if (VALIDATION_CONFIG.checkKillCounts && scoreData.wave && scoreData.wave > 0) {
     // Determine if we're dealing with a defined wave or generated wave
     const isDefinedWave = scoreData.wave <= waveDefinitions.length;
+    const isHighWave = scoreData.wave > 15;
     const tolerance = isDefinedWave ? 
       VALIDATION_TOLERANCES.definedWaveTolerance : 
-      VALIDATION_TOLERANCES.generatedWaveTolerance;
+      (isHighWave ? VALIDATION_TOLERANCES.generatedWaveTolerance * 1.2 : VALIDATION_TOLERANCES.generatedWaveTolerance);
     
     // Get maximum possible enemies for this wave
     const maxEnemies = calculateMaxEnemiesForWave(scoreData.wave);
@@ -246,14 +247,26 @@ function validateSubmission(scoreData, clientIp) {
     
     // Determine if we should reject
     if (CURRENT_VALIDATION_MODE === VALIDATION_MODE.ENFORCE && hasSerious) {
-      return {
-        valid: false,
-        reason: `Score validation failed: ${validationIssues[0]}`, // Return first issue as the primary reason
-        allIssues: validationIssues,
-        enforceRejection: true
-      };
+      // Add additional check for skilled players with high accuracy
+      const playerAccuracy = scoreData.stats.accuracy || 
+        (scoreData.stats.missilesFired > 0 ? 
+          ((scoreData.stats.enemyMissilesDestroyed + scoreData.stats.planeBombsDestroyed) / 
+           scoreData.stats.missilesFired * 100) : 0);
+          
+      // Don't reject if they have very high accuracy (skilled player)
+      const isLikelySkilled = playerAccuracy > 100 && 
+                             scoreData.stats.missileSpeedLevel > 5 &&
+                             scoreData.stats.explosionRadiusLevel > 5;
+      
+      if (!isLikelySkilled) {
+        return {
+          valid: false,
+          reason: `Score validation failed: ${validationIssues[0]}`,
+          allIssues: validationIssues,
+          enforceRejection: true
+        };
+      }
     }
-  }
   
   // Score passed validation or we're in LOG_ONLY mode
   return { 
@@ -814,11 +827,10 @@ function isDurationPlausible(wave, durationSeconds) {
 
     // Add another check for high waves - more challenging waves should take longer
     if (wave > 20) {
-        // For very high waves, enforce a stricter minimum time
-        // As waves get harder, at least 20-25 seconds per wave is expected
-        const minHighWaveTime = VALIDATION_TOLERANCES.minSecondsPerWave;
+        // For very high waves, more lenient check based on player skill
+        const minHighWaveTime = Math.max(10, VALIDATION_TOLERANCES.minSecondsPerWave - (wave / 4));
         if (averageTime < minHighWaveTime) {
-            return false;
+          return false;
         }
     }
 
