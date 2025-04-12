@@ -3871,6 +3871,17 @@ async function syncStoredScores() {
     console.log(`Syncing score: Name=${scoreData.name}, Score=${scoreData.score}`);
     const result = await submitScoreData(scoreData); // Use your existing submission function
 
+    // --- IMMEDIATE CLEAR AND EXIT ON 403 INVALID SESSION TOKEN ---
+    if (
+      result.error &&
+      typeof result.error === 'string' &&
+      result.error.includes('Invalid or expired session token')
+    ) {
+      localStorage.removeItem('storedScores');
+      console.warn('Cleared local stored scores due to invalid/expired session token (syncStoredScores).');
+      return { synced: syncedCount, failed: failedCount + 1 };
+    }
+
     if (result.success) {
       syncedCount++;
     } else {
