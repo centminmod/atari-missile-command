@@ -4072,6 +4072,131 @@
             statsModal.style.display = 'block';
         }
 
+        // Function to clean up AI response text for display
+        function cleanupAIResponseText(text) {
+          if (!text) return '';
+          
+          // 1. Strip markdown formatting
+          let cleanText = text
+            .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+            .replace(/\*(.*?)\*/g, '$1')     // Remove italic markdown
+            .replace(/`(.*?)`/g, '$1')       // Remove code ticks
+            .replace(/^(>|\s*-)\s*/gm, '')   // Remove blockquotes and list markers
+            
+          // 2. Remove any leftover quotation marks from JSON strings
+          cleanText = cleanText
+            .replace(/^["']|["']$/g, '')     // Remove quotes at start/end
+            .replace(/\\"/g, '"')            // Replace escaped quotes
+          
+          // 3. Fix weird patterns or terms that shouldn't be in the analysis
+          const inappropriateTerms = {
+            'andold': 'android', // Example: Fix typo
+            'Enemy internet': 'Enemy intercept', // Example: Fix misinterpretation
+            'holed MIRVs': 'incoming MIRVs', // Example: Fix game term
+            // Add more specific replacements as needed based on observed AI outputs
+          };
+          
+          Object.entries(inappropriateTerms).forEach(([badTerm, goodTerm]) => {
+            // Use case-insensitive global replacement
+            cleanText = cleanText.replace(new RegExp(badTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi'), goodTerm);
+          });
+          
+          return cleanText.trim(); // Trim whitespace at the end
+        }
+
+        // Handler function for AI analysis results
+        function handleAIAnalysisResponse(analysisResult) {
+          // Get UI elements
+          const messageTitle = document.getElementById('messageTitle');
+          const messageText = document.getElementById('messageText');
+          const messageSubText = document.getElementById('messageSubText');
+          
+          // Process the summary text
+          const cleanSummary = cleanupAIResponseText(analysisResult.summary);
+          
+          // Process each advice item
+          let adviceHTML = '';
+          if (Array.isArray(analysisResult.advice) && analysisResult.advice.length > 0) {
+            adviceHTML = '<ul>';
+            analysisResult.advice.forEach(tip => {
+              // Clean up the tip text and remove any numbering at the start (we'll handle list formatting)
+              let cleanTip = cleanupAIResponseText(tip);
+              cleanTip = cleanTip.replace(/^\s*\d+\.?\s*/, ''); // Remove leading numbers/dots/spaces
+              
+              if (cleanTip) { // Only add non-empty tips
+                adviceHTML += `<li>${cleanTip}</li>`;
+              }
+            });
+            adviceHTML += '</ul>';
+          }
+          
+          // Update the UI
+          messageTitle.textContent = "AI Gameplay Analysis";
+          messageText.innerHTML = cleanSummary || "Analysis complete, but no summary provided."; // Use innerHTML for potential line breaks if needed
+          messageSubText.innerHTML = adviceHTML || ""; // Use innerHTML for the list
+          messageSubText.style.display = adviceHTML ? 'block' : 'none';
+
+          // --- Common UI updates needed after showing analysis ---
+          messageBonusText.textContent = ""; // Clear bonus text area
+          messageBonusText.style.display = 'none';
+          statsContainer.style.display = 'none'; // Hide game stats
+          scoreSubmissionDiv.style.display = 'none'; // Hide score submission
+
+          // Hide store buttons if they were visible
+          goToStoreButton.style.display = 'none';
+          skipStoreButton.style.display = 'none';
+
+          // Ensure the message box is visible
+          messageBox.style.display = 'block';
+
+          // Find the button container
+          const buttonContainer = messageBox.querySelector('.messageBoxButtons');
+
+          // First, remove any existing "Back to Score Submission" buttons
+          const existingBackButtons = buttonContainer.querySelectorAll('#backToScoreButton'); // Use ID selector
+          existingBackButtons.forEach(btn => btn.remove());
+
+          // Add a back button to return to score submission/game over screen
+          const backButton = document.createElement('button');
+          backButton.id = 'backToScoreButton'; // Add an ID for easier selection
+          backButton.textContent = 'Back to Score Submission';
+          backButton.addEventListener('click', () => {
+              // Show game over screen again with score submission
+              const title = highScore === gameTotalScore && gameTotalScore > 0 ? "GAME OVER - NEW HIGH SCORE!" : "GAME OVER";
+              messageTitle.textContent = title;
+              messageText.innerHTML = `Total Score: $${gameTotalScore}`;
+              messageSubText.innerHTML = "";
+              messageSubText.style.display = 'none';
+              statsContainer.style.display = 'grid'; // Show stats again
+              
+              // Show score submission form if score > 0
+              if (gameTotalScore > 0) {
+                  scoreSubmissionDiv.style.display = 'flex';
+                  // Check if score was already submitted
+                  if (scoreSubmitted) {
+                      submissionStatus.textContent = 'Score already submitted!';
+                      submissionStatus.style.color = "#00ff00";
+                      submitScoreButton.disabled = true;
+                  } else if (!navigator.onLine) {
+                      submissionStatus.textContent = "Offline. Score saved locally.";
+                      submissionStatus.style.color = "#ffff00";
+                      submitScoreButton.disabled = true;
+                  } else {
+                      submissionStatus.textContent = '';
+                      submitScoreButton.disabled = false;
+                  }
+              } else {
+                  scoreSubmissionDiv.style.display = 'none';
+              }
+              
+              // Remove the back button itself
+              backButton.remove();
+          });
+
+          // Add button to the message box buttons area
+          buttonContainer.appendChild(backButton);
+        }
+
         // --- Function to Handle AI Summary Request ---
         async function handleViewSummaryClick(event) {
             event.preventDefault(); // Prevent default link navigation behaviour
@@ -4135,82 +4260,8 @@
                     throw new Error(`Analysis request failed. ${detail}`);
                 }
 
-                // Parse the successful JSON response from the Worker
-                const analysisResult = await response.json();
-                if (window.enableDebugLogging) {
-                    console.log("Received analysis:", analysisResult);
-                } else {
-                    console.log("Analysis results received");
-                }
-
-                // 4. Display the Analysis Result
-                messageTitle.textContent = "AI Gameplay Analysis";
-                messageText.innerHTML = analysisResult.summary || "Analysis complete, but no summary provided.";
-                
-                // Format advice as an unordered list if available
-                if (analysisResult.advice && analysisResult.advice.length > 0) {
-                    let adviceHtml = "<ul>";
-                    analysisResult.advice.forEach(tip => {
-                        adviceHtml += `<li>${tip}</li>`;
-                    });
-                    adviceHtml += "</ul>";
-                    messageSubText.innerHTML = adviceHtml;
-                    messageSubText.style.display = 'block';
-                } else {
-                    messageSubText.innerHTML = "";
-                    messageSubText.style.display = 'none';
-                }
-                
-                messageBonusText.textContent = ""; // Clear bonus text area
-                messageBonusText.style.display = 'none';
-                statsContainer.style.display = 'none'; // Hide game stats
-                scoreSubmissionDiv.style.display = 'none'; // Hide score submission
-
-                // Hide store buttons
-                goToStoreButton.style.display = 'none';
-                skipStoreButton.style.display = 'none';
-
-                // Ensure the message box is visible
-                messageBox.style.display = 'block';
-
-                // Find the button container
-                const buttonContainer = messageBox.querySelector('.messageBoxButtons');
-
-                // First, remove any existing "Back to Score Submission" buttons
-                const existingBackButtons = buttonContainer.querySelectorAll('button');
-                existingBackButtons.forEach(btn => {
-                    if (btn.textContent === 'Back to Score Submission') {
-                        btn.remove();
-                    }
-                });
-
-                // Add a back button to return to score submission
-                const backButton = document.createElement('button');
-                backButton.id = 'backToScoreButton'; // Add an ID for easier selection
-                backButton.textContent = 'Back to Score Submission';
-                backButton.addEventListener('click', () => {
-                    // Show game over screen again with score submission
-                    messageTitle.textContent = "GAME OVER";
-                    messageText.innerHTML = `Total Score: $${gameTotalScore}`;
-                    messageSubText.innerHTML = "";
-                    statsContainer.style.display = 'grid';
-                    scoreSubmissionDiv.style.display = 'flex';
-                    // Check if score was already submitted
-                    if (scoreSubmitted) {
-                        submissionStatus.textContent = 'Score already submitted!';
-                        submissionStatus.style.color = "#00ff00";
-                        submitScoreButton.disabled = true;
-                    } else {
-                        submissionStatus.textContent = '';
-                        submitScoreButton.disabled = false;
-                    }
-                    
-                    // Remove the back button itself
-                    backButton.remove();
-                });
-
-                // Add button to the message box buttons area
-                buttonContainer.appendChild(backButton);
+                // 4. Display the Analysis Result using the new handler
+                handleAIAnalysisResponse(analysisResult);
 
             } catch (error) {
                 // Catch errors from local storage access, fetch (network, timeout), or response handling
