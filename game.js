@@ -1880,7 +1880,9 @@ function gameOver() {
     
     // Compare with tracked wave durations for validation
     if (Math.abs(actualGameDuration - totalGameDurationSeconds) > 5) {
-        console.warn(`Duration discrepancy: Wave-based calculation (${totalGameDurationSeconds.toFixed(1)}s) differs from start-to-end time (${actualGameDuration.toFixed(1)}s)`);
+        if (window.enableDebugLogging) {
+            console.warn(`Duration discrepancy: Wave-based calculation (${totalGameDurationSeconds.toFixed(1)}s) differs from start-to-end time (${actualGameDuration.toFixed(1)}s)`);
+        }
     }
     
     // ADDED: Accumulate final wave duration on game over
