@@ -89,38 +89,6 @@ async function verifyScoreSignature(scoreData, signature, secretKey) {
   return signature === expectedSignature;
 }
 
-// --- WAVE DEFINITION EXTENSION FUNCTION ---
-function generateExtendedWaveDefinitions(baseWaves, maxWaveToDefine) {
-  const extendedWaves = [...baseWaves]; // Copy existing waves
-  const baseScalingIncrease = 0.06;
-  const maxScalingFactor = 4.0;
-  
-  // Generate definitions for waves beyond what's already defined
-  for (let waveIndex = baseWaves.length; waveIndex < maxWaveToDefine; waveIndex++) {
-    // Calculate scaling factor based on your existing formula
-    const scalingFactor = Math.min(
-      maxScalingFactor,
-      1 + (waveIndex - (baseWaves.length - 1)) * baseScalingIncrease
-    );
-    
-    // Clone the last defined wave and scale it
-    const newWave = JSON.parse(JSON.stringify(baseWaves[baseWaves.length - 1]));
-    newWave.forEach(part => {
-      part.count = Math.ceil(part.count * scalingFactor);
-      if (part.speedFactor) {
-        part.speedFactor = Math.min(3.0, part.speedFactor * scalingFactor);
-      }
-    });
-    
-    extendedWaves.push(newWave);
-  }
-  
-  return extendedWaves;
-}
-
-// Generate extended wave definitions once (for waves 12-100)
-const extendedWaveDefinitions = generateExtendedWaveDefinitions(waveDefinitions, 100);
-
 // --- ENHANCED VALIDATION FUNCTION ---
 /**
  * Comprehensive validation of score submission
@@ -762,12 +730,13 @@ function calculateMaxEnemiesForWave(targetWave) {
     for (let waveIndex = 0; waveIndex < targetWave; waveIndex++) {
         let currentWaveConfig;
         
-        // Check whether to use extended definitions or base definitions
-        if (waveIndex < extendedWaveDefinitions.length) {
-            currentWaveConfig = JSON.parse(JSON.stringify(extendedWaveDefinitions[waveIndex]));
+        // Check if we're dealing with a defined wave or need to use scaling
+        if (waveIndex < waveDefinitions.length) {
+            // Use the predefined wave configuration
+            currentWaveConfig = JSON.parse(JSON.stringify(waveDefinitions[waveIndex]));
         } else {
-            // For waves beyond our extended definitions, use a scaling formula
-            const baseWaveIndex = extendedWaveDefinitions.length - 1;
+            // Calculate a scaled version based on the last defined wave
+            const baseWaveIndex = waveDefinitions.length - 1;
             const extraWaves = waveIndex - baseWaveIndex;
             const scalingFactor = Math.min(
                 maxScalingFactor,
@@ -775,7 +744,7 @@ function calculateMaxEnemiesForWave(targetWave) {
             );
             
             // Clone the highest defined wave and scale it
-            currentWaveConfig = JSON.parse(JSON.stringify(extendedWaveDefinitions[baseWaveIndex]));
+            currentWaveConfig = JSON.parse(JSON.stringify(waveDefinitions[baseWaveIndex]));
             currentWaveConfig.forEach(part => {
                 part.count = Math.ceil(part.count * scalingFactor);
             });
