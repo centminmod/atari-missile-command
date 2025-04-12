@@ -2581,37 +2581,81 @@
         function checkWaveEnd() {
             if (transitioningWave || isGameOver || isPaused) return;
 
-            // Add debug logging for high wave numbers
-            if (currentWave >= 30) {
-                console.log(`Wave ${currentWave + 1} check - Spawned: ${waveEnemiesSpawned}, Required: ${waveEnemiesRequired}`);
-                console.log(`Enemies remaining - Missiles: ${incomingMissiles.filter(m => m.alive).length}, Planes: ${planes.filter(p => p.alive).length}, Bombs: ${planeBombs.filter(b => b.alive).length}`);
-            }
+            const allEnemiesSpawned = waveEnemiesRequired > 0 ? waveEnemiesSpawned >= waveEnemiesRequired : waveTimer > 600;
 
-            // Check if all active enemies are gone
-            const allEnemiesGone = incomingMissiles.every(m => !m.alive) &&
-                                  planes.every(p => !p.alive) &&
-                                  planeBombs.every(b => !b.alive);
+            // Count remaining active objects ON screen vs OFF screen
+            let activeOnScreenEnemies = 0;
+            let activeOffScreenEnemies = 0;
+            const offScreenBuffer = 100; // How far off-screen before considered "stuck"
 
-            // Check if all explosions are done
-            const allExplosionsDone = explosions.every(e => !e.alive);
+            incomingMissiles.forEach(m => {
+                if (m.alive) {
+                    if (m.x < -offScreenBuffer || m.x > canvas.width + offScreenBuffer || m.y < -offScreenBuffer || m.y > canvas.height + offScreenBuffer) {
+                        activeOffScreenEnemies++;
+                    } else {
+                        activeOnScreenEnemies++;
+                    }
+                }
+            });
+            planes.forEach(p => {
+                if (p.alive) {
+                    // Planes only move left, check left boundary mainly + some top/bottom buffer
+                    if (p.x < -p.width - offScreenBuffer || p.y < -offScreenBuffer || p.y > canvas.height + offScreenBuffer) {
+                         activeOffScreenEnemies++;
+                    } else {
+                         activeOnScreenEnemies++;
+                    }
+                }
+            });
+            planeBombs.forEach(b => {
+                 if (b.alive) {
+                    if (b.x < -offScreenBuffer || b.x > canvas.width + offScreenBuffer || b.y < -offScreenBuffer || b.y > canvas.height + offScreenBuffer) {
+                        activeOffScreenEnemies++;
+                    } else {
+                        activeOnScreenEnemies++;
+                    }
+                }
+            });
 
-            // Check if we've spawned all required enemies
-            // Add safeguard for cases where waveEnemiesRequired might be invalid
-            const allEnemiesSpawned = waveEnemiesRequired > 0 ?
-                                     waveEnemiesSpawned >= waveEnemiesRequired :
-                                     waveTimer > 600; // Fallback timer (10 seconds)
+            // Count remaining active explosions ON screen vs OFF screen
+            let activeOnScreenExplosions = 0;
+            let activeOffScreenExplosions = 0;
+             explosions.forEach(e => {
+                if (e.alive) {
+                     // Check if explosion center is way off screen
+                     if (e.x < -offScreenBuffer || e.x > canvas.width + offScreenBuffer || e.y < -offScreenBuffer || e.y > canvas.height + offScreenBuffer) {
+                         activeOffScreenExplosions++;
+                     } else {
+                         activeOnScreenExplosions++;
+                     }
+                }
+            });
 
-            // Wave is complete when all conditions are met
-            const waveComplete = allEnemiesSpawned && allEnemiesGone && allExplosionsDone && !activeSonicWave;
+            const noActiveSonicWave = !activeSonicWave || !activeSonicWave.alive;
 
-            if (waveComplete) {
+            // Condition 1: Normal completion (zero active objects left)
+            const normalCompletion = allEnemiesSpawned && activeOnScreenEnemies === 0 && activeOffScreenEnemies === 0 && activeOnScreenExplosions === 0 && activeOffScreenExplosions === 0 && noActiveSonicWave;
+
+            // Condition 2: Completion because only off-screen objects remain
+            const offScreenCompletion = allEnemiesSpawned && activeOnScreenEnemies === 0 && activeOnScreenExplosions === 0 && (activeOffScreenEnemies > 0 || activeOffScreenExplosions > 0) && noActiveSonicWave;
+
+            if (normalCompletion) {
                 console.log(`Wave ${currentWave + 1} completed successfully!`);
                 transitioningWave = true;
                 nextWave();
-            } else if (currentWave >= 30 && waveTimer > 3600) {
-                // Safety valve - if a high wave has been running for 60 seconds (3600 frames at 60fps),
-                // force completion even if normal conditions aren't met
-                console.log(`Wave ${currentWave + 1} force-completed due to timeout!`);
+            } else if (offScreenCompletion) {
+                // Log which objects were stuck off-screen for debugging
+                if (activeOffScreenEnemies > 0) console.warn(`Found ${activeOffScreenEnemies} enemies stuck off-screen.`);
+                if (activeOffScreenExplosions > 0) console.warn(`Found ${activeOffScreenExplosions} explosions stuck off-screen.`);
+                console.warn(`Wave ${currentWave + 1} force-completed due to only off-screen objects remaining!`);
+                transitioningWave = true;
+                nextWave();
+            } else if (allEnemiesSpawned && waveTimer > 900) { // Timeout safety net (15 seconds after all spawned)
+                console.warn(`Wave ${currentWave + 1} force-completed due to cleanup timeout! ` +
+                             `Spawned: ${waveEnemiesSpawned}/${waveEnemiesRequired}, ` +
+                             `Remaining On-Screen Enemies: ${activeOnScreenEnemies}, ` +
+                             `Remaining Off-Screen Enemies: ${activeOffScreenEnemies}, ` +
+                             `Remaining On-Screen Explosions: ${activeOnScreenExplosions}`);
                 transitioningWave = true;
                 nextWave();
             }
