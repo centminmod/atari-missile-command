@@ -2318,6 +2318,41 @@
             if (hitOccurred) { consecutiveIntercepts = 0; scoreMultiplier = 1.0; updateUI(); }
         }
 
+        /**
+         * Generates extended wave definitions up to wave 100 based on the scaling formula
+         * @param {Array} baseWaves - The base wave definitions (11 waves)
+         * @param {number} maxWaveToDefine - The maximum wave number to define
+         * @returns {Array} - All waves from 1 to maxWaveToDefine
+         */
+        function generateExtendedWaveDefinitions(baseWaves, maxWaveToDefine) {
+            const extendedWaves = [...baseWaves]; // Copy first 11 waves
+            
+            // Generate definitions for waves 12 to maxWaveToDefine
+            for (let waveIndex = baseWaves.length; waveIndex < maxWaveToDefine; waveIndex++) {
+                // Use existing scaling formula
+                const baseScalingIncrease = 0.06;
+                const maxScalingFactor = 4.0;
+                
+                const scalingFactor = Math.min(
+                    maxScalingFactor,
+                    1 + (waveIndex - (baseWaves.length - 1)) * baseScalingIncrease
+                );
+                
+                // Clone the last defined wave and scale it
+                const newWave = JSON.parse(JSON.stringify(baseWaves[baseWaves.length - 1]));
+                newWave.forEach(part => {
+                    part.count = Math.ceil(part.count * scalingFactor);
+                    if (part.speedFactor) {
+                        part.speedFactor = Math.min(3.0, part.speedFactor * scalingFactor);
+                    }
+                });
+                
+                extendedWaves.push(newWave);
+            }
+            
+            return extendedWaves;
+        }
+
         // --- Wave System Logic ---
         function defineWaves() {
             return [
@@ -2354,6 +2389,9 @@
                 [{ type: 'missile', count: 38, speedFactor: 1.7 }, { type: 'smart_bomb', count: 7, speedFactor: 1.6 }, { type: 'mirv', count: 7, speedFactor: 1.5 }, { type: 'plane', count: 12, variantChance: 0.7, speedFactor: 1.4 }, { type: 'shield_bomb', count: 2, bombType: 1, speedFactor: 1.05 }, { type: 'shield_bomb', count: 2, bombType: 2, speedFactor: 1.05 }, { type: 'shield_bomb', count: 2, bombType: 3, speedFactor: 1.10 }],
             ];
         }
+
+        const extendedWaveDefinitions = generateExtendedWaveDefinitions(waveDefinitions, 100);
+
         function initWave(waveIndex) {
             try {
                 console.log(`initWave: Entered for wave ${waveIndex}`);
@@ -2361,45 +2399,39 @@
                 waveTimer = 0; // Reset wave timer
                 waveStartTime = Date.now(); // ADDED: Start wave timer
 
-                const effectiveWaveIndex = Math.min(waveIndex, waveDefinitions.length - 1);
-                if (!waveDefinitions || waveDefinitions.length === 0) {
-                    throw new Error("waveDefinitions is empty or not defined.");
-                }
-
-                if (effectiveWaveIndex < 0 || effectiveWaveIndex >= waveDefinitions.length) {
-                    throw new Error(`Calculated effectiveWaveIndex (${effectiveWaveIndex}) is out of bounds for waveDefinitions (length ${waveDefinitions.length}).`);
-                }
-
-                currentWaveConfig = JSON.parse(JSON.stringify(waveDefinitions[effectiveWaveIndex]));
-                console.log(`initWave: Loaded config for wave ${waveIndex} (using definition ${effectiveWaveIndex}):`, JSON.stringify(currentWaveConfig));
-
-                if (!Array.isArray(currentWaveConfig)) {
-                    throw new Error(`currentWaveConfig for wave ${waveIndex} (effective index ${effectiveWaveIndex}) is not an array.`);
-                }
-
-                if (waveIndex >= waveDefinitions.length) {
-                    // Cap the scaling factor for very high waves
+                // Use extended wave definitions when possible
+                // For waves 1-100, use the pre-calculated definitions
+                if (waveIndex < extendedWaveDefinitions.length) {
+                    console.log(`initWave: Using pre-defined wave configuration for wave ${waveIndex + 1}`);
+                    currentWaveConfig = JSON.parse(JSON.stringify(extendedWaveDefinitions[waveIndex]));
+                } else {
+                    // For waves beyond 100, use the highest defined wave with dynamic scaling
+                    console.log(`initWave: Using dynamically scaled wave for wave ${waveIndex + 1}`);
+                    
+                    const baseWaveIndex = extendedWaveDefinitions.length - 1; // Wave 100
                     const baseScalingIncrease = 0.06;
                     const maxScalingFactor = 4.0;
-
-                    // Calculate scaling with a cap
+                    
+                    // Calculate scaling for waves beyond the pre-defined ones
+                    const extraWaveCount = waveIndex - baseWaveIndex;
                     const scalingFactor = Math.min(
                         maxScalingFactor,
-                        1 + (waveIndex - (waveDefinitions.length - 1)) * baseScalingIncrease
+                        1 + extraWaveCount * baseScalingIncrease
                     );
-
-                    console.log(`Wave ${waveIndex} using scaling factor: ${scalingFactor}`);
-
+                    
+                    // Clone the highest defined wave and scale it
+                    currentWaveConfig = JSON.parse(JSON.stringify(extendedWaveDefinitions[baseWaveIndex]));
                     currentWaveConfig.forEach(part => {
                         part.count = Math.ceil(part.count * scalingFactor);
                         if (part.speedFactor) {
                             part.speedFactor = Math.min(3.0, part.speedFactor * scalingFactor);
                         }
                     });
-
-                    console.log(`initWave: Scaled config for high wave ${waveIndex}:`, JSON.stringify(currentWaveConfig));
+                    
+                    console.log(`initWave: Dynamically scaled wave ${waveIndex + 1} with factor ${scalingFactor.toFixed(2)}`);
                 }
 
+                // Rest of your existing initWave code...
                 // Clear game objects
                 incomingMissiles = [];
                 playerMissiles = [];
@@ -2408,8 +2440,6 @@
                 planes = [];
                 planeBombs = [];
                 waveEnemiesSpawned = 0;
-
-                console.log(`initWave: Calculating waveEnemiesRequired for wave ${waveIndex}...`);
 
                 // Calculate with better error handling
                 waveEnemiesRequired = 0;
@@ -4375,10 +4405,10 @@
             return;
           }
 
-            // Collect stats for immediate submission
-            const gameStats = {
-              missilesFired: statsMissilesFired,
-              enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
+          // Collect stats for immediate submission
+          const gameStats = {
+            missilesFired: statsMissilesFired,
+            enemyMissilesDestroyed: statsEnemyMissilesDestroyed,
             planeBombsDestroyed: statsPlaneBombsDestroyed,
             planesDestroyed: statsPlanesDestroyed,
             citiesLost: statsCitiesLost,
@@ -4387,10 +4417,12 @@
             shieldBombsDestroyed: statsShieldBombsDestroyed,
             difficulty: selectedDifficultyName,
             missileSpeedLevel: playerMissileSpeedLevel,
-              explosionRadiusLevel: explosionRadiusLevel,
-              accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0"),
-              duration: Math.round(totalGameDurationSeconds) // ADDED: Include total duration
-            };
+            explosionRadiusLevel: explosionRadiusLevel,
+            accuracy: parseFloat(statsMissilesFired > 0 ? 
+              ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : 
+              "0.0"),
+            duration: Math.round(totalGameDurationSeconds)
+          };
 
           submitScoreButton.disabled = true;
           submissionStatus.textContent = "Submitting...";

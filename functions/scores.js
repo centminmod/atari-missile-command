@@ -16,6 +16,33 @@ const DEFAULT_SCORES_TO_RETURN = 10; // Added for clarity
 // Maximum number of scores that can be requested via the 'limit' parameter in a GET request
 const MAX_SCORES_TO_RETURN = 1000; // Added limit for GET requests
 
+// --- VALIDATION CONFIG ---
+const VALIDATION_MODE = {
+  LOG_ONLY: 'log_only',    // Log validation failures but still accept scores
+  ENFORCE: 'enforce'       // Reject scores that fail validation
+};
+
+// Set this to VALIDATION_MODE.LOG_ONLY initially, change to VALIDATION_MODE.ENFORCE when ready
+const CURRENT_VALIDATION_MODE = VALIDATION_MODE.LOG_ONLY;
+
+// Configure which validations to run
+const VALIDATION_CONFIG = {
+  checkScoreConsistency: true,     // Check if score makes sense with stats
+  checkKillCounts: true,           // Check if kill counts are plausible for the wave
+  checkDuration: true,             // Check if the game duration is plausible
+  checkHoneyPot: true,             // Check for honeypot fields that should never exist
+  checkMaxWave: true,              // Check for implausibly high wave claims
+  maxReasonableWave: 150           // Adjust based on what's realistically achievable
+};
+
+// Tolerance factors for validation (adjust as needed)
+const VALIDATION_TOLERANCES = {
+  definedWaveTolerance: 1.05,      // 5% tolerance for waves 1-11 (exactly defined)
+  generatedWaveTolerance: 1.20,    // 20% tolerance for waves 12+ (formula-generated)
+  minAccuracyForHighWaves: 90,     // Minimum accuracy % required for very high waves
+  minSecondsPerWave: 25            // Minimum seconds per wave for duration check
+};
+
 // Helper function to handle CORS
 function handleCors(request, env) {
   // Get allowed origins from environment variables
@@ -60,6 +87,212 @@ async function verifyScoreSignature(scoreData, signature, secretKey) {
   
   // Compare signatures
   return signature === expectedSignature;
+}
+
+// --- WAVE DEFINITION EXTENSION FUNCTION ---
+function generateExtendedWaveDefinitions(baseWaves, maxWaveToDefine) {
+  const extendedWaves = [...baseWaves]; // Copy existing waves
+  const baseScalingIncrease = 0.06;
+  const maxScalingFactor = 4.0;
+  
+  // Generate definitions for waves beyond what's already defined
+  for (let waveIndex = baseWaves.length; waveIndex < maxWaveToDefine; waveIndex++) {
+    // Calculate scaling factor based on your existing formula
+    const scalingFactor = Math.min(
+      maxScalingFactor,
+      1 + (waveIndex - (baseWaves.length - 1)) * baseScalingIncrease
+    );
+    
+    // Clone the last defined wave and scale it
+    const newWave = JSON.parse(JSON.stringify(baseWaves[baseWaves.length - 1]));
+    newWave.forEach(part => {
+      part.count = Math.ceil(part.count * scalingFactor);
+      if (part.speedFactor) {
+        part.speedFactor = Math.min(3.0, part.speedFactor * scalingFactor);
+      }
+    });
+    
+    extendedWaves.push(newWave);
+  }
+  
+  return extendedWaves;
+}
+
+// Generate extended wave definitions once (for waves 12-100)
+const extendedWaveDefinitions = generateExtendedWaveDefinitions(waveDefinitions, 100);
+
+// --- ENHANCED VALIDATION FUNCTION ---
+/**
+ * Comprehensive validation of score submission
+ * @param {object} scoreData - The score data to validate
+ * @param {string} clientIp - The submitting client's IP address (for logging)
+ * @returns {object} Validation result with valid flag and details
+ */
+function validateSubmission(scoreData, clientIp) {
+  // Store validation issues for logging/rejection
+  const validationIssues = [];
+  const validationFlags = {};
+  
+  // --- TIER 1: Basic structure validation ---
+  // This should be kept as immediate rejection regardless of mode
+  if (!scoreData || typeof scoreData.score !== 'number' || 
+      typeof scoreData.name !== 'string' || !scoreData.stats) {
+    return { 
+      valid: false, 
+      reason: "Missing required fields",
+      enforceRejection: true // Always enforce regardless of mode
+    };
+  }
+  
+  // --- TIER 2: Honeypot checks ---
+  if (VALIDATION_CONFIG.checkHoneyPot) {
+    // Look for fields that should never exist in legitimate submissions
+    const honeypotFields = ['_honeyPotRNG', '_clientValidation', '_verifiedPlay'];
+    for (const field of honeypotFields) {
+      if (scoreData.stats[field] !== undefined) {
+        validationIssues.push(`Honeypot field detected: ${field}`);
+        validationFlags.honeypot_detected = true;
+        break;
+      }
+    }
+  }
+  
+  // --- TIER 3: Duration check ---
+  if (VALIDATION_CONFIG.checkDuration && scoreData.stats.duration !== undefined) {
+    const durationValid = isDurationPlausible(scoreData.wave, scoreData.stats.duration);
+    if (!durationValid) {
+      validationIssues.push(`Implausible game duration (${scoreData.stats.duration}s) for wave ${scoreData.wave}`);
+      validationFlags.flagged_duration = true;
+      
+      // Additional check for extremely fast completion of high waves
+      if (scoreData.wave > 20) {
+        const minimumExpectedDuration = scoreData.wave * VALIDATION_TOLERANCES.minSecondsPerWave;
+        if (scoreData.stats.duration < minimumExpectedDuration) {
+          validationIssues.push(`Impossibly fast completion: ${scoreData.stats.duration}s for wave ${scoreData.wave}`);
+          validationFlags.impossible_speed = true;
+        }
+      }
+    }
+  }
+  
+  // --- TIER 4: Wave-specific kill count validation ---
+  if (VALIDATION_CONFIG.checkKillCounts && scoreData.wave && scoreData.wave > 0) {
+    // Determine if we're dealing with a defined wave or generated wave
+    const isDefinedWave = scoreData.wave <= waveDefinitions.length;
+    const tolerance = isDefinedWave ? 
+      VALIDATION_TOLERANCES.definedWaveTolerance : 
+      VALIDATION_TOLERANCES.generatedWaveTolerance;
+    
+    // Get maximum possible enemies for this wave
+    const maxEnemies = calculateMaxEnemiesForWave(scoreData.wave);
+    const stats = scoreData.stats;
+    
+    // Track which kill counts failed validation
+    const killChecksFailed = [];
+    
+    // Check missile kills
+    if (stats.enemyMissilesDestroyed > maxEnemies.totalMissileTypes * tolerance) {
+      killChecksFailed.push({
+        type: "missiles",
+        reported: stats.enemyMissilesDestroyed,
+        max: Math.round(maxEnemies.totalMissileTypes * tolerance)
+      });
+    }
+    
+    // Check plane kills
+    if (stats.planesDestroyed > maxEnemies.plane * tolerance) {
+      killChecksFailed.push({
+        type: "planes",
+        reported: stats.planesDestroyed,
+        max: Math.round(maxEnemies.plane * tolerance)
+      });
+    }
+    
+    // Check shield bomb kills
+    if (stats.shieldBombsDestroyed > maxEnemies.shield_bomb * tolerance) {
+      killChecksFailed.push({
+        type: "shield_bombs",
+        reported: stats.shieldBombsDestroyed,
+        max: Math.round(maxEnemies.shield_bomb * tolerance)
+      });
+    }
+    
+    // Evaluate the failed checks
+    if (killChecksFailed.length > 0) {
+      // Log the details of the failed checks
+      const failDetails = killChecksFailed.map(f => 
+        `${f.type}: ${f.reported}/${f.max}`).join(', ');
+      
+      validationIssues.push(`Kill count anomalies: ${failDetails}`);
+      validationFlags.flagged_killcounts = true;
+      
+      // For defined waves or multiple failed checks, mark as a serious issue
+      if (isDefinedWave || killChecksFailed.length >= 2) {
+        validationFlags.serious_killcount_issues = true;
+      }
+    }
+  }
+  
+  // --- TIER 5: Score/stats consistency check ---
+  if (VALIDATION_CONFIG.checkScoreConsistency) {
+    const scoreConsistent = validateScoreConsistency(scoreData.score, scoreData.stats);
+    if (!scoreConsistent) {
+      validationIssues.push(
+        `Score inconsistency: ${scoreData.score} doesn't match expected range based on stats`
+      );
+      validationFlags.flagged_score_inconsistency = true;
+    }
+  }
+  
+  // --- TIER 6: Extremely high wave claims ---
+  if (VALIDATION_CONFIG.checkMaxWave && 
+      scoreData.wave > VALIDATION_CONFIG.maxReasonableWave) {
+    // For extremely high waves, require proportionally high accuracy
+    const playerAccuracy = scoreData.stats.accuracy || 
+      (scoreData.stats.missilesFired > 0 ? 
+        ((scoreData.stats.enemyMissilesDestroyed + scoreData.stats.planeBombsDestroyed) / 
+         scoreData.stats.missilesFired * 100).toFixed(1) : 0);
+        
+    if (playerAccuracy < VALIDATION_TOLERANCES.minAccuracyForHighWaves) {
+      validationIssues.push(
+        `Unrealistic wave (${scoreData.wave}) with low accuracy (${playerAccuracy}%)`
+      );
+      validationFlags.flagged_unrealistic_wave = true;
+    }
+  }
+  
+  // --- Final Validation Decision ---
+  const hasSerious = Object.keys(validationFlags).some(flag => 
+    flag.startsWith('serious_') || flag === 'impossible_speed' || flag === 'honeypot_detected'
+  );
+  
+  // If we have validation issues, decide whether to log or enforce
+  if (validationIssues.length > 0) {
+    // Log all validation issues regardless of enforcement mode
+    const ipInfo = clientIp ? ` from IP ${clientIp}` : '';
+    console.warn(`Validation issues for score ${scoreData.name} (${scoreData.score})${ipInfo}:`);
+    validationIssues.forEach(issue => console.warn(`- ${issue}`));
+    
+    // Apply flags to the score data
+    Object.assign(scoreData, validationFlags);
+    
+    // Determine if we should reject
+    if (CURRENT_VALIDATION_MODE === VALIDATION_MODE.ENFORCE && hasSerious) {
+      return {
+        valid: false,
+        reason: `Score validation failed: ${validationIssues[0]}`, // Return first issue as the primary reason
+        allIssues: validationIssues,
+        enforceRejection: true
+      };
+    }
+  }
+  
+  // Score passed validation or we're in LOG_ONLY mode
+  return { 
+    valid: true,
+    flags: Object.keys(validationFlags),
+    hasIssues: validationIssues.length > 0
+  };
 }
 
 export async function onRequest(context) {
@@ -245,6 +478,37 @@ export async function onRequest(context) {
             }
           }
         });
+
+        // Perform enhanced validation with our new function
+        const clientIp = request.headers.get('CF-Connecting-IP');
+        const validationResult = validateSubmission({
+          name: name,
+          score: score,
+          wave: wave,
+          stats: sanitizedStats
+        }, clientIp);
+      
+        // Check if we should reject this submission
+        if (!validationResult.valid && validationResult.enforceRejection) {
+          const corsHeaders = handleCors(request, env);
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: validationResult.reason 
+          }), {
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders
+            },
+            status: 400
+          });
+        }
+        
+        // Apply any flags from validation
+        if (validationResult.flags && validationResult.flags.length > 0) {
+          validationResult.flags.forEach(flag => {
+            scoreDataToAdd[flag] = true;
+          });
+        }
 
         // Perform basic consistency check between stats and score
         const isConsistent = validateScoreConsistency(score, sanitizedStats);
@@ -497,23 +761,27 @@ function calculateMaxEnemiesForWave(targetWave) {
     // Process each wave up to the target wave
     for (let waveIndex = 0; waveIndex < targetWave; waveIndex++) {
         let currentWaveConfig;
-        const effectiveWaveIndex = Math.min(waveIndex, waveDefinitions.length - 1);
-
-        // Deep copy the definition to avoid modifying the original
-        currentWaveConfig = JSON.parse(JSON.stringify(waveDefinitions[effectiveWaveIndex]));
-
-        // Apply scaling if the actual wave index is beyond the defined waves
-        if (waveIndex >= waveDefinitions.length) {
+        
+        // Check whether to use extended definitions or base definitions
+        if (waveIndex < extendedWaveDefinitions.length) {
+            currentWaveConfig = JSON.parse(JSON.stringify(extendedWaveDefinitions[waveIndex]));
+        } else {
+            // For waves beyond our extended definitions, use a scaling formula
+            const baseWaveIndex = extendedWaveDefinitions.length - 1;
+            const extraWaves = waveIndex - baseWaveIndex;
             const scalingFactor = Math.min(
                 maxScalingFactor,
-                1 + (waveIndex - (waveDefinitions.length - 1)) * baseScalingIncrease
+                1 + extraWaves * baseScalingIncrease
             );
+            
+            // Clone the highest defined wave and scale it
+            currentWaveConfig = JSON.parse(JSON.stringify(extendedWaveDefinitions[baseWaveIndex]));
             currentWaveConfig.forEach(part => {
                 part.count = Math.ceil(part.count * scalingFactor);
             });
         }
 
-        // Sum counts for the current wave from predefined wave definitions
+        // Sum counts for the current wave from wave configuration
         currentWaveConfig.forEach(part => {
             if (maxCounts.hasOwnProperty(part.type)) {
                 maxCounts[part.type] += part.count || 0;
@@ -575,7 +843,15 @@ function isDurationPlausible(wave, durationSeconds) {
         return false; // Too slow
     }
 
-    // Could add more sophisticated checks later if needed
+    // Add another check for high waves - more challenging waves should take longer
+    if (wave > 20) {
+        // For very high waves, enforce a stricter minimum time
+        // As waves get harder, at least 20-25 seconds per wave is expected
+        const minHighWaveTime = VALIDATION_TOLERANCES.minSecondsPerWave;
+        if (averageTime < minHighWaveTime) {
+            return false;
+        }
+    }
+
     return true;
 }
-// --- END ADDED Logic ---
