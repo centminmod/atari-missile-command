@@ -234,6 +234,7 @@ const PLANE_BOMB_COLOR = '#FFA500';
 const PLANE_BOMB_TRAIL_COLOR = 'rgba(255, 165, 0, 0.4)';
 
 // Game State Variables
+let stars = [];
 let gameStartTimestamp = 0;
 let score = 0;
 let gameTotalScore = 0;
@@ -330,6 +331,22 @@ const audioFilePaths = {
     launch: 'audio/launch.mp3', // Placeholder - Changed to mp3
     explosion: 'audio/explosion.mp3' // Placeholder - Changed to mp3
 };
+
+function initializeStars() {
+  stars = []; // Clear any existing stars
+  const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
+  const numStars = Math.floor(canvas.width * canvas.height / 5000);
+  
+  for (let i = 0; i < numStars; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * groundY,
+      radius: 0.3 + Math.random() * 1.2, // Base radius between 0.3 and 1.5
+      twinkleSpeed: 0.3 + Math.random() * 0.7, // Random speed for twinkling
+      twinkleOffset: Math.random() * Math.PI * 2 // Random starting phase
+    });
+  }
+}
 
 // Function to initialize AudioContext (must be called after user interaction)
 function initAudioContext() {
@@ -1812,6 +1829,9 @@ async function startGame() {
         score = 0; scoreSubmitted = false; gameTotalScore = 0; gameClickData = []; storeActions = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
         storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
         inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null; satelliteBases = []; baseShields = [null, null, null]; planes = []; planeBombs = []; incomingMissiles = []; playerMissiles = []; explosions = []; statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0; playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; consecutiveIntercepts = 0; scoreMultiplier = 1.0; highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0');
+
+        initializeStars();
+
         // Reset duration/stat tracking
         totalGameDurationSeconds = 0; waveStartTime = 0; waveAllSpawnedTimestamp = 0; waveStats = [];
         console.log("startGame: State variables reset");
@@ -2714,7 +2734,35 @@ function deployBomb(clickX, clickY) {
 }
 
 // --- Drawing Functions ---
-function drawBackground() { ctx.fillStyle = '#00001a'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'white'; const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO); const numStars = Math.floor(canvas.width * canvas.height / 5000); for (let i = 0; i < numStars; i++) { let x = Math.random() * canvas.width; let y = Math.random() * groundY; let radius = Math.random() * 1.5; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#3b2e1a'; ctx.fillRect(0, groundY, canvas.width, canvas.height * GROUND_HEIGHT_RATIO); }
+function drawBackground() { 
+  ctx.fillStyle = '#00001a'; 
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw stars from the pre-generated array
+  ctx.fillStyle = 'white';
+  const time = Date.now() / 1000; // Current time in seconds for twinkling effect
+  
+  for (const star of stars) {
+    // Subtle twinkling effect by varying opacity and slightly varying size
+    const twinkle = 0.5 + 0.5 * Math.sin(time * star.twinkleSpeed + star.twinkleOffset);
+    ctx.globalAlpha = 0.5 + (twinkle * 0.5); // Opacity varies between 0.5 and 1.0
+    
+    // Slightly vary star size for more natural twinkling
+    const currentRadius = star.radius * (0.8 + (twinkle * 0.2));
+    
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, currentRadius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Reset opacity
+  ctx.globalAlpha = 1.0;
+  
+  // Draw the ground
+  const groundY = canvas.height - (canvas.height * GROUND_HEIGHT_RATIO);
+  ctx.fillStyle = '#3b2e1a';
+  ctx.fillRect(0, groundY, canvas.width, canvas.height * GROUND_HEIGHT_RATIO);
+}
 function drawGameObjects() { cities.forEach(city => city.draw()); bases.forEach(base => base.draw()); satelliteBases.forEach(sat => { sat.draw(); if (sat.shield && sat.shield.alive) { const shieldCenterX = sat.x + sat.width / 2; const shieldCenterY = sat.y + sat.height / 2; const shieldRadiusX = sat.width * 0.6 + 4; const shieldRadiusY = sat.height * 0.8 + 4; let shieldColor = SHIELD_COLOR_25; if (sat.shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (sat.shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (sat.shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (sat.shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; sat.shield.flashTimer--; } ctx.beginPath(); ctx.ellipse(shieldCenterX, shieldCenterY, shieldRadiusX, shieldRadiusY, 0, 0, Math.PI * 2); ctx.strokeStyle = shieldColor; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1; } }); for (let i = 0; i < baseShields.length; i++) { const shield = baseShields[i]; if (shield && shield.alive) { const base = bases[i]; const shieldCenterX = base.x + base.width / 2; const shieldRadius = BASE_SHIELD_RADIUS_MULTIPLIER * ((base.width / 2) + (canvas.width * CITY_WIDTH_RATIO / 2) + 5); let shieldColor = SHIELD_COLOR_25; if (shield.strength > 75) shieldColor = SHIELD_COLOR_FULL; else if (shield.strength > 50) shieldColor = SHIELD_COLOR_75; else if (shield.strength > 25) shieldColor = SHIELD_COLOR_50; if (shield.flashTimer > 0) { shieldColor = SHIELD_FLASH_COLOR; shield.flashTimer--; } const startX = shieldCenterX - shieldRadius; const endX = shieldCenterX + shieldRadius; const shieldTopY = base.y - 15; const controlY = shieldTopY - shieldRadius * 0.3; ctx.beginPath(); ctx.moveTo(startX, shieldTopY); ctx.quadraticCurveTo(shieldCenterX, controlY, endX, shieldTopY); ctx.strokeStyle = shieldColor; ctx.lineWidth = 3; ctx.stroke(); ctx.lineWidth = 1; } } if (activeSonicWave && activeSonicWave.alive) { ctx.fillStyle = SONIC_WAVE_COLOR; ctx.fillRect(0, activeSonicWave.y - SONIC_WAVE_HEIGHT, canvas.width, SONIC_WAVE_HEIGHT); ctx.strokeStyle = 'rgba(255, 100, 255, 0.8)'; ctx.lineWidth = 1; const numLines = 5; for(let i=0; i < numLines; i++) { const lineY = activeSonicWave.y - (SONIC_WAVE_HEIGHT / numLines * (i + 0.5)); ctx.beginPath(); ctx.moveTo(0, lineY); ctx.lineTo(canvas.width, lineY); ctx.stroke(); } } incomingMissiles.forEach(missile => missile.draw()); playerMissiles.forEach(missile => missile.draw()); explosions.forEach(explosion => explosion.draw()); planes.forEach(plane => plane.draw()); planeBombs.forEach(bomb => bomb.draw()); }
 
 // --- Update Functions ---
@@ -2880,6 +2928,7 @@ function optimizeCanvasForOrientation() {
     // Keep internal resolution the same to avoid breaking game logic
     canvas.width = INTERNAL_WIDTH;
     canvas.height = INTERNAL_HEIGHT;
+    initializeStars();
     
     // Apply landscape-specific layout adjustments ONLY for mobile/small screens
     if (isLandscape && isMobileOrSmallScreen) {
@@ -4079,6 +4128,8 @@ document.querySelectorAll('#restartButton').forEach(button => {
         selectedDifficultyName = ''; difficultyScoreMultiplier = 1.0;
         statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0;
 
+        initializeStars();
+
         // Reset UI elements to initial state
         startMenuContainer.style.display = 'flex';
         canvasContainer.style.display = 'none'; canvas.style.display = 'none';
@@ -4299,6 +4350,9 @@ window.onload = () => {
 
     // Set canvas dimensions
     canvas.width = INTERNAL_WIDTH; canvas.height = INTERNAL_HEIGHT;
+
+    // initializeStars
+    initializeStars();
 
     // ADDED: Optimize for current orientation on load
     optimizeCanvasForOrientation();
