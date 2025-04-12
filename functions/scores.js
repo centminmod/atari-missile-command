@@ -84,25 +84,37 @@ function handleCors(request, env) {
   };
 }
 
+/**
+ * Deterministically serialize an object with sorted keys (for signature).
+ * Handles only plain objects and primitives (no circular refs).
+ */
+function stableStringify(obj) {
+  if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
+  if (Array.isArray(obj)) return `[${obj.map(stableStringify).join(',')}]`;
+  const keys = Object.keys(obj).sort();
+  return `{${keys.map(k => JSON.stringify(k) + ':' + stableStringify(obj[k])).join(',')}}`;
+}
+
 // Verify the signature of submitted score data
 async function verifyScoreSignature(scoreData, signature, secretKey) {
   if (!secretKey) {
     console.error('Missing SCORE_SECRET_KEY environment variable');
     return false;
   }
-  
-  // Recreate the expected signature
-  const dataToHash = `${scoreData.name}-${scoreData.score}-${scoreData.wave}-${secretKey}`;
-  
+
+  // Recreate the expected signature (must match client)
+  const statsString = stableStringify(scoreData.stats || {});
+  const dataToHash = `${scoreData.name}-${scoreData.score}-${scoreData.wave}-${statsString}-${scoreData.sessionToken}-${secretKey}`;
+
   // Hash using the same algorithm
   const encoder = new TextEncoder();
   const data = encoder.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  
+
   // Convert to hex for comparison
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const expectedSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
+
   // Compare signatures
   return signature === expectedSignature;
 }

@@ -3717,21 +3717,25 @@ async function submitHighScore() {
 
   // Add signature if possible
   try {
+    // Attach sessionToken before signing
+    if (sessionToken) {
+      scoreDataToSubmit.sessionToken = sessionToken;
+    }
     const secretKey = await getGameSecret();
-    
+
     if (window.enableDebugLogging) {
       console.log("Secret key fetch result:", secretKey ? "Success" : "Failed");
     }
-    
+
     if (secretKey) {
       const signature = await generateScoreSignature(scoreDataToSubmit, secretKey);
-      
+
       if (window.enableDebugLogging) {
         console.log("Generated signature:", signature.substring(0, 10) + "...");
       } else {
         console.log("Score signature generated");
       }
-      
+
       scoreDataToSubmit.signature = signature;
     } else {
       // Keep warning for both debug and non-debug as it's important
@@ -3992,10 +3996,23 @@ async function getGameSecret() {
   }
 }
 
+/**
+ * Deterministically serialize an object with sorted keys (for signature).
+ * Handles only plain objects and primitives (no circular refs).
+ */
+function stableStringify(obj) {
+  if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
+  if (Array.isArray(obj)) return `[${obj.map(stableStringify).join(',')}]`;
+  const keys = Object.keys(obj).sort();
+  return `{${keys.map(k => JSON.stringify(k) + ':' + stableStringify(obj[k])).join(',')}}`;
+}
+
 // Add this function to generate signatures
 async function generateScoreSignature(scoreData, secretKey) {
   // Create a string to hash (include all important fields)
-  const dataToHash = `${scoreData.name}-${scoreData.score}-${scoreData.wave}-${secretKey}`;
+  // sessionToken must be present on scoreData
+  const statsString = stableStringify(scoreData.stats || {});
+  const dataToHash = `${scoreData.name}-${scoreData.score}-${scoreData.wave}-${statsString}-${scoreData.sessionToken}-${secretKey}`;
   
   // Use Web Crypto API to create a hash
   const encoder = new TextEncoder();
