@@ -4260,6 +4260,14 @@
                     throw new Error(`Analysis request failed. ${detail}`);
                 }
 
+                // Parse the successful JSON response from the Worker
+                const analysisResult = await response.json();
+                if (window.enableDebugLogging) {
+                    console.log("Received analysis:", analysisResult);
+                } else {
+                    console.log("Analysis results received");
+                }
+
                 // 4. Display the Analysis Result using the new handler
                 handleAIAnalysisResponse(analysisResult);
 
