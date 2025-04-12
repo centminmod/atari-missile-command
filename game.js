@@ -1,3 +1,20 @@
+/* --- SESSION TOKEN FOR SCORE SUBMISSION --- */
+let sessionToken = null; // Holds the session token for this game session
+
+async function fetchSessionToken() {
+  try {
+    const response = await fetch('/start-session', { method: 'POST' });
+    if (!response.ok) throw new Error('Failed to get session token');
+    const data = await response.json();
+    sessionToken = data.sessionToken;
+    console.log('Session token acquired:', sessionToken);
+  } catch (e) {
+    sessionToken = null;
+    console.error('Session token error:', e);
+    // Optionally: disable score submission UI here
+  }
+}
+
 // --- PWA Install Prompt Variables ---
 let deferredPrompt; // To store the event
 const installButton = document.getElementById('installPwaButton');
@@ -1787,8 +1804,10 @@ function checkWaveEnd() {
 }
 
 // --- Game Flow ---
-function startGame() {
+async function startGame() {
     try {
+        // Fetch a new session token before starting the game
+        await fetchSessionToken();
         console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding..."); optimizeCanvasForOrientation(); gameStartTimestamp = Date.now(); console.log(`Game started at: ${new Date(gameStartTimestamp).toISOString()}`);
         score = 0; scoreSubmitted = false; gameTotalScore = 0; gameClickData = []; storeActions = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
         storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
@@ -3602,6 +3621,11 @@ async function submitScoreData(scoreData) {
     console.log(`Submitting score: Name=${name}, Score=${finalScore}, Wave=${waveReached}`);
 
     try {
+        // --- SESSION TOKEN: Attach to scoreData if present ---
+        if (sessionToken) {
+            scoreData.sessionToken = sessionToken;
+        }
+
         const response = await fetch('/scores', {
             method: 'POST',
             headers: {

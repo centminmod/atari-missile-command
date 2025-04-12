@@ -379,7 +379,24 @@ export async function onRequest(context) {
       try {
         newScoreEntry = await request.json();
         console.log('Received score entry:', JSON.stringify(newScoreEntry));
-        
+
+        // --- SESSION TOKEN VALIDATION ---
+        if (!newScoreEntry.sessionToken) {
+          console.warn('Missing session token in score submission');
+          return new Response('Missing session token', { status: 400 });
+        }
+        if (!env.MISSILE_CMD_SESSIONS) {
+          console.error('MISSILE_CMD_SESSIONS KV binding not configured');
+          return new Response('Session validation unavailable', { status: 500 });
+        }
+        const tokenValid = await env.MISSILE_CMD_SESSIONS.get(newScoreEntry.sessionToken);
+        if (!tokenValid) {
+          console.warn('Invalid or expired session token');
+          return new Response('Invalid or expired session token', { status: 403 });
+        }
+        // Delete the token to prevent reuse
+        await env.MISSILE_CMD_SESSIONS.delete(newScoreEntry.sessionToken);
+
         // Verify signature if secret key is available
         if (env.SCORE_SECRET_KEY) {
           console.log('SCORE_SECRET_KEY found, attempting signature verification...'); // ADDED: Confirmation log
