@@ -1169,6 +1169,8 @@
         // ADDED: Duration tracking variables
         let waveStartTime = 0;
         let totalGameDurationSeconds = 0;
+        let waveAllSpawnedTimestamp = 0; // NEW: Timestamp when all enemies for the wave are spawned
+        let waveStats = []; // NEW: Array to store stats per wave [{ spawnToCompletionMs: 12345 }, ...]
         // NEW: Keyboard control variables
         let keyboardSelectedBaseIndex = -1; // -1 = none, 0-2 ground, 3-5 satellite
         let reticleX = INTERNAL_WIDTH / 2;
@@ -2574,8 +2576,9 @@
             
             // Force wave completion when we've spawned enough enemies
             // This is an additional safeguard
-            if (waveEnemiesSpawned >= waveEnemiesRequired) {
-                console.log(`All required enemies (${waveEnemiesRequired}) spawned for wave ${currentWave + 1}`);
+            if (waveEnemiesSpawned >= waveEnemiesRequired && waveAllSpawnedTimestamp === 0) { // Check if timestamp not already set
+                waveAllSpawnedTimestamp = Date.now(); // Record timestamp when last enemy is spawned
+                console.log(`All required enemies (${waveEnemiesRequired}) spawned for wave ${currentWave + 1} at ${waveAllSpawnedTimestamp}`);
             }
         }
         function checkWaveEnd() {
@@ -2626,7 +2629,7 @@
                      if (e.x < -offScreenBuffer || e.x > canvas.width + offScreenBuffer || e.y < -offScreenBuffer || e.y > canvas.height + offScreenBuffer) {
                          activeOffScreenExplosions++;
                      } else {
-                         activeOnScreenExplosions++;
+                 activeOnScreenExplosions++;
                      }
                 }
             });
@@ -2650,10 +2653,10 @@
                 console.warn(`Wave ${currentWave + 1} force-completed due to only off-screen objects remaining!`);
                 transitioningWave = true;
                 nextWave();
-            } else if (allEnemiesSpawned && waveTimer > 900) { // Timeout safety net (15 seconds after all spawned)
+            } else if (allEnemiesSpawned && waveTimer > 7200) { // INCREASED Timeout safety net (120 seconds after all spawned)
                 console.warn(`Wave ${currentWave + 1} force-completed due to cleanup timeout! ` +
-                             `Spawned: ${waveEnemiesSpawned}/${waveEnemiesRequired}, ` +
-                             `Remaining On-Screen Enemies: ${activeOnScreenEnemies}, ` +
+                              `Spawned: ${waveEnemiesSpawned}/${waveEnemiesRequired}, ` +
+                              `Remaining On-Screen Enemies: ${activeOnScreenEnemies}, ` +
                              `Remaining Off-Screen Enemies: ${activeOffScreenEnemies}, ` +
                              `Remaining On-Screen Explosions: ${activeOnScreenExplosions}`);
                 transitioningWave = true;
@@ -2667,7 +2670,10 @@
                 console.log("startGame: Entered"); if (!difficultySelected) { console.warn("Difficulty not selected!"); return; } console.log("startGame: Difficulty selected, proceeding..."); optimizeCanvasForOrientation();
                 score = 0; scoreSubmitted = false; gameTotalScore = 0; gameClickData = []; storeActions = []; currentWave = -1; isGameOver = false; isPaused = false; transitioningWave = false; gameHasStarted = true; bonusMissileCount = 0;
                 storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
-                inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null; satelliteBases = []; baseShields = [null, null, null]; planes = []; planeBombs = []; incomingMissiles = []; playerMissiles = []; explosions = []; statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0; playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; consecutiveIntercepts = 0; scoreMultiplier = 1.0; highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0'); console.log("startGame: State variables reset");
+                inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null; satelliteBases = []; baseShields = [null, null, null]; planes = []; planeBombs = []; incomingMissiles = []; playerMissiles = []; explosions = []; statsMissilesFired = 0; statsEnemyMissilesDestroyed = 0; statsPlaneBombsDestroyed = 0; statsPlanesDestroyed = 0; statsCitiesLost = 0; statsBasesLost = 0; statsAccuracyBonusHits = 0; playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; consecutiveIntercepts = 0; scoreMultiplier = 1.0; highScore = parseInt(localStorage.getItem('missileCommandHighScore') || '0');
+                // Reset duration/stat tracking
+                totalGameDurationSeconds = 0; waveStartTime = 0; waveAllSpawnedTimestamp = 0; waveStats = [];
+                console.log("startGame: State variables reset");
                 console.log("startGame: Setting up UI..."); startMenuContainer.style.display = 'none'; canvasContainer.style.display = 'block'; canvas.style.display = 'block'; uiContainer.style.display = 'flex'; controlsContainer.style.display = 'flex'; specialWeaponsUIDiv.style.display = 'flex'; screenshotButton.style.display = 'inline-block'; hideMessage(); statsContainer.style.display = 'none'; pauseOverlay.style.display = 'none'; canvas.style.cursor = 'crosshair'; console.log("startGame: UI setup complete");
                 console.log("startGame: Initializing game objects..."); cities = []; const cityWidth = canvas.width * CITY_WIDTH_RATIO; const citySpacingRatio = (INTERNAL_WIDTH - 6 * (INTERNAL_WIDTH * CITY_WIDTH_RATIO)) / (7 * INTERNAL_WIDTH); const cityWidthRatio = CITY_WIDTH_RATIO; for (let i = 0; i < 3; i++) cities.push(createCity(citySpacingRatio * (i + 1) + cityWidthRatio * i)); for (let i = 0; i < 3; i++) cities.push(createCity(citySpacingRatio * (i + 4) + cityWidthRatio * (i + 3))); cities.forEach(c => c.alive = true); bases = []; const basePositionsRatios = [0.15, 0.5, 0.85]; bases.push(createBase(basePositionsRatios[0])); bases.push(createBase(basePositionsRatios[1])); bases.push(createBase(basePositionsRatios[2])); bases.forEach(b => b.alive = true); console.log("startGame: Game objects initialized");
                 console.log("startGame: Calling initWave(0)..."); initWave(0); console.log("startGame: initWave(0) complete");
@@ -2686,10 +2692,23 @@
         }
         function nextWave() {
             // ADDED: Accumulate wave duration
+            const waveCompletionTimestamp = Date.now(); // Timestamp when wave actually completes
+            let spawnToCompletionMs = null;
+            if (waveAllSpawnedTimestamp > 0) { // Ensure spawn timestamp was recorded
+                spawnToCompletionMs = waveCompletionTimestamp - waveAllSpawnedTimestamp;
+                console.log(`Wave ${currentWave + 1}: Spawn-to-completion duration: ${(spawnToCompletionMs / 1000).toFixed(1)}s`);
+            } else {
+                console.warn(`Wave ${currentWave + 1}: waveAllSpawnedTimestamp not set, cannot calculate spawn-to-completion duration.`);
+            }
+            // Store the stat for this wave (even if null)
+            waveStats[currentWave] = { spawnToCompletionMs: spawnToCompletionMs };
+            waveAllSpawnedTimestamp = 0; // Reset for the next wave
+
+            // ADDED: Accumulate wave duration
             if (waveStartTime > 0) {
-                const waveDuration = (Date.now() - waveStartTime) / 1000;
+                const waveDuration = (waveCompletionTimestamp - waveStartTime) / 1000; // Use completion timestamp
                 totalGameDurationSeconds += waveDuration;
-                console.log(`Wave ${currentWave + 1} duration: ${waveDuration.toFixed(1)}s. Total duration: ${totalGameDurationSeconds.toFixed(1)}s`);
+                console.log(`Wave ${currentWave + 1} total duration: ${waveDuration.toFixed(1)}s. Total game duration: ${totalGameDurationSeconds.toFixed(1)}s`);
                 waveStartTime = 0; // Reset for next wave start in initWave
             }
             let bonusEarned = calculateBonus();
@@ -2764,6 +2783,8 @@
                             citiesLost: statsCitiesLost,
                             basesLost: statsBasesLost,
                             accuracyBonusHits: statsAccuracyBonusHits,
+                            // ADDED: Save wave stats
+                            waveStats: waveStats.map(stat => stat ? stat.spawnToCompletionMs : null) // Store only the duration in ms
                         },
                         // The raw click data
                         clicks: gameClickData,
@@ -2822,7 +2843,9 @@
                             difficulty: selectedDifficultyName,
                             missileSpeedLevel: playerMissileSpeedLevel,
                             explosionRadiusLevel: explosionRadiusLevel,
-                            accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0")
+                            accuracy: parseFloat(statsMissilesFired > 0 ? ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : "0.0"),
+                            // ADDED: Save wave stats for offline scores too
+                            waveStats: waveStats.map(stat => stat ? stat.spawnToCompletionMs : null)
                         },
                         timestamp: Date.now() // Add a timestamp for potential sorting/debugging
                     };
@@ -4456,19 +4479,21 @@
             planeBombsDestroyed: statsPlaneBombsDestroyed,
             planesDestroyed: statsPlanesDestroyed,
             citiesLost: statsCitiesLost,
-            basesLost: statsBasesLost,
-            accuracyBonusHits: statsAccuracyBonusHits,
-            shieldBombsDestroyed: statsShieldBombsDestroyed,
-            difficulty: selectedDifficultyName,
-            missileSpeedLevel: playerMissileSpeedLevel,
-            explosionRadiusLevel: explosionRadiusLevel,
-            accuracy: parseFloat(statsMissilesFired > 0 ? 
-              ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) : 
-              "0.0"),
-            duration: Math.round(totalGameDurationSeconds)
-          };
+                            basesLost: statsBasesLost,
+                            accuracyBonusHits: statsAccuracyBonusHits,
+                            shieldBombsDestroyed: statsShieldBombsDestroyed,
+                            difficulty: selectedDifficultyName,
+                            missileSpeedLevel: playerMissileSpeedLevel,
+                            explosionRadiusLevel: explosionRadiusLevel,
+                            accuracy: parseFloat(statsMissilesFired > 0 ?
+                              ((statsEnemyMissilesDestroyed + statsPlaneBombsDestroyed) / statsMissilesFired * 100).toFixed(1) :
+                              "0.0"),
+                            duration: Math.round(totalGameDurationSeconds),
+                            // ADDED: Include wave stats in submission
+                            waveStats: waveStats.map(stat => stat ? stat.spawnToCompletionMs : null)
+                          };
 
-          submitScoreButton.disabled = true;
+                          submitScoreButton.disabled = true;
           submissionStatus.textContent = "Submitting...";
           submissionStatus.style.color = "#00ff00";
 
@@ -4798,7 +4823,7 @@
                 // Reset game state variables
                 score = 0; gameTotalScore = 0; currentWave = -1; consecutiveIntercepts = 0; scoreMultiplier = 1.0;
                 playerMissileSpeedLevel = 0; explosionRadiusLevel = 0; bonusMissileCount = 0;
-                totalGameDurationSeconds = 0; waveStartTime = 0; // ADDED: Reset duration timers
+                totalGameDurationSeconds = 0; waveStartTime = 0; waveAllSpawnedTimestamp = 0; waveStats = []; // ADDED: Reset duration/stat tracking
                 storeStockSatellite = MAX_STOCK_SATELLITE; storeStockBase = MAX_STOCK_BASE; storeStockCity = MAX_STOCK_CITY; storeStockShield = MAX_STOCK_SHIELD; storeStockSatShield = MAX_STOCK_SAT_SHIELD; storeStockSonicWave = MAX_STOCK_SONIC_WAVE; storeStockBomb = MAX_STOCK_BOMB;
                 inventorySonicWave = 0; inventoryBomb = 0; isBombArmed = false; activeSonicWave = null;
                 satelliteBases = []; baseShields = [null, null, null]; cities = []; bases = []; incomingMissiles = []; playerMissiles = []; explosions = []; planes = []; planeBombs = [];
