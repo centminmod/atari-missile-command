@@ -836,3 +836,4 @@ function isDurationPlausible(wave, durationSeconds) {
 
     return true;
 }
+} // Added closing brace at the end of the file
