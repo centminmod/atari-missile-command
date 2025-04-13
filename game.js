@@ -3634,6 +3634,7 @@ async function handleViewSummaryClick(event) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Session-Token': sessionToken, // Include the session token
             },
             body: JSON.stringify(gameData), // Send the entire game data object
             signal: controller.signal // Link the AbortController signal
