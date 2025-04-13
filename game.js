@@ -1984,6 +1984,15 @@ function gameOver() {
                 console.log("Game data saved to local storage");
             }
 
+            // --- [NEW] Call AI Analysis Function ---
+            // Check if online before attempting to send data
+            if (navigator.onLine) {
+                sendGameDataForAnalysis(dataToStore); // Call the function to send data
+            } else {
+                console.log("Offline. Skipping AI analysis data submission.");
+            }
+            // --- [END NEW] ---
+
         } catch (e) {
             console.error("Failed to save game data to local storage:", e);
             // Clear potentially partial data if saving failed
@@ -3542,6 +3551,48 @@ function handleAIAnalysisResponse(analysisResult) {
   // Add button to the message box buttons area
   buttonContainer.appendChild(backButton);
 }
+
+// --- [NEW] Function to Send Game Data for Analysis ---
+async function sendGameDataForAnalysis(gameData) { // Added gameData parameter for consistency
+  try {
+    if (!sessionToken) {
+      // Don't throw an error, just log and exit if no token.
+      // Score submission might still work without analysis.
+      console.warn('Session token is missing. Cannot send game data for analysis.');
+      return; // Exit the function gracefully
+    }
+
+    const workerUrl = '/api'; // The endpoint for the analyzer worker
+    console.log(`Sending game data to ${workerUrl} with session token: ${sessionToken ? sessionToken.substring(0, 6) + '...' : 'null'}`); // Log partial token
+
+    const response = await fetch(workerUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Session-Token': sessionToken, // Include the session token as a custom header
+      },
+      body: JSON.stringify(gameData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text(); // Get the error message from the response
+      // Log the error but don't necessarily throw, as the game is already over.
+      console.error(`Failed to send game data: ${response.status} - ${errorText}`);
+      // Optionally, inform the user via a non-blocking message if needed
+      // showMessage('Analysis Error', 'Failed to send game data for analysis.', `Status: ${response.status}`);
+      return; // Exit after logging error
+    }
+
+    const analysisResult = await response.json();
+    console.log('Received analysis result:', analysisResult);
+    handleAIAnalysisResponse(analysisResult); // Call the handler function (defined in game.js)
+  } catch (error) {
+    console.error('Error sending game data:', error);
+    // Handle errors appropriately (e.g., display a message to the user)
+    // showMessage('Analysis Error', 'Failed to send game data for analysis.', error.message);
+  }
+}
+
 
 // --- Function to Handle AI Summary Request ---
 async function handleViewSummaryClick(event) {
