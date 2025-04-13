@@ -3781,7 +3781,8 @@ async function submitHighScore() {
     name: name,
     score: finalScore,
     wave: waveReached,
-    stats: gameStats
+    stats: gameStats,
+    nonce: crypto.randomUUID() // Generate and add nonce
   };
 
   // Add signature if possible
@@ -4079,10 +4080,11 @@ function stableStringify(obj) {
 // Add this function to generate signatures
 async function generateScoreSignature(scoreData, secretKey) {
   // Create a string to hash (include all important fields)
-  // sessionToken must be present on scoreData
+  // sessionToken and nonce must be present on scoreData
   const statsString = stableStringify(scoreData.stats || {});
-  const dataToHash = `${scoreData.name}-${scoreData.score}-${scoreData.wave}-${statsString}-${scoreData.sessionToken}-${secretKey}`;
-  
+  // ADDED nonce to the signature data
+  const dataToHash = `${scoreData.name}-${scoreData.score}-${scoreData.wave}-${statsString}-${scoreData.sessionToken}-${scoreData.nonce}-${secretKey}`;
+
   // Use Web Crypto API to create a hash
   const encoder = new TextEncoder();
   const data = encoder.encode(dataToHash);
