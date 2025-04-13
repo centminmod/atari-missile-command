@@ -3669,6 +3669,11 @@ async function handleViewSummaryClick(event) {
         // 4. Display the Analysis Result using the new handler
         handleAIAnalysisResponse(analysisResult);
 
+        // Disable the button after successful display
+        summaryLink.disabled = true;
+        summaryLink.textContent = 'Summary Viewed';
+        summaryLink.style.color = '#aaaaaa'; // Optional: Grey out text
+
     } catch (error) {
         // Catch errors from local storage access, fetch (network, timeout), or response handling
         clearTimeout(timeoutId); // Ensure timeout is cleared on error
