@@ -3543,47 +3543,8 @@ function handleAIAnalysisResponse(analysisResult) {
   buttonContainer.appendChild(backButton);
 }
 
-// --- [NEW] Function to Send Game Data for Analysis ---
-async function sendGameDataForAnalysis(gameData) { // Added gameData parameter for consistency
-  try {
-    if (!sessionToken) {
-      // Don't throw an error, just log and exit if no token.
-      // Score submission might still work without analysis.
-      console.warn('Session token is missing. Cannot send game data for analysis.');
-      return; // Exit the function gracefully
-    }
-
-    const workerUrl = '/api'; // The endpoint for the analyzer worker
-    console.log(`Sending game data to ${workerUrl} with session token: ${sessionToken ? sessionToken.substring(0, 6) + '...' : 'null'}`); // Log partial token
-
-    const response = await fetch(workerUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Session-Token': sessionToken, // Include the session token as a custom header
-      },
-      body: JSON.stringify(gameData),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text(); // Get the error message from the response
-      // Log the error but don't necessarily throw, as the game is already over.
-      console.error(`Failed to send game data: ${response.status} - ${errorText}`);
-      // Optionally, inform the user via a non-blocking message if needed
-      // showMessage('Analysis Error', 'Failed to send game data for analysis.', `Status: ${response.status}`);
-      return; // Exit after logging error
-    }
-
-    const analysisResult = await response.json();
-    console.log('Received analysis result:', analysisResult);
-    handleAIAnalysisResponse(analysisResult); // Call the handler function (defined in game.js)
-  } catch (error) {
-    console.error('Error sending game data:', error);
-    // Handle errors appropriately (e.g., display a message to the user)
-    // showMessage('Analysis Error', 'Failed to send game data for analysis.', error.message);
-  }
-}
-
+// --- [REMOVED] Function to Send Game Data for Analysis ---
+// Logic moved into handleViewSummaryClick
 
 // --- Function to Handle AI Summary Request ---
 async function handleViewSummaryClick(event) {
@@ -3602,6 +3563,7 @@ async function handleViewSummaryClick(event) {
     }, 20000); // 20-second timeout for the analysis request
 
     try {
+        // --- MOVED LOGIC START ---
         // 1. Retrieve data from Local Storage
         const storedDataString = localStorage.getItem('missileCommandLastGameData');
         if (!storedDataString) {
@@ -3617,9 +3579,17 @@ async function handleViewSummaryClick(event) {
             console.log("No player name submitted this session, not including in analysis request.");
         }
 
-        // 2. Call your Cloudflare Worker
-        const workerUrl = '/api'; // Adjust to your actual worker URL
+        // 2. Check for Session Token
+        if (!sessionToken) {
+          // Don't throw an error, just log and exit if no token.
+          console.warn('Session token is missing. Cannot send game data for analysis.');
+          throw new Error("Session token missing. Cannot request analysis."); // Throw to trigger error display
+        }
+
+        // 3. Call your Cloudflare Worker
+        const workerUrl = '/api'; // The endpoint for the analyzer worker
         console.log(`Sending ${gameData.clicks?.length || 0} clicks to worker: ${workerUrl}`);
+        console.log(`Using session token: ${sessionToken ? sessionToken.substring(0, 6) + '...' : 'null'}`); // Log partial token
 
         const response = await fetch(workerUrl, {
             method: 'POST',
@@ -3630,11 +3600,12 @@ async function handleViewSummaryClick(event) {
             body: JSON.stringify(gameData), // Send the entire game data object
             signal: controller.signal // Link the AbortController signal
         });
+        // --- MOVED LOGIC END ---
 
         // Clear the timeout timer as the fetch completed (successfully or not)
         clearTimeout(timeoutId);
 
-        // 3. Handle Worker Response
+        // 4. Handle Worker Response
         if (!response.ok) {
             // Handle HTTP errors from the Worker (e.g., 4xx, 5xx)
             const errorText = await response.text();
@@ -3657,7 +3628,7 @@ async function handleViewSummaryClick(event) {
             console.log("Analysis results received");
         }
 
-        // 4. Display the Analysis Result using the new handler
+        // 5. Display the Analysis Result using the new handler
         handleAIAnalysisResponse(analysisResult);
 
         // Disable the button after successful display
