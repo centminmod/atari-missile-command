@@ -1,39 +1,23 @@
+/**
+ * Cloudflare Pages Function - Wrapper for /game-secret endpoint.
+ * Forwards requests to the Worker via Service Binding.
+ */
 export async function onRequest(context) {
-  // Get the environment variables
-  const secretKey = context.env.SCORE_SECRET_KEY;
-  
-  // Handle CORS the same way as scores.js
-  const allowedOriginsStr = context.env.ALLOWED_ORIGINS || 'https://missile-command-game.centminmod.com';
-  const allowedOrigins = allowedOriginsStr.split(',').map(origin => origin.trim());
-  const requestOrigin = context.request.headers.get('Origin');
-  
-  // Set default origin
-  let corsOrigin = 'https://missile-command-game.centminmod.com';
-  
-  // Check if request origin is allowed
-  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
-    corsOrigin = requestOrigin;
+  // Ensure 'API_WORKER' matches the Variable Name of your Service Binding
+  // in the Cloudflare Pages dashboard settings.
+  const backendWorker = context.env.API_WORKER;
+
+  if (!backendWorker) {
+    console.error("Service Binding 'API_WORKER' not found. Ensure it is configured in Pages settings.");
+    return new Response("Backend service binding not configured.", { status: 500 });
   }
-  
-  // Check if we have the key
-  if (!secretKey) {
-    return new Response(JSON.stringify({ error: "Secret not configured" }), {
-      status: 500,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': corsOrigin,
-        'Vary': 'Origin'
-      }
-    });
+
+  try {
+    // Forward the incoming request (method, headers, body, etc.) directly
+    // to the bound backend worker service.
+    return await backendWorker.fetch(context.request);
+  } catch (error) {
+    console.error(`Error forwarding request to API_WORKER for /game-secret: ${error}`);
+    return new Response("Error communicating with backend service.", { status: 502 }); // Bad Gateway
   }
-  
-  // Return the key with proper security headers
-  return new Response(JSON.stringify({ key: secretKey }), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store, private, max-age=0',
-      'Access-Control-Allow-Origin': corsOrigin,
-      'Vary': 'Origin'
-    }
-  });
 }

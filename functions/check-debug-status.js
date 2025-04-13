@@ -1,44 +1,23 @@
 /**
- * Cloudflare Function to check if the requesting IP matches a debug IP.
- *
- * Environment variables:
- * - DEBUG_IP_ADDRESS: The specific IP address allowed for debug logging.
+ * Cloudflare Pages Function - Wrapper for /check-debug-status endpoint.
+ * Forwards requests to the Worker via Service Binding.
  */
-
 export async function onRequest(context) {
-  const { request, env } = context;
+  // Ensure 'API_WORKER' matches the Variable Name of your Service Binding
+  // in the Cloudflare Pages dashboard settings.
+  const backendWorker = context.env.API_WORKER;
 
-  // Default to not debug mode
-  let isDebug = false;
-
-  // Get the connecting IP address from Cloudflare headers
-  const clientIp = request.headers.get('CF-Connecting-IP');
-  const debugIp = env.DEBUG_IP_ADDRESS;
-
-  console.log(`[check-debug-status] Request from IP: ${clientIp}, Debug IP Env: ${debugIp}`);
-
-  // Check if the DEBUG_IP_ADDRESS is set and matches the client IP
-  if (debugIp && clientIp === debugIp) {
-    isDebug = true;
-    console.log(`[check-debug-status] Debug IP match found.`);
-  } else if (!debugIp) {
-    console.warn(`[check-debug-status] DEBUG_IP_ADDRESS environment variable not set.`);
-  } else {
-     console.log(`[check-debug-status] No debug IP match.`);
+  if (!backendWorker) {
+    console.error("Service Binding 'API_WORKER' not found. Ensure it is configured in Pages settings.");
+    return new Response("Backend service binding not configured.", { status: 500 });
   }
 
-  // Respond with JSON indicating debug status
-  // IMPORTANT: Use CORS headers similar to the /scores endpoint if needed,
-  // assuming this might be called cross-origin or you want consistency.
-  // For simplicity here, assuming same-origin or permissive CORS.
-  const responseBody = JSON.stringify({ isDebug });
-  return new Response(responseBody, {
-    headers: {
-      'Content-Type': 'application/json',
-      // Add CORS headers if necessary, copying logic from handleCors if applicable
-      'Access-Control-Allow-Origin': '*', // Example: Allow all origins for this simple check
-      'Cache-Control': 'no-store' // Prevent caching of debug status
-    },
-    status: 200,
-  });
+  try {
+    // Forward the incoming request (method, headers, body, etc.) directly
+    // to the bound backend worker service.
+    return await backendWorker.fetch(context.request);
+  } catch (error) {
+    console.error(`Error forwarding request to API_WORKER for /check-debug-status: ${error}`);
+    return new Response("Error communicating with backend service.", { status: 502 }); // Bad Gateway
+  }
 }
