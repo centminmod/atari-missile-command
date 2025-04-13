@@ -2796,6 +2796,23 @@ function updateGameObjects() {
     explosions.forEach(explosion => explosion.update());
     planes.forEach(plane => plane.update());
     planeBombs.forEach(bomb => bomb.update());
+
+    // --- NEW: Deferred Kill Counting Logic (Moved Here) ---
+    if (useDeferredKillCounting) {
+        incomingMissiles.forEach(missile => {
+            if (!missile.alive && !missile.countedAsDestroyed) {
+                if (missile.isShieldBomb) {
+                    statsShieldBombsDestroyed++;
+                }
+                statsEnemyMissilesDestroyed++;
+                missile.countedAsDestroyed = true; // Mark as counted
+            }
+        });
+        // Note: Plane bombs are counted immediately in their collision check,
+        // as they don't have the same potential for multiple hits within a frame.
+    }
+    // --- END Deferred Kill Counting Logic ---
+
     incomingMissiles = incomingMissiles.filter(missile => missile.alive);
     playerMissiles = playerMissiles.filter(missile => missile.alive);
     explosions = explosions.filter(explosion => explosion.alive);
@@ -2813,22 +2830,6 @@ function updateGameObjects() {
               messageBonusText.textContent = "";
           }
      }
-
-     // --- NEW: Deferred Kill Counting Logic ---
-     if (useDeferredKillCounting) {
-         incomingMissiles.forEach(missile => {
-             if (!missile.alive && !missile.countedAsDestroyed) {
-                 if (missile.isShieldBomb) {
-                     statsShieldBombsDestroyed++;
-                 }
-                 statsEnemyMissilesDestroyed++;
-                 missile.countedAsDestroyed = true; // Mark as counted
-             }
-         });
-         // Note: Plane bombs are counted immediately in their collision check,
-         // as they don't have the same potential for multiple hits within a frame.
-     }
-     // --- END Deferred Kill Counting Logic ---
  }
  function updateUI() {
     scoreDisplay.textContent = `CURRENT SCORE: $${score}`;
