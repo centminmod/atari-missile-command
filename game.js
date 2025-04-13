@@ -1984,15 +1984,6 @@ function gameOver() {
                 console.log("Game data saved to local storage");
             }
 
-            // --- [NEW] Call AI Analysis Function ---
-            // Check if online before attempting to send data
-            if (navigator.onLine) {
-                sendGameDataForAnalysis(dataToStore); // Call the function to send data
-            } else {
-                console.log("Offline. Skipping AI analysis data submission.");
-            }
-            // --- [END NEW] ---
-
         } catch (e) {
             console.error("Failed to save game data to local storage:", e);
             // Clear potentially partial data if saving failed
