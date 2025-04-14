@@ -3288,8 +3288,8 @@ async function fetchAndDisplayLeaderboard(limit = 10) { // Default limit to 10
     }
 }
 
-// --- NEW: Function to Display Player Stats Modal ---
-function displayPlayerStats(playerData) {
+// --- MODIFIED: Function to Display Player Stats Modal (Fetches Full Data) ---
+async function displayPlayerStats(playerData) { // Made async
     // Create or update modal
     let statsModal = document.getElementById('playerStatsModal');
     if (!statsModal) {
@@ -3316,106 +3316,143 @@ function displayPlayerStats(playerData) {
         document.body.appendChild(statsModal);
     }
 
+    // --- Initial Display (Summary Data) ---
+    statsModal.innerHTML = `
+        <h2 style="color: #ffff00; text-align: center; margin-bottom: 10px;">Player: ${playerData.name}</h2>
+        <div style="text-align: center; margin-bottom: 15px; line-height: 1.5;">
+            <p style="margin: 0; color: #ffffff; font-size: 14px;">Score: $${playerData.score}</p>
+            <p style="margin: 0;">Wave: ${playerData.wave || '?'} | Difficulty: Loading...</p>
+            <p style="margin: 0; font-size: 8px; color: #aaaaaa;">Loading details...</p>
+            <p style="margin: 0; font-size: 8px; color: #aaaaaa;">Game Duration: Loading...</p>
+        </div>
+        <p id="statsLoadingMsg" style="text-align: center; color: #aaaaaa; margin-top: 20px;">Loading detailed stats...</p>
+        <div id="detailedStatsContainer" style="display: none;">
+            <!-- Detailed stats will be populated here -->
+        </div>
+        <button id="closeStatsButton" style="display: block; margin: 20px auto 0;">Close</button>
+    `;
+
+    // Add close button listener immediately
+    document.getElementById('closeStatsButton').addEventListener('click', () => {
+        statsModal.style.display = 'none';
+    });
+    statsModal.style.display = 'block'; // Show modal with loading state
+
+    // --- Fetch Full Game Data ---
+    if (!playerData.gameId) {
+        document.getElementById('statsLoadingMsg').textContent = 'Error: Missing gameId for detailed stats.';
+        console.error("Missing gameId in playerData:", playerData);
+        return;
+    }
+
+    try {
+        console.log(`Fetching full stats for gameId: ${playerData.gameId}`);
+        const response = await fetch(`/game/${playerData.gameId}`); // Fetch from the new endpoint
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        }
+
+        const fullGameData = await response.json();
+        console.log("Full game data received:", fullGameData);
+
+        // --- Populate Modal with Full Data ---
+        const stats = fullGameData.stats; // Use stats from the fetched data
+        if (!stats) {
+             document.getElementById('statsLoadingMsg').textContent = 'No detailed stats available for this player.';
+             // Still update date/duration if available in top-level fullGameData
+             updateModalSummary(statsModal, fullGameData);
+             return;
+        }
+
+        // Update summary section with potentially more accurate data from full record
+        updateModalSummary(statsModal, fullGameData);
+
+        const accuracy = stats.accuracy !== undefined ? stats.accuracy : (stats.missilesFired > 0 ?
+            ((stats.enemyMissilesDestroyed + stats.planeBombsDestroyed) / stats.missilesFired * 100).toFixed(1) :
+            "N/A");
+
+        const detailedStatsHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px;">
+                    <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Offensive Stats</h3>
+                    <p>Missiles Fired: ${stats.missilesFired || 0}</p>
+                    <p>Accuracy: ${accuracy}%</p>
+                    <p>Accuracy Bonuses: ${stats.accuracyBonusHits || 0}</p>
+                    <p>Missile Speed Level: ${stats.missileSpeedLevel || 0}/15</p>
+                    <p>Explosion Radius Level: ${stats.explosionRadiusLevel || 0}/15</p>
+                </div>
+
+                <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px;">
+                    <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Defensive Stats</h3>
+                    <p>Cities Lost: ${stats.citiesLost || 0}</p>
+                    <p>Bases Lost: ${stats.basesLost || 0}</p>
+                </div>
+
+                <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px; grid-column: 1 / -1;">
+                    <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Enemy Kills</h3>
+                    <p style="margin: 0;">Enemy Missiles: ${stats.enemyMissilesDestroyed || 0} | Shield Bombs: ${stats.shieldBombsDestroyed || 0}</p>
+                    <p style="margin: 0;">Plane Bombs: ${stats.planeBombsDestroyed || 0} | Planes: ${stats.planesDestroyed || 0}</p>
+                </div>
+            </div>
+        `;
+
+        // Inject detailed stats and hide loading message
+        document.getElementById('detailedStatsContainer').innerHTML = detailedStatsHTML;
+        document.getElementById('detailedStatsContainer').style.display = 'block';
+        document.getElementById('statsLoadingMsg').style.display = 'none';
+
+    } catch (error) {
+        console.error(`Error fetching detailed stats for gameId ${playerData.gameId}:`, error);
+        document.getElementById('statsLoadingMsg').textContent = `Error loading detailed stats: ${error.message}`;
+        document.getElementById('statsLoadingMsg').style.color = '#ff0000';
+    }
+}
+
+// --- NEW Helper function to update modal summary section ---
+function updateModalSummary(modalElement, data) {
+    const summaryDiv = modalElement.querySelector('div'); // Assumes first div is the summary
+    if (!summaryDiv) return;
+
     // Format Date
     let formattedDate = 'Date Unknown';
-    // Use the correct field name 'submittedAt' from the backend
-    if (playerData.submittedAt) {
+    if (data.submittedAt) {
         try {
-            const date = new Date(playerData.submittedAt);
-            formattedDate = date.toLocaleString('en-US', {
+            const date = new Date(data.submittedAt);
+            formattedDate = date.toLocaleString('en-US', { // Use data.submittedAt
                 weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-                timeZone: 'UTC',
-                timeZoneName: 'short'
-            }).replace(' GMT', ' UTC'); // Ensure UTC is appended correctly
+                year: 'numeric', // Use data.submittedAt
+                month: 'short', // Use data.submittedAt
+                day: 'numeric', // Use data.submittedAt
+                hour: 'numeric', // Use data.submittedAt
+                minute: '2-digit', // Use data.submittedAt
+                timeZone: 'UTC', // Use data.submittedAt
+                timeZoneName: 'short' // Use data.submittedAt
+            }).replace(' GMT', ' UTC');
         } catch (e) {
             console.error("Error formatting date:", e);
             formattedDate = 'Invalid Date';
         }
     }
 
-    // --- ADDED: Format Duration ---
+    // Format Duration from full data if available
     let formattedDuration = 'N/A';
-    if (playerData.stats && typeof playerData.stats.duration === 'number' && playerData.stats.duration >= 0) {
-        const totalSeconds = playerData.stats.duration;
+    if (data.stats && typeof data.stats.duration === 'number' && data.stats.duration >= 0) {
+        const totalSeconds = data.stats.duration;
         const minutes = Math.floor(totalSeconds / 60);
-        const seconds = Math.round(totalSeconds % 60); // Round seconds
+        const seconds = Math.round(totalSeconds % 60);
         formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
-    // --- END ADDED ---
 
-    // No stats data available - show basic info + date + duration (if somehow available)
-    if (!playerData.stats) {
-        statsModal.innerHTML = `
-            <h2 style="color: #ffff00; text-align: center; margin-bottom: 10px;">Player: ${playerData.name}</h2>
-            <div style="text-align: center; margin-bottom: 15px; line-height: 1.5;">
-                <p style="margin: 0; color: #ffffff; font-size: 14px;">Score: $${playerData.score}</p>
-                <p style="margin: 0;">Wave: ${playerData.wave || '?'} | Difficulty: Unknown</p>
-                <p style="margin: 0; font-size: 8px; color: #aaaaaa;">${formattedDate}</p> {/* Font size changed */}
-                <p style="margin: 0; font-size: 8px; color: #aaaaaa;">Game Duration: ${formattedDuration}</p> {/* Duration added */}
-            </div>
-            <p style="text-align: center; color: #aaaaaa; margin-top: 20px;">No detailed stats available for this player.</p>
-            <button id="closeStatsButton" style="display: block; margin: 20px auto 0;">Close</button>
-        `;
-        document.getElementById('closeStatsButton').addEventListener('click', () => {
-            statsModal.style.display = 'none';
-        });
-        statsModal.style.display = 'block';
-        return;
+    // Update the summary part of the modal
+    const paragraphs = summaryDiv.querySelectorAll('p');
+    if (paragraphs.length >= 4) {
+        paragraphs[0].innerHTML = `<p style="margin: 0; color: #ffffff; font-size: 14px;">Score: $${data.score}</p>`;
+        paragraphs[1].innerHTML = `<p style="margin: 0;">Wave: ${data.wave || '?'} | Difficulty: ${data.stats?.difficulty || 'Unknown'}</p>`;
+        paragraphs[2].innerHTML = `<p style="margin: 0; font-size: 8px; color: #aaaaaa;">${formattedDate}</p>`;
+        paragraphs[3].innerHTML = `<p style="margin: 0; font-size: 8px; color: #aaaaaa;">Game Duration: ${formattedDuration}</p>`;
     }
-
-    // Build stats display with new format
-    const stats = playerData.stats;
-    const accuracy = stats.accuracy || (stats.missilesFired > 0 ?
-        ((stats.enemyMissilesDestroyed + stats.planeBombsDestroyed) / stats.missilesFired * 100).toFixed(1) :
-        "N/A");
-
-    statsModal.innerHTML = `
-        <h2 style="color: #ffff00; text-align: center; margin-bottom: 10px;">Player: ${playerData.name}</h2>
-        <div style="text-align: center; margin-bottom: 15px; line-height: 1.5;">
-            <p style="margin: 0; color: #ffffff; font-size: 14px;">Score: $${playerData.score}</p>
-            <p style="margin: 0;">Wave: ${playerData.wave || '?'} | Difficulty: ${stats.difficulty || 'Unknown'}</p>
-            <p style="margin: 0; font-size: 8px; color: #aaaaaa;">${formattedDate}</p>
-            <p style="margin: 0; font-size: 8px; color: #aaaaaa;">Game Duration: ${formattedDuration}</p>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-            <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px;">
-                <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Offensive Stats</h3>
-                <p>Missiles Fired: ${stats.missilesFired || 0}</p>
-                <p>Accuracy: ${accuracy}%</p>
-                <p>Accuracy Bonuses: ${stats.accuracyBonusHits || 0}</p>
-                <p>Missile Speed Level: ${stats.missileSpeedLevel || 0}/15</p> <!-- Updated max level -->
-                <p>Explosion Radius Level: ${stats.explosionRadiusLevel || 0}/15</p> <!-- Updated max level -->
-            </div>
-
-            <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px;">
-                <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Defensive Stats</h3>
-                <p>Cities Lost: ${stats.citiesLost || 0}</p>
-                <p>Bases Lost: ${stats.basesLost || 0}</p>
-            </div>
-
-            <div style="border: 1px solid #005500; padding: 10px; border-radius: 8px; grid-column: 1 / -1;">
-                <h3 style="color: #ffff00; text-align: center; margin-top: 0;">Enemy Kills</h3>
-                <!-- Removed inner grid, using paragraphs with line breaks -->
-                <p style="margin: 0;">Enemy Missiles: ${stats.enemyMissilesDestroyed || 0} | Shield Bombs: ${stats.shieldBombsDestroyed || 0}</p>
-                <p style="margin: 0;">Plane Bombs: ${stats.planeBombsDestroyed || 0} | Planes: ${stats.planesDestroyed || 0}</p>
-            </div>
-        </div>
-
-        <button id="closeStatsButton" style="display: block; margin: 20px auto 0;">Close</button>
-    `;
-
-    document.getElementById('closeStatsButton').addEventListener('click', () => {
-        statsModal.style.display = 'none';
-    });
-
-    // Display the modal
-    statsModal.style.display = 'block';
 }
 
 // Function to clean up AI response text for display
