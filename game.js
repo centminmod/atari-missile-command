@@ -3241,7 +3241,7 @@ async function fetchAndDisplayLeaderboard(limit = 10) { // Default limit to 10
         // --- Fetch Total Playtime Stats ---
         let totalPlaytimeFormatted = 'Loading...';
         try {
-            const statsResponse = await fetch('/stats'); // Fetch from the new /stats endpoint
+            const statsResponse = await fetch('/stats/playtime'); // Fetch from the new /stats/playtime endpoint
             if (statsResponse.ok) {
                 const statsData = await statsResponse.json();
                 totalPlaytimeFormatted = formatDuration(statsData.totalDurationSeconds);
@@ -3250,7 +3250,7 @@ async function fetchAndDisplayLeaderboard(limit = 10) { // Default limit to 10
                 totalPlaytimeFormatted = 'Error';
             }
         } catch (statsError) {
-            console.error('Error fetching /stats:', statsError);
+            console.error('Error fetching /stats/playtime:', statsError);
             totalPlaytimeFormatted = 'Error';
         }
 
