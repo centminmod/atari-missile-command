@@ -3202,9 +3202,34 @@ function recordGameClick(clickX, clickY, armedWeapon) {
     });
 }
 
-// --- NEW: Function to Fetch and Display Leaderboard ---
+// --- [NEW] Helper function to format duration ---
+function formatDuration(totalSeconds) {
+    if (totalSeconds === null || totalSeconds === undefined || totalSeconds < 0) {
+        return 'N/A';
+    }
+    if (totalSeconds === 0) {
+        return '0s';
+    }
+
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    // Round seconds *up* as requested
+    const seconds = Math.ceil(totalSeconds % 60);
+
+    let parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    // Show seconds if > 0 or if it's the only unit, or if totalSeconds < 60
+    if (seconds > 0 || parts.length === 0 || totalSeconds < 60) parts.push(`${seconds}s`);
+
+    return parts.join(' ');
+}
+
+// --- [NEW] Function to Fetch and Display Leaderboard ---
 async function fetchAndDisplayLeaderboard(limit = 10) { // Default limit to 10
-    console.log(`Workspaceing leaderboard (limit: ${limit})...`);
+    console.log(`Fetching leaderboard (limit: ${limit})...`); // Corrected typo
     leaderboardLoading.textContent = "Loading...";
     leaderboardLoading.style.display = 'list-item'; // Show loading message
     leaderboardList.innerHTML = ''; // Clear previous entries
@@ -3213,11 +3238,27 @@ async function fetchAndDisplayLeaderboard(limit = 10) { // Default limit to 10
     leaderboardViewMoreContainer.style.display = 'none'; // Hide view more link initially
 
     try {
-        // Append limit to the fetch URL
+        // --- Fetch Total Playtime Stats ---
+        let totalPlaytimeFormatted = 'Loading...';
+        try {
+            const statsResponse = await fetch('/stats'); // Fetch from the new /stats endpoint
+            if (statsResponse.ok) {
+                const statsData = await statsResponse.json();
+                totalPlaytimeFormatted = formatDuration(statsData.totalDurationSeconds);
+            } else {
+                console.error(`Error fetching stats: ${statsResponse.status}`);
+                totalPlaytimeFormatted = 'Error';
+            }
+        } catch (statsError) {
+            console.error('Error fetching /stats:', statsError);
+            totalPlaytimeFormatted = 'Error';
+        }
+
+        // --- Fetch Leaderboard Scores ---
         const response = await fetch(`/scores?limit=${limit}`); // [MODIFIED] Uses the Functions route with limit
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error fetching scores! status: ${response.status}`);
         }
 
         const scores = await response.json();
@@ -3226,9 +3267,24 @@ async function fetchAndDisplayLeaderboard(limit = 10) { // Default limit to 10
         leaderboardLoading.style.display = 'none'; // Hide loading message
         leaderboardList.innerHTML = ''; // Clear loading message definitively
 
+        // --- Display Total Playtime Stat ---
+        const statsLi = document.createElement('li');
+        statsLi.className = 'leaderboard-stat'; // Add a class for potential styling
+        statsLi.style.textAlign = 'center';
+        statsLi.style.marginBottom = '10px';
+        statsLi.style.color = '#aaaaff'; // Distinct color
+        statsLi.style.borderBottom = '1px dashed #555588'; // Separator line
+        statsLi.style.paddingBottom = '8px'; // Space below line
+        statsLi.textContent = `Total Playtime: ${totalPlaytimeFormatted}`;
+        leaderboardList.appendChild(statsLi); // Add it before the scores
+
+        // --- Display Leaderboard Scores ---
         if (scores && scores.length > 0) {
             scores.forEach((entry, index) => {
                 const li = document.createElement('li');
+                // Add alternating background color for readability
+                li.style.backgroundColor = index % 2 === 0 ? 'rgba(0, 50, 0, 0.3)' : 'transparent';
+                li.style.padding = '3px 5px'; // Add some padding
                 const rankSpan = document.createElement('span');
                 rankSpan.className = 'rank';
                 rankSpan.textContent = `${index + 1}.`;
