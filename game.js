@@ -3448,9 +3448,13 @@ function updateModalSummary(modalElement, data) {
     // Update the summary part of the modal
     const paragraphs = summaryDiv.querySelectorAll('p');
     if (paragraphs.length >= 4) {
+        // Update Score
         paragraphs[0].innerHTML = `<p style="margin: 0; color: #ffffff; font-size: 14px;">Score: $${data.score}</p>`;
+        // Update Wave & Difficulty
         paragraphs[1].innerHTML = `<p style="margin: 0;">Wave: ${data.wave || '?'} | Difficulty: ${data.stats?.difficulty || 'Unknown'}</p>`;
+        // Update Date (with smaller font size style)
         paragraphs[2].innerHTML = `<p style="margin: 0; font-size: 8px; color: #aaaaaa;">${formattedDate}</p>`;
+        // Update Duration (with smaller font size style)
         paragraphs[3].innerHTML = `<p style="margin: 0; font-size: 8px; color: #aaaaaa;">Game Duration: ${formattedDuration}</p>`;
     }
 }
