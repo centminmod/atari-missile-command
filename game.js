@@ -3346,7 +3346,9 @@ async function displayPlayerStats(playerData) { // Made async
     }
 
     try {
-        console.log(`Fetching full stats for gameId: ${playerData.gameId}`);
+        if (window.enableDebugLogging) {
+            console.log(`Fetching full stats for gameId: ${playerData.gameId}`);
+        }
         const response = await fetch(`/game/${playerData.gameId}`); // Fetch from the new endpoint
 
         if (!response.ok) {
