@@ -3355,7 +3355,10 @@ async function displayPlayerStats(playerData) { // Made async
         }
 
         const fullGameData = await response.json();
-        console.log("Full game data received:", fullGameData);
+        // Conditionally log the full data only if debug logging is enabled
+        if (window.enableDebugLogging) {
+            console.log("Full game data received:", fullGameData);
+        }
 
         // --- Populate Modal with Full Data ---
         const stats = fullGameData.stats; // Use stats from the fetched data
