@@ -196,7 +196,7 @@ footer a img { vertical-align: middle; margin: 0 3px; height: 20px; width: auto;
 /* --- Leaderboard Styles --- */
 #leaderboardContainer { margin-top: 20px; padding: 15px; border: 2px solid #00ffff; border-radius: 10px; background-color: rgba(0, 30, 30, 0.5); width: 100%; max-width: 550px; box-sizing: border-box; color: #00ffff; display: none; text-align: center; }
 #leaderboardContainer h3 { margin: 0 0 10px 0; font-size: clamp(16px, 4vw, 18px); color: #ffffff; }
-#leaderboardList { list-style: none; padding: 0; margin: 0; font-size: clamp(10.5px, 3vw, 10.5px); text-align: left; max-height: 300px; overflow-y: auto; min-height: 220px; /* ADDED: Reserve space for ~10 items */ }
+#leaderboardList { list-style: none; padding: 0; margin: 0; font-size: clamp(10.5px, 3vw, 10.5px); text-align: left; max-height: 300px; overflow-y: auto; min-height: 180px; }
 #leaderboardList li { display: flex; justify-content: space-between; padding: 3px 5px; border-bottom: 1px dashed rgba(0, 255, 255, 0.3); }
  #leaderboardList li:last-child { border-bottom: none; }
 #leaderboardList .rank { flex-basis: 8%; text-align: right; padding-right: 10px; color: #aaaaaa; }
