@@ -31,6 +31,7 @@
                 person_profiles: 'identified_only',
             })
         </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -100,6 +101,8 @@
         <div id="scoreSubmission">
             <label for="playerNameInput">Enter Name (max 18 chars):</label>
             <input type="text" id="playerNameInput" maxlength="18" placeholder="ACE" size="18">
+            <!-- Cloudflare Turnstile Widget Placeholder -->
+            <div id="turnstile-widget" style="margin-top: 10px; margin-bottom: 10px;"></div>
             <button id="submitScoreButton">Submit Score</button>
             <div id="submissionStatus"></div>
         </div>
