@@ -2,7 +2,7 @@
 
 // --- Configuration ---
 // Increment this version number when you update assets or caching logic
-const APP_VERSION = 'v77'; // Incremented version
+const APP_VERSION = 'v78'; // Incremented version
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
 const DATA_CACHE_NAME = `missile-command-data-cache-${APP_VERSION}`; // Separate cache for dynamic data
 
@@ -89,8 +89,10 @@ self.addEventListener('fetch', (event) => {
         return fetch(event.request)
           .then((networkResponse) => {
             // Only cache GET requests, not POST requests
-            if (event.request.method === 'GET') {
-              // Need to clone the response stream as it can only be consumed once
+            if (
+              event.request.method === 'GET' &&
+              !requestUrl.pathname.startsWith('/game-secret')
+            ) {
               cache.put(event.request, networkResponse.clone());
             }
             return networkResponse;
