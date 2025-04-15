@@ -7895,10 +7895,12 @@ async function submitHighScore() {
   };
 
   submitScoreButton.disabled = true;
-    score: finalScore,
-    wave: waveReached,
-    stats: gameStats,
-    nonce: crypto.randomUUID() // Generate and add nonce
+  const scoreDataToSubmit = {
+      name: name,
+      score: finalScore,
+      wave: waveReached,
+      stats: gameStats,
+      nonce: crypto.randomUUID() // Generate and add nonce
   };
 
   // Add signature if possible
