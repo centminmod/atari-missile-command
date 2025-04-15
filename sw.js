@@ -2,7 +2,7 @@
 
 // --- Configuration ---
 // Increment this version number when you update assets or caching logic
-const APP_VERSION = 'v78'; // Incremented version
+const APP_VERSION = 'v79'; // Incremented version
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
 const DATA_CACHE_NAME = `missile-command-data-cache-${APP_VERSION}`; // Separate cache for dynamic data
 
@@ -18,7 +18,10 @@ const CORE_ASSETS_TO_CACHE = [
   '/icons/android-launchericon-96-96.png',
   '/icons/android-launchericon-72-72.png',
   '/icons/android-launchericon-48-48.png',
-  '/game.js',
+  '/js/main.js',
+  '/js/configAndUtils.js',
+  '/js/gameLogic.js',
+  '/js/uiAndIO.js',
   '/css/fonts.css',
   '/css/style.css',
   '/fonts/press-start-2p-v15-latin-regular.woff2',
