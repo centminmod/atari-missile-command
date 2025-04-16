@@ -279,6 +279,8 @@ function nextWave() {
     UI.showMessage(gameState, `WAVE ${gameState.currentWave + 1} CLEARED`, `Score Bonus: $${Math.round(bonusEarned * gameState.difficultyScoreMultiplier)}`, "", bonusChangeMsg); // Pass gameState
     UI.goToStoreButton.style.display = 'inline-block';
     UI.skipStoreButton.style.display = 'inline-block';
+    const messageRestartButton = UI.messageBox.querySelector('#restartButton');
+    if (messageRestartButton) messageRestartButton.style.display = 'none';
     UI.pauseButton.disabled = true;
     UI.statsContainer.style.display = 'none';
     UI.updateUI(gameState); // Pass gameState
