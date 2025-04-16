@@ -183,6 +183,12 @@ async function startGame() {
         UI.canvas.style.cursor = 'crosshair';
         console.log("startGame: UI setup complete");
 
+        UI.sonicWaveControl.style.display = 'flex';
+        UI.bombControl.style.display = 'flex';
+        document.querySelectorAll('#restartButton').forEach(btn => btn.style.display = 'inline-block');
+        UI.pauseButton.style.display = 'inline-block';
+        UI.screenshotButton.style.display = 'inline-block';
+
         console.log("startGame: Initializing game objects...");
         gameState.cities = [];
         const cityWidth = gameState.canvas.width * Config.CITY_WIDTH_RATIO;
