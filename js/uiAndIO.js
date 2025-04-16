@@ -1319,18 +1319,17 @@ async function generateScoreSignature(scoreData, secretKey) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// --- Canvas Optimization ---
 export function optimizeCanvasForOrientation(gameState) {
-    const { canvas, canvasContainer, controlsContainer, specialWeaponsUIDiv } = gameState;
+    const { canvas, canvasContainer, controlsContainer, specialWeaponsUIDiv, gameHasStarted, isGameOver } = gameState;
     const isLandscape = window.innerWidth > window.innerHeight;
     const isMobileOrSmallScreen = window.innerHeight < 700;
 
     canvas.width = Config.INTERNAL_WIDTH;
     canvas.height = Config.INTERNAL_HEIGHT;
-    // initializeStars(gameState); // Stars should be initialized only once at game start
 
     if (isLandscape && isMobileOrSmallScreen) {
         console.log("Applying mobile landscape layout");
+        // ... calculate canvasWidth, canvasHeight ... (code remains the same)
         const uiSidePadding = 180;
         const availableWidth = window.innerWidth - uiSidePadding;
         const topBottomMargin = 60;
@@ -1345,16 +1344,43 @@ export function optimizeCanvasForOrientation(gameState) {
         canvasContainer.style.height = `${canvasHeight}px`;
         canvasContainer.style.maxWidth = 'none';
         canvasContainer.style.margin = '0 auto';
-        controlsContainer.style.cssText = 'position: absolute; left: 10px; top: 50%; transform: translateY(-50%); flex-direction: column; width: auto; background-color: rgba(0,0,0,0.6); padding: 8px; border-radius: 8px; z-index: 15;';
-        specialWeaponsUIDiv.style.cssText = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); flex-direction: column; background-color: rgba(0,0,0,0.6); padding: 8px; border-radius: 8px; z-index: 15;';
+
+        // **** MODIFIED CSS TEXT for controlsContainer ****
+        controlsContainer.style.cssText = 'display: flex; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); flex-direction: column; width: auto; background-color: rgba(0,0,0,0.6); padding: 8px; border-radius: 8px; z-index: 15;';
+        // Apply similar change if specialWeaponsUIDiv should also be flex
+        specialWeaponsUIDiv.style.cssText = 'display: flex; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); flex-direction: column; background-color: rgba(0,0,0,0.6); padding: 8px; border-radius: 8px; z-index: 15;';
+
         const buttons = controlsContainer.querySelectorAll('button');
-        buttons.forEach(button => { button.style.cssText = 'padding: 6px 10px; margin: 3px 0; font-size: 12px; width: 100%;'; });
+        buttons.forEach(button => {
+            if (gameHasStarted && !isGameOver && (button.id === 'restartButton' || button.id === 'pauseButton' || button.id === 'screenshotButton')) {
+                 button.style.cssText = 'padding: 6px 10px; margin: 3px 0; font-size: 12px; width: 100%; display: block;';
+            } else if (!gameHasStarted || isGameOver) {
+                 if (button.id === 'restartButton' || button.id === 'pauseButton' || button.id === 'screenshotButton') {
+                    button.style.display = 'none';
+                 }
+            } else {
+                 // Apply styles to other potential buttons inside controlsContainer
+                 button.style.cssText = 'padding: 6px 10px; margin: 3px 0; font-size: 12px; width: 100%; display: block;';
+            }
+        });
+
     } else {
-        console.log("Using standard layout");
+        // Standard layout code (should be correct from previous fix)
+        console.log("Applying standard layout");
         canvasContainer.style.width = ''; canvasContainer.style.height = ''; canvasContainer.style.maxWidth = "800px";
         controlsContainer.style.cssText = ''; specialWeaponsUIDiv.style.cssText = '';
+        controlsContainer.style.display = 'flex'; // Ensure display is flex here too
+        specialWeaponsUIDiv.style.display = 'flex'; // Ensure display is flex here too
         const buttons = controlsContainer.querySelectorAll('button');
         buttons.forEach(button => { button.style.cssText = ''; });
+        if (gameHasStarted && !isGameOver) {
+            const restartBtn = document.getElementById('restartButton'); // Assuming IDs are unique enough
+            const pauseBtn = document.getElementById('pauseButton');
+            const screenshotBtn = document.getElementById('screenshotButton');
+            if (restartBtn) restartBtn.style.display = 'inline-block';
+            if (pauseBtn) pauseBtn.style.display = 'inline-block';
+            if (screenshotBtn) screenshotBtn.style.display = 'inline-block';
+        }
     }
     canvasContainer.style.aspectRatio = `${Config.INTERNAL_WIDTH} / ${Config.INTERNAL_HEIGHT}`;
     updateUI(gameState);
