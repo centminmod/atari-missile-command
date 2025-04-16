@@ -352,7 +352,7 @@ export function createIncomingMissile(gameState, config = {}) {
                 for (let i = 0; i < Config.MIRV_WARHEAD_COUNT; i++) {
                     // Use getBaseOrCityTarget for MIRV splits instead of getRandomTarget
                     const warheadTarget = Config.getBaseOrCityTarget(gameState); // Pass gameState
-                    incomingMissiles.push(createIncomingMissile(gameState, { // Pass gameState
+                    gameState.incomingMissiles.push(createIncomingMissile(gameState, { // Pass gameState
                         startX: this.x,
                         startY: this.y,
                         target: warheadTarget,
@@ -378,7 +378,7 @@ export function createIncomingMissile(gameState, config = {}) {
                 for (let i = 0; i < Config.SMART_BOMB_SPLIT_COUNT; i++) {
                     // Use getBaseOrCityTarget for smart bomb splits instead of getRandomTarget
                     const splitTarget = Config.getBaseOrCityTarget(gameState); // Pass gameState
-                    incomingMissiles.push(createIncomingMissile(gameState, { // Pass gameState
+                    gameState.incomingMissiles.push(createIncomingMissile(gameState, { // Pass gameState
                         startX: this.x,
                         startY: this.y,
                         target: splitTarget,
