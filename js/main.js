@@ -110,7 +110,7 @@ async function startGame() {
         console.log("startGame: Entered");
         if (!gameState.difficultySelected) { console.warn("Difficulty not selected!"); return; }
         console.log("startGame: Difficulty selected, proceeding...");
-        document.cookie = "startgame=true; max-age=600; path=/; Secure; SameSite=Lax";
+        document.cookie = "startgame=true; max-age=3600; path=/; Secure; SameSite=Lax";
         UI.optimizeCanvasForOrientation(gameState); // Pass gameState
         gameState.gameStartTimestamp = Date.now();
         console.log(`Game started at: ${new Date(gameState.gameStartTimestamp).toISOString()}`);
