@@ -1283,8 +1283,17 @@ export async function syncStoredScores(gameState) { // Pass gameState to reset t
             console.warn('Cleared local stored scores due to invalid/expired session token (syncStoredScores).');
             return { synced: syncedCount, failed: failedCount + 1 };
         }
-        if (result.success) { syncedCount++; }
-        else { failedCount++; remainingScores.push(scoreData); }
+        if (result.success) {
+             syncedCount++;
+        } else {
+            failedCount++;
+            // Only keep the score for retry if it wasn't blocked or a validation error
+            if (!result.blocked && !result.validationError) {
+                remainingScores.push(scoreData);
+            } else {
+                console.log(`Discarding stored score due to ${result.blocked ? 'block (403)' : 'validation error (400)'}: Name=${scoreData.name}, Score=${scoreData.score}`);
+            }
+        }
     }
 
     if (remainingScores.length > 0) {
