@@ -1110,6 +1110,10 @@ async function submitScoreData(scoreData) {
         return { success: true };
     } catch (error) {
         console.error('Error submitting score data:', error);
+        // Check if the error is likely 403
+        if (error && error.message && error.message.includes('status: 403')) {
+            return { success: false, error: "Submission Blocked by Security", blocked: true };
+        }
         return { success: false, error: error.message };
     }
 }
@@ -1185,7 +1189,15 @@ export async function submitHighScore(gameState) {
         localStorage.setItem('missileCommandPlayerName', name);
         gameState.gameStartTimestamp = 0; // Reset timestamp in main gameState
     } else {
-        if (navigator.onLine) {
+        if (result.blocked) {
+            // Specific handling for blocks
+            submissionStatus.textContent = "Submission Blocked by Security. Please try again later.";
+            submissionStatus.style.color = "#ffaa00"; // Orange/Yellow for blocked
+            submitScoreButton.disabled = false; // Allow retry, maybe the block is temporary
+            // Optionally, still store locally if desired, but maybe not if it's a security block
+            console.warn("Score submission blocked by security.");
+        } else if (navigator.onLine) {
+            // Existing online failure handling
             submissionStatus.textContent = `Submission Failed: ${result.error || 'Unknown error'}`;
             submissionStatus.style.color = "#ff0000";
             submitScoreButton.disabled = false;
