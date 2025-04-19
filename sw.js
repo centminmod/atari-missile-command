@@ -2,7 +2,7 @@
 
 // --- Configuration ---
 // Increment this version number when you update assets or caching logic
-const APP_VERSION = 'v111'; // Incremented version
+const APP_VERSION = 'v112'; // Incremented version
 const CACHE_NAME = `missile-command-cache-${APP_VERSION}`;
 const DATA_CACHE_NAME = `missile-command-data-cache-${APP_VERSION}`; // Separate cache for dynamic data
 
@@ -32,7 +32,7 @@ const CORE_ASSETS_TO_CACHE = [
   '/audio/music-lowest.mp3',
   // Add any other static assets here
   '/favicon.ico',
-  '/images/social-preview.png'
+  '/images/social-preview.jpg'
 ];
 
 // --- Installation Event ---
