@@ -5,6 +5,7 @@ cloudflare/llms.txt
 
 /ignore-dev/
 /screenshots/
+/memory-bank-backup/
 
 # Environment variables
 .env
