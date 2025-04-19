@@ -1097,10 +1097,25 @@ async function submitScoreData(scoreData) {
 
         if (!response.ok) {
             const errorText = await response.text();
+            // Check for specific 400 Bad Request (likely validation error)
+            if (response.status === 400) {
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    if (errorJson && errorJson.error) {
+                        // Throw a specific error type for validation failures, without exposing the detail
+                        throw new Error('Validation Error: 400');
+                    }
+                } catch (parseError) {
+                    // Ignore parsing error, fall through to generic error
+                    console.warn("Could not parse 400 error response body as JSON:", parseError);
+                }
+            }
+            // Handle 403 specifically for token issues
             if (response.status === 403 && errorText.includes('Invalid or expired session token')) {
                 localStorage.removeItem('storedScores');
                 console.warn('Cleared local stored scores due to invalid/expired session token.');
             }
+            // Throw generic error for other non-ok statuses or unparsed 400s
             throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
 
@@ -1110,10 +1125,15 @@ async function submitScoreData(scoreData) {
         return { success: true };
     } catch (error) {
         console.error('Error submitting score data:', error);
-        // Check if the error is likely 403
+        // Check for specific validation error first
+        if (error && error.message === 'Validation Error: 400') {
+            return { success: false, error: "Invalid Data", validationError: true };
+        }
+        // Check if the error is likely a 403
         if (error && error.message && error.message.includes('status: 403')) {
             return { success: false, error: "Submission Blocked by Security", blocked: true };
         }
+        // Fallback for other errors
         return { success: false, error: error.message };
     }
 }
@@ -1194,10 +1214,15 @@ export async function submitHighScore(gameState) {
             submissionStatus.textContent = "Submission Blocked by Security. Please try again later.";
             submissionStatus.style.color = "#ffaa00"; // Orange/Yellow for blocked
             submitScoreButton.disabled = false; // Allow retry, maybe the block is temporary
-            // Optionally, still store locally if desired, but maybe not if it's a security block
             console.warn("Score submission blocked by security.");
+        } else if (result.validationError) {
+             // Specific handling for validation errors (400)
+            submissionStatus.textContent = "Submission Failed: Invalid data.";
+            submissionStatus.style.color = "#ff0000"; // Red for invalid data
+            submitScoreButton.disabled = false; // Allow retry after fixing potential issues (though unlikely client-fixable here)
+            console.warn("Score submission failed due to invalid data (400).");
         } else if (navigator.onLine) {
-            // Existing online failure handling
+            // Existing online failure handling for other errors
             submissionStatus.textContent = `Submission Failed: ${result.error || 'Unknown error'}`;
             submissionStatus.style.color = "#ff0000";
             submitScoreButton.disabled = false;
